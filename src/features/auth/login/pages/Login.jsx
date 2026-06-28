@@ -1,5 +1,5 @@
-import LoginForm from "@/components/auth/LoginForm";
-import logo from "../../../public/logo-png.png";
+import LoginForm from "@/features/auth/login/components/LoginForm";
+import logo from "../../../../../public/logo-png.png";
 
 const Login = () => {
   return (

@@ -1,7 +1,6 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
 import StatusAlert from "@/components/shared/status-alert";
 
 export default function BrandForm({
@@ -97,7 +96,7 @@ export default function BrandForm({
             value={values.short_description}
             onChange={onChange}
             placeholder="Write a short summary about your brand and what makes it special."
-            className="min-h-[120px] rounded-2xl"
+            className="min-h-30 rounded-2xl"
           />
           {errors.short_description?.map((item, index) => (
             <p key={index} className="text-sm text-destructive">

@@ -17,13 +17,12 @@ const LoginForm = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const { loading, error, user } = useSelector((state) => state.auth);
-
+  const { loading, error, isAuthenticated } = useSelector(
+    (state) => state.auth,
+  );
   useEffect(() => {
-    if (user) {
-      navigate("/");
-    }
-  }, [user, navigate]);
+    if (isAuthenticated) navigate("/");
+  }, [isAuthenticated, navigate]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -45,9 +44,11 @@ const LoginForm = () => {
           <div className="bg-red-100 text-red-700 p-3 mb-4 rounded">
             {typeof error === "string"
               ? error
-              : Array.isArray(error.non_field_errors)
-                ? error.non_field_errors[0]
-                : "Something went wrong"}
+              : error?.detail
+                ? error.detail
+                : Array.isArray(error?.non_field_errors)
+                  ? error.non_field_errors[0]
+                  : "Something went wrong"}
           </div>
         )}
 

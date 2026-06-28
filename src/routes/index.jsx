@@ -1,22 +1,21 @@
 import { RouterProvider, createBrowserRouter } from "react-router-dom";
 
 import MainLayout from "@/layouts/MainLayout";
-import Home from "@/pages/home/Home";
-import Login from "@/pages/auth/Login";
-import Register from "@/pages/auth/Register";
-import Verified from "@/pages/auth/Verified";
-import ProfilePage from "@/pages/profile/ProfilePage";
-import UpdateProfile from "@/pages/profile/UpdateProfile";
-import ForgotPassword from "@/pages/reset_and_forgot_password/ForgotPassword";
-import ResetPassword from "@/pages/reset_and_forgot_password/ResetPassword";
+import Home from "@/features/home/pages/Home";
+import Login from "@/features/auth/login/pages/Login";
+import Register from "@/features/auth/register/pages/Register";
+import Verified from "@/features/auth/Verified";
+import ForgotPassword from "@/features/auth/forgot-password/pages/ForgotPassword";
+import ResetPassword from "@/features/auth/reset-password/pages/ResetPassword";
 import PrivateRoute from "./PrivateRoute";
-import RoleSelector from "@/components/auth/RoleSelector";
-import SellerForm from "@/components/auth/SellerForm";
-import CustomerForm from "@/components/auth/CustomerForm";
-import BrandsPage from "@/pages/eventPlanner/brands-page";
-import CreateBrandPage from "@/pages/eventPlanner/create-brand-page";
-import BrandDetailsPage from "@/pages/eventPlanner/brand-details-page";
-import EditBrandPage from "@/pages/eventPlanner/edit-brand-page";
+import RoleSelector from "@/features/auth/register/components/RoleSelector";
+import SellerForm from "@/features/auth/register/components/SellerForm";
+import CustomerForm from "@/features/auth/register/components/CustomerForm";
+import CreateBrandPage from "@/features/event-planning-feature/brands-feature/pages/CreateBrandPage";
+import ProfilePage from "@/features/profiles/pages/ProfilePage";
+import UpdateProfile from "@/features/profiles/pages/UpdateProfile";
+import BrandDetailsPage from "@/features/event-planning-feature/brands-feature/pages/BrandDetailsPage";
+import EditBrandPage from "@/features/event-planning-feature/brands-feature/pages/EditBrandPage";
 
 const router = createBrowserRouter([
   {
@@ -61,11 +60,7 @@ const router = createBrowserRouter([
         element: <PrivateRoute element={<UpdateProfile />} />,
       },
 
-      // event planner routes
-      {
-        path: "/event-planner/brands",
-        element: <BrandsPage />,
-      },
+      // event planner routes,
       {
         path: "/event-planner/brands/create",
         element: (
@@ -75,15 +70,14 @@ const router = createBrowserRouter([
           />
         ),
       },
+
+      {
+        path: "/event-planner/brands/:slug/edit",
+        element: <EditBrandPage />,
+      },
       {
         path: "/event-planner/brands/:slug",
         element: <BrandDetailsPage />,
-      },
-      {
-        path: "/event-planner/brands/:slug/edit",
-        element: (
-          <PrivateRoute element={<EditBrandPage />} allowedRoles={["seller"]} />
-        ),
       },
     ],
   },

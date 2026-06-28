@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { Moon, Sun, Menu, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetTrigger, SheetContent } from "@/components/ui/sheet";
@@ -7,6 +8,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { Link, NavLink } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { logoutUser } from "@/store/features/auth/authSlice";
+import { fetchMyBrand } from "@/store/features/eventPlanner/eventPlannerSlice";
 
 import {
   DropdownMenu,
@@ -21,7 +23,15 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 const Navbar = () => {
   const { theme, setTheme } = useTheme();
   const dispatch = useDispatch();
+
   const { user } = useSelector((state) => state.auth);
+  const { brandDetails } = useSelector((state) => state.eventPlanner);
+
+  useEffect(() => {
+    if (user?.role === "seller" && !brandDetails) {
+      dispatch(fetchMyBrand());
+    }
+  }, [dispatch, user?.role, brandDetails]);
 
   const toggleTheme = () => {
     setTheme(theme === "light" ? "dark" : "light");
@@ -30,6 +40,10 @@ const Navbar = () => {
   const handleLogout = () => {
     dispatch(logoutUser());
   };
+
+  const myBrandPath = brandDetails?.slug
+    ? `/event-planner/brands/${brandDetails.slug}`
+    : "/event-planner/brands";
 
   const navItems = [
     { label: "Home", to: "/" },
@@ -45,13 +59,11 @@ const Navbar = () => {
     <nav className="fixed top-0 left-0 w-full z-50 border-b bg-background/95 backdrop-blur">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
-          {/* Logo */}
           <Link to="/" className="flex items-center gap-2">
             <Calendar className="h-6 w-6 text-primary" />
             <span className="text-lg font-semibold">EventraBD</span>
           </Link>
 
-          {/* Desktop Nav */}
           <div className="hidden md:flex items-center gap-8">
             {navItems.map((item) => (
               <NavLink key={item.to} to={item.to} className={navLinkClass}>
@@ -60,9 +72,7 @@ const Navbar = () => {
             ))}
           </div>
 
-          {/* Right Section */}
           <div className="flex items-center gap-3">
-            {/* Theme Toggle */}
             <Button
               variant="ghost"
               size="icon"
@@ -73,7 +83,6 @@ const Navbar = () => {
               <Moon className="h-4 w-4 hidden dark:block" />
             </Button>
 
-            {/* Auth Section */}
             {!user ? (
               <div className="hidden sm:flex items-center gap-2">
                 <Button variant="ghost" size="sm" asChild>
@@ -85,14 +94,18 @@ const Navbar = () => {
               </div>
             ) : (
               <DropdownMenu>
-                <DropdownMenuTrigger>
-                  <Avatar className="h-9 w-9 cursor-pointer">
-                    <AvatarImage
-                      src={user.profile_image_url}
-                      alt={user.full_name}
-                    />
-                    <AvatarFallback>{user.full_name?.charAt(0)}</AvatarFallback>
-                  </Avatar>
+                <DropdownMenuTrigger asChild>
+                  <button className="rounded-full">
+                    <Avatar className="h-9 w-9 cursor-pointer">
+                      <AvatarImage
+                        src={user.profile_image_url}
+                        alt={user.full_name}
+                      />
+                      <AvatarFallback>
+                        {user.full_name?.charAt(0) || "U"}
+                      </AvatarFallback>
+                    </Avatar>
+                  </button>
                 </DropdownMenuTrigger>
 
                 <DropdownMenuContent align="end" className="w-44">
@@ -103,7 +116,7 @@ const Navbar = () => {
                   {user?.role === "seller" && (
                     <>
                       <DropdownMenuItem asChild>
-                        <Link to="/event-planner/brands">My Brands</Link>
+                        <Link to={myBrandPath}>My Brand</Link>
                       </DropdownMenuItem>
 
                       <DropdownMenuItem asChild>
@@ -126,7 +139,6 @@ const Navbar = () => {
               </DropdownMenu>
             )}
 
-            {/* Mobile Menu */}
             <Sheet>
               <SheetTrigger asChild className="md:hidden">
                 <Button variant="ghost" size="icon">
@@ -146,6 +158,24 @@ const Navbar = () => {
                     </NavLink>
                   ))}
 
+                  {user?.role === "seller" && (
+                    <>
+                      <Link
+                        to={myBrandPath}
+                        className="block text-base font-medium"
+                      >
+                        My Brand
+                      </Link>
+
+                      <Link
+                        to="/event-planner/brands/create"
+                        className="block text-base font-medium"
+                      >
+                        Create Brand
+                      </Link>
+                    </>
+                  )}
+
                   <div className="pt-6 space-y-2">
                     {!user ? (
                       <>
@@ -157,13 +187,19 @@ const Navbar = () => {
                         </Button>
                       </>
                     ) : (
-                      <Button
-                        variant="outline"
-                        className="w-full text-red-500"
-                        onClick={handleLogout}
-                      >
-                        Logout
-                      </Button>
+                      <>
+                        <Button asChild variant="outline" className="w-full">
+                          <Link to={`/profile/${user.slug}`}>Profile</Link>
+                        </Button>
+
+                        <Button
+                          variant="outline"
+                          className="w-full text-red-500"
+                          onClick={handleLogout}
+                        >
+                          Logout
+                        </Button>
+                      </>
                     )}
                   </div>
                 </div>

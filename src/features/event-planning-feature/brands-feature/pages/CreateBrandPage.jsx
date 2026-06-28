@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+
 import PageShell from "@/components/shared/page-shell";
 import SectionHeader from "@/components/shared/section-header";
-import BrandForm from "@/components/eventPlanner/brand-form";
-import { useBrandActions } from "@/hooks/use-brand-actions";
+
+import BrandForm from "@/features/event-planning-feature/brands-feature/components/BrandForm";
+import { useBrandActions } from "@/features/event-planning-feature/brands-feature/hooks/use-brand-actions";
+
 import { useDispatch } from "react-redux";
 import { clearCreateBrandState } from "@/store/features/eventPlanner/eventPlannerSlice";
 

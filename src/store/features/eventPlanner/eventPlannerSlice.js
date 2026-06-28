@@ -115,6 +115,18 @@ export const fetchBrands = createAsyncThunk(
   },
 );
 
+export const fetchMyBrand = createAsyncThunk(
+  "eventPlanner/fetchMyBrand",
+  async (_, thunkAPI) => {
+    try {
+      const response = await api.get("/event-planner/my-brand/");
+      return response.data;
+    } catch (error) {
+      return thunkAPI.rejectWithValue(normalizeApiError(error));
+    }
+  },
+);
+
 export const fetchBrandBySlug = createAsyncThunk(
   "eventPlanner/fetchBrandBySlug",
   async (slug, thunkAPI) => {
@@ -158,8 +170,14 @@ export const deleteBrand = createAsyncThunk(
   "eventPlanner/deleteBrand",
   async (slug, thunkAPI) => {
     try {
-      await api.delete(`/event-planner/brands/${slug}/delete/`);
-      return slug;
+      const response = await api.delete(
+        `/event-planner/brands/${slug}/delete/`,
+      );
+
+      return {
+        slug,
+        message: response.data?.message || "Brand deleted successfully.",
+      };
     } catch (error) {
       return thunkAPI.rejectWithValue(normalizeApiError(error));
     }
@@ -172,17 +190,27 @@ export const deleteBrand = createAsyncThunk(
 
 const initialState = {
   brands: [],
-  brandDetails: null,
+
+  // Public brand page / brand details by slug
+  publicBrandDetails: null,
+
+  // Logged-in seller's own brand
+  myBrandDetails: null,
 
   list: {
     loading: false,
     errorMessage: "",
   },
 
-  details: {
+  publicDetails: {
     loading: false,
     errorMessage: "",
     redirectInfo: null,
+  },
+
+  myBrand: {
+    loading: false,
+    errorMessage: "",
   },
 
   create: { ...initialAsyncState },
@@ -196,10 +224,15 @@ const eventPlannerSlice = createSlice({
   name: "eventPlanner",
   initialState,
   reducers: {
-    clearBrandDetails(state) {
-      state.brandDetails = null;
-      state.details.errorMessage = "";
-      state.details.redirectInfo = null;
+    clearPublicBrandDetails(state) {
+      state.publicBrandDetails = null;
+      state.publicDetails.errorMessage = "";
+      state.publicDetails.redirectInfo = null;
+    },
+
+    clearMyBrandDetails(state) {
+      state.myBrandDetails = null;
+      state.myBrand.errorMessage = "";
     },
 
     clearCreateBrandState(state) {
@@ -217,12 +250,18 @@ const eventPlannerSlice = createSlice({
 
     clearAllBrandErrors(state) {
       state.list.errorMessage = "";
-      state.details.errorMessage = "";
-      state.details.redirectInfo = null;
+
+      state.publicDetails.errorMessage = "";
+      state.publicDetails.redirectInfo = null;
+
+      state.myBrand.errorMessage = "";
+
       state.create.errorMessage = "";
       state.create.errors = {};
+
       state.update.errorMessage = "";
       state.update.errors = {};
+
       state.delete.errorMessage = "";
       state.delete.errors = {};
     },
@@ -245,21 +284,36 @@ const eventPlannerSlice = createSlice({
           action.payload?.message || "Failed to fetch brands.";
       })
 
+      //fetch all brands
+      .addCase(fetchMyBrand.pending, (state) => {
+        state.myBrand.loading = true;
+        state.myBrand.errorMessage = "";
+      })
+      .addCase(fetchMyBrand.fulfilled, (state, action) => {
+        state.myBrand.loading = false;
+        state.myBrandDetails = action.payload;
+      })
+      .addCase(fetchMyBrand.rejected, (state, action) => {
+        state.myBrand.loading = false;
+        state.myBrand.errorMessage =
+          action.payload?.message || "Failed to fetch my brand.";
+      })
+
       // ── Fetch Brand Details ────────────────────────────────────────────────
       .addCase(fetchBrandBySlug.pending, (state) => {
-        state.details.loading = true;
-        state.details.errorMessage = "";
-        state.details.redirectInfo = null;
+        state.publicDetails.loading = true;
+        state.publicDetails.errorMessage = "";
+        state.publicDetails.redirectInfo = null;
       })
       .addCase(fetchBrandBySlug.fulfilled, (state, action) => {
-        state.details.loading = false;
-        state.brandDetails = action.payload;
+        state.publicDetails.loading = false;
+        state.publicBrandDetails = action.payload;
       })
       .addCase(fetchBrandBySlug.rejected, (state, action) => {
-        state.details.loading = false;
-        state.details.errorMessage =
+        state.publicDetails.loading = false;
+        state.publicDetails.errorMessage =
           action.payload?.message || "Failed to fetch brand details.";
-        state.details.redirectInfo = action.payload?.redirectInfo || null;
+        state.publicDetails.redirectInfo = action.payload?.redirectInfo || null;
       })
 
       // ── Create Brand ────────────────────────────────────────────────────────
@@ -274,7 +328,8 @@ const eventPlannerSlice = createSlice({
         state.create.loading = false;
         state.create.success = true;
         state.create.message = "Brand created successfully.";
-        state.brandDetails = action.payload;
+        state.myBrandDetails = action.payload;
+        state.publicBrandDetails = action.payload;
 
         const exists = state.brands.some(
           (item) => item.slug === action.payload.slug,
@@ -304,7 +359,8 @@ const eventPlannerSlice = createSlice({
         state.update.loading = false;
         state.update.success = true;
         state.update.message = "Brand updated successfully.";
-        state.brandDetails = action.payload;
+        state.myBrandDetails = action.payload;
+        state.publicBrandDetails = action.payload;
 
         state.brands = state.brands.map((brand) =>
           brand.slug === action.payload.slug || brand.id === action.payload.id
@@ -334,16 +390,24 @@ const eventPlannerSlice = createSlice({
         state.lastDeletedSlug = null;
       })
       .addCase(deleteBrand.fulfilled, (state, action) => {
+        const deletedSlug = action.payload.slug;
+
         state.delete.loading = false;
         state.delete.success = true;
-        state.delete.message = "Brand deleted successfully.";
-        state.lastDeletedSlug = action.payload;
+        state.delete.message =
+          action.payload.message || "Brand deleted successfully.";
+        state.lastDeletedSlug = deletedSlug;
+
         state.brands = state.brands.filter(
-          (brand) => brand.slug !== action.payload,
+          (brand) => brand.slug !== deletedSlug,
         );
 
-        if (state.brandDetails?.slug === action.payload) {
-          state.brandDetails = null;
+        if (state.myBrandDetails?.slug === deletedSlug) {
+          state.myBrandDetails = null;
+        }
+
+        if (state.publicBrandDetails?.slug === deletedSlug) {
+          state.publicBrandDetails = null;
         }
       })
       .addCase(deleteBrand.rejected, (state, action) => {
@@ -357,7 +421,8 @@ const eventPlannerSlice = createSlice({
 });
 
 export const {
-  clearBrandDetails,
+  clearPublicBrandDetails,
+  clearMyBrandDetails,
   clearCreateBrandState,
   clearUpdateBrandState,
   clearDeleteBrandState,
@@ -365,5 +430,3 @@ export const {
 } = eventPlannerSlice.actions;
 
 export default eventPlannerSlice.reducer;
-
-

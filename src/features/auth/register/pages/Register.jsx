@@ -1,6 +1,6 @@
 import { Outlet, useMatch } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import logo from "../../../public/logo-png.png";
+import logo from "../../../../../public/logo-png.png";
 
 const branding = {
   seller: {

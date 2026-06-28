@@ -7,11 +7,14 @@ import {
   updateBrand,
   deleteBrand,
 } from "@/store/features/eventPlanner/eventPlannerSlice";
+
 import {
   selectBrands,
-  selectBrandDetails,
+  selectPublicBrandDetails,
+  selectMyBrandDetails,
   selectBrandListState,
-  selectBrandDetailsState,
+  selectPublicBrandDetailsState,
+  selectMyBrandState,
   selectCreateBrandState,
   selectUpdateBrandState,
   selectDeleteBrandState,
@@ -21,9 +24,15 @@ export function useBrandActions() {
   const dispatch = useDispatch();
 
   const brands = useSelector(selectBrands);
-  const brandDetails = useSelector(selectBrandDetails);
+
+  const publicBrandDetails = useSelector(selectPublicBrandDetails);
+  const myBrandDetails = useSelector(selectMyBrandDetails);
+
   const listState = useSelector(selectBrandListState);
-  const detailsState = useSelector(selectBrandDetailsState);
+
+  const publicDetailsState = useSelector(selectPublicBrandDetailsState);
+  const myBrandState = useSelector(selectMyBrandState);
+
   const createState = useSelector(selectCreateBrandState);
   const updateState = useSelector(selectUpdateBrandState);
   const deleteState = useSelector(selectDeleteBrandState);
@@ -31,12 +40,19 @@ export function useBrandActions() {
   return useMemo(
     () => ({
       brands,
-      brandDetails,
+
+      publicBrandDetails,
+      myBrandDetails,
+
       listState,
-      detailsState,
+
+      publicDetailsState,
+      myBrandState,
+
       createState,
       updateState,
       deleteState,
+
       fetchBrands: () => dispatch(fetchBrands()),
       fetchBrandBySlug: (slug) => dispatch(fetchBrandBySlug(slug)),
       createBrand: (payload) => dispatch(createBrand(payload)),
@@ -47,9 +63,15 @@ export function useBrandActions() {
     [
       dispatch,
       brands,
-      brandDetails,
+
+      publicBrandDetails,
+      myBrandDetails,
+
       listState,
-      detailsState,
+
+      publicDetailsState,
+      myBrandState,
+
       createState,
       updateState,
       deleteState,

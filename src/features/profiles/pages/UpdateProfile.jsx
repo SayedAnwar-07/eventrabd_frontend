@@ -24,7 +24,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import ForgotPassword from "../reset_and_forgot_password/ForgotPassword";
+import ForgotPassword from "@/features/auth/forgot-password/pages/ForgotPassword";
 
 const Spinner = () => (
   <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-r-transparent align-middle" />
@@ -103,7 +103,7 @@ const UpdateProfile = () => {
             service_area: user.service_area || "",
           }
         : null,
-    [user]
+    [user],
   );
 
   const onSubmit = async (values) => {
@@ -123,7 +123,7 @@ const UpdateProfile = () => {
 
     try {
       const resultAction = await dispatch(
-        updateProfile({ slug: user.slug, updateData })
+        updateProfile({ slug: user.slug, updateData }),
       );
 
       if (updateProfile.fulfilled.match(resultAction)) {
@@ -467,7 +467,7 @@ const UpdateProfile = () => {
 
                               if (user?.username_last_changed) {
                                 const lastChanged = new Date(
-                                  user.username_last_changed
+                                  user.username_last_changed,
                                 );
                                 const now = new Date();
                                 const SIXTY_DAYS_IN_MS =
@@ -476,7 +476,7 @@ const UpdateProfile = () => {
                                 const msLeft = SIXTY_DAYS_IN_MS - diff;
                                 if (msLeft > 0) {
                                   remainingDays = Math.ceil(
-                                    msLeft / (1000 * 60 * 60 * 24)
+                                    msLeft / (1000 * 60 * 60 * 24),
                                   );
                                 }
                               }
