@@ -16,6 +16,7 @@ import ProfilePage from "@/features/profiles/pages/ProfilePage";
 import UpdateProfile from "@/features/profiles/pages/UpdateProfile";
 import BrandDetailsPage from "@/features/event-planning-feature/brands-feature/pages/BrandDetailsPage";
 import EditBrandPage from "@/features/event-planning-feature/brands-feature/pages/EditBrandPage";
+import ServiceDetailsPage from "@/features/event-planning-feature/brand-services-feature/pages/ServiceDetailsPage";
 
 const router = createBrowserRouter([
   {
@@ -78,6 +79,11 @@ const router = createBrowserRouter([
       {
         path: "/event-planner/brands/:slug",
         element: <BrandDetailsPage />,
+      },
+
+      {
+        path: "/event-planner/brands/:brandSlug/services/:serviceName",
+        element: <ServiceDetailsPage />,
       },
     ],
   },
