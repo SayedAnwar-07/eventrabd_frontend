@@ -2,7 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
+
 import BrandForm from "@/features/event-planning-feature/brands-feature/components/BrandForm";
+
 import {
   fetchBrandBySlug,
   updateBrand,
@@ -15,6 +17,8 @@ const getBrandFormValues = (brand) => ({
   whatsapp_number: brand?.whatsapp_number || "",
   service_area: brand?.service_area || "",
   short_description: brand?.short_description || "",
+  logo: null,
+  existingLogo: brand?.logo_url || null,
 });
 
 function EditBrandLoader() {
@@ -23,7 +27,9 @@ function EditBrandLoader() {
       <div className="mx-auto max-w-3xl">
         <div className="rounded-3xl border bg-card p-8 text-center shadow-sm">
           <Loader2 className="mx-auto h-8 w-8 animate-spin text-muted-foreground" />
+
           <h2 className="mt-4 text-xl font-semibold">Loading brand data...</h2>
+
           <p className="mt-2 text-sm text-muted-foreground">
             Please wait while we prepare your edit form.
           </p>
@@ -36,16 +42,75 @@ function EditBrandLoader() {
 function EditBrandFormContent({ initialValues, updateState, onUpdate }) {
   const [values, setValues] = useState(initialValues);
 
-  const handleChange = ({ target: { name, value } }) => {
+  const [logoPreview, setLogoPreview] = useState(null);
+
+  const [removeLogo, setRemoveLogo] = useState(false);
+
+  useEffect(() => {
+    setValues(initialValues);
+  }, [initialValues]);
+
+  useEffect(() => {
+    return () => {
+      if (logoPreview) {
+        URL.revokeObjectURL(logoPreview);
+      }
+    };
+  }, [logoPreview]);
+
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+
     setValues((prev) => ({
       ...prev,
       [name]: value,
     }));
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onUpdate(values);
+  const handleLogoChange = (event) => {
+    const file = event.target.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    setValues((prev) => ({
+      ...prev,
+      logo: file,
+    }));
+
+    setLogoPreview(URL.createObjectURL(file));
+
+    setRemoveLogo(false);
+  };
+
+  const handleRemoveLogo = () => {
+    setValues((prev) => ({
+      ...prev,
+      logo: null,
+    }));
+
+    setLogoPreview(null);
+
+    setRemoveLogo(true);
+  };
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+
+    const formData = new FormData();
+
+    Object.entries(values).forEach(([key, value]) => {
+      if (key !== "existingLogo" && value) {
+        formData.append(key, value);
+      }
+    });
+
+    if (removeLogo) {
+      formData.append("remove_logo", "true");
+    }
+
+    onUpdate(formData);
   };
 
   return (
@@ -58,13 +123,19 @@ function EditBrandFormContent({ initialValues, updateState, onUpdate }) {
       errors={updateState.errors}
       errorMessage={updateState.errorMessage}
       successMessage={updateState.success ? updateState.message : ""}
+      logoPreview={logoPreview}
+      existingLogo={values.existingLogo}
+      onLogoChange={handleLogoChange}
+      onRemoveLogo={handleRemoveLogo}
     />
   );
 }
 
 export default function EditBrandPage() {
   const { slug } = useParams();
+
   const navigate = useNavigate();
+
   const dispatch = useDispatch();
 
   const { publicBrandDetails, publicDetails, update } = useSelector(
@@ -73,6 +144,7 @@ export default function EditBrandPage() {
 
   useEffect(() => {
     dispatch(clearPublicBrandDetails());
+
     dispatch(clearUpdateBrandState());
 
     if (slug) {
@@ -81,6 +153,7 @@ export default function EditBrandPage() {
 
     return () => {
       dispatch(clearPublicBrandDetails());
+
       dispatch(clearUpdateBrandState());
     };
   }, [dispatch, slug]);
@@ -113,11 +186,12 @@ export default function EditBrandPage() {
     [publicBrandDetails],
   );
 
-  const handleUpdate = (values) => {
+  const handleUpdate = (payload) => {
     dispatch(
       updateBrand({
         slug,
-        payload: values,
+
+        payload,
       }),
     );
   };

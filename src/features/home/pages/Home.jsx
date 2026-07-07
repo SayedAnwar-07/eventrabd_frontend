@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchBrands } from "@/store/features/eventPlanner/eventPlannerSlice";
 import { Link } from "react-router-dom";
+import BrandCard from "@/features/event-planning-feature/brands-feature/components/BrandCard";
 
 const Home = () => {
   const dispatch = useDispatch();
@@ -32,33 +33,7 @@ const Home = () => {
 
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {brands.map((brand) => (
-            <div
-              key={brand.id}
-              className="rounded-3xl border bg-white p-6 shadow-sm"
-            >
-              <h2 className="text-xl font-bold text-gray-900">
-                {brand.brand_name}
-              </h2>
-
-              <p className="mt-2 text-sm text-gray-600">
-                {brand.short_description}
-              </p>
-
-              <p className="mt-4 text-sm text-gray-700">
-                📍 {brand.service_area}
-              </p>
-
-              <p className="mt-2 text-sm text-gray-700">
-                🧾 {brand.total_services} Services
-              </p>
-
-              <Link
-                to={`/event-planner/brands/${brand.slug}`}
-                className="mt-5 inline-block w-full rounded-xl bg-black px-4 py-2 text-center text-sm font-semibold text-white"
-              >
-                View Details
-              </Link>
-            </div>
+            <BrandCard key={brand.id} brand={brand} />
           ))}
         </div>
       </div>

@@ -12,6 +12,10 @@ export default function BrandForm({
   errors = {},
   errorMessage = "",
   successMessage = "",
+  logoPreview,
+  onLogoChange,
+  onRemoveLogo,
+  existingLogo,
 }) {
   return (
     <form
@@ -46,6 +50,60 @@ export default function BrandForm({
             className="h-11 rounded-xl"
           />
           {errors.brand_name?.map((item, index) => (
+            <p key={index} className="text-sm text-destructive">
+              {item}
+            </p>
+          ))}
+        </div>
+
+        <div className="grid gap-2">
+          <Label htmlFor="logo">Brand Logo</Label>
+
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              {logoPreview || existingLogo ? (
+                <>
+                  <img
+                    src={logoPreview || existingLogo}
+                    alt="Brand Logo"
+                    className={`h-24 w-24 rounded-2xl border object-cover ${
+                      !logoPreview && existingLogo ? "" : ""
+                    }`}
+                  />
+
+                  {(logoPreview || existingLogo) && (
+                    <button
+                      type="button"
+                      onClick={onRemoveLogo}
+                      className="absolute -right-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full bg-black text-white"
+                    >
+                      X
+                    </button>
+                  )}
+                </>
+              ) : (
+                <div className="flex h-24 w-24 items-center justify-center rounded-2xl border bg-muted text-sm text-muted-foreground">
+                  No Logo
+                </div>
+              )}
+            </div>
+
+            <div>
+              <Input
+                id="logo"
+                name="logo"
+                type="file"
+                accept="image/*"
+                onChange={onLogoChange}
+              />
+
+              <p className="mt-1 text-xs text-muted-foreground">
+                Maximum size: 1MB
+              </p>
+            </div>
+          </div>
+
+          {errors.logo?.map((item, index) => (
             <p key={index} className="text-sm text-destructive">
               {item}
             </p>
