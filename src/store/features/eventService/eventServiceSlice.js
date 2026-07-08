@@ -1,23 +1,72 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import api from "@/store/constant/api";
 
-// ── Async Thunks ──────────────────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────────────
 
 const getErrorMessage = (error) => {
   const data = error.response?.data;
 
+  if (!data) return error.message || "Something went wrong";
+
   if (typeof data === "string") {
-    const match = data.match(/<title>(.*?)<\/title>/i);
-    return match ? match[1] : "Server error";
+    const titleMatch = data.match(/<title>(.*?)<\/title>/i);
+    if (titleMatch?.[1]) return titleMatch[1];
+
+    return data.replace(/<[^>]*>/g, "").trim() || "Server error";
   }
 
-  return data || error.message;
+  if (data.detail) return data.detail;
+  if (data.message) return data.message;
+  if (data.error) return data.error;
+
+  if (data.non_field_errors) {
+    return Array.isArray(data.non_field_errors)
+      ? data.non_field_errors.join(" ")
+      : data.non_field_errors;
+  }
+
+  if (typeof data === "object") {
+    const firstError = Object.values(data)[0];
+
+    if (Array.isArray(firstError)) return firstError.join(" ");
+    if (typeof firstError === "string") return firstError;
+
+    return "Validation error";
+  }
+
+  return "Server error";
 };
 
-/**
- * Fetch all services for a specific brand
- * brand_slug: string (e.g., "brand-name")
- */
+const serviceUrl = ({ brandSlug, serviceId, serviceName }) =>
+  `/event-services/brands/${brandSlug}/services/${serviceId}/${serviceName}/`;
+
+const normalizeList = (payload) => ({
+  data: Array.isArray(payload) ? payload : payload.results || [],
+  count: Array.isArray(payload) ? payload.length : payload.count || 0,
+  next: Array.isArray(payload) ? null : payload.next || null,
+  previous: Array.isArray(payload) ? null : payload.previous || null,
+});
+
+const matchesService = (service, serviceId, serviceName) => {
+  return (
+    service?.id === serviceId ||
+    service?.slug === serviceName ||
+    service?.service_name === serviceName
+  );
+};
+
+const upsertService = (list, service) => {
+  const index = list.findIndex((item) => item.id === service.id);
+
+  if (index !== -1) {
+    list[index] = service;
+  } else {
+    list.unshift(service);
+  }
+};
+
+// ── Async Thunks ──────────────────────────────────────────────────────────
+
 export const fetchBrandServices = createAsyncThunk(
   "eventServices/fetchBrandServices",
   async (brandSlug, { rejectWithValue }) => {
@@ -25,34 +74,29 @@ export const fetchBrandServices = createAsyncThunk(
       const response = await api.get(
         `/event-services/brands/${brandSlug}/services/`,
       );
+
       return response.data;
     } catch (error) {
-      return rejectWithValue(error.response?.data || error.message);
+      return rejectWithValue(getErrorMessage(error));
     }
   },
 );
 
-/**
- * Fetch a single service by slug
- */
 export const fetchEventServiceDetail = createAsyncThunk(
   "eventServices/fetchEventServiceDetail",
-  async ({ brandSlug, serviceName }, { rejectWithValue }) => {
+  async ({ brandSlug, serviceId, serviceName }, { rejectWithValue }) => {
     try {
       const response = await api.get(
-        `/event-services/brands/${brandSlug}/services/${serviceName}/`,
+        serviceUrl({ brandSlug, serviceId, serviceName }),
       );
+
       return response.data;
     } catch (error) {
-      return rejectWithValue(error.response?.data || error.message);
+      return rejectWithValue(getErrorMessage(error));
     }
   },
 );
 
-/**
- * Create a new event service
- * data: FormData with service details and optional images
- */
 export const createEventService = createAsyncThunk(
   "eventServices/createEventService",
   async ({ brandSlug, data }, { rejectWithValue }) => {
@@ -70,57 +114,56 @@ export const createEventService = createAsyncThunk(
   },
 );
 
-/**
- * Update an existing service
- * slug: string (service identifier)
- * data: FormData with updated service details
- */
 export const updateEventService = createAsyncThunk(
   "eventServices/updateEventService",
-  async ({ brandSlug, serviceName, data }, { rejectWithValue }) => {
+  async ({ brandSlug, serviceId, serviceName, data }, { rejectWithValue }) => {
     try {
       const response = await api.patch(
-        `/event-services/brands/${brandSlug}/services/${serviceName}/update/`,
+        `${serviceUrl({ brandSlug, serviceId, serviceName })}update/`,
         data,
         { headers: { "Content-Type": "multipart/form-data" } },
       );
+
       return response.data;
     } catch (error) {
-      return rejectWithValue(error.response?.data || error.message);
+      return rejectWithValue(getErrorMessage(error));
     }
   },
 );
 
-/**
- * Delete an event service
- */
 export const deleteEventService = createAsyncThunk(
   "eventServices/deleteEventService",
-  async ({ brandSlug, serviceName }, { rejectWithValue }) => {
+  async ({ brandSlug, serviceId, serviceName }, { rejectWithValue }) => {
     try {
       await api.delete(
-        `/event-services/brands/${brandSlug}/services/${serviceName}/delete/`,
+        `${serviceUrl({ brandSlug, serviceId, serviceName })}delete/`,
       );
-      return { brandSlug, serviceName };
+
+      return { brandSlug, serviceId, serviceName };
     } catch (error) {
-      return rejectWithValue(error.response?.data || error.message);
+      return rejectWithValue(getErrorMessage(error));
     }
   },
 );
 
-/**
- * Delete a specific gallery image from a service
- */
 export const deleteGalleryImage = createAsyncThunk(
   "eventServices/deleteGalleryImage",
-  async ({ brandSlug, serviceName, imageId }, { rejectWithValue }) => {
+  async (
+    { brandSlug, serviceId, serviceName, imageId },
+    { rejectWithValue },
+  ) => {
     try {
       await api.delete(
-        `/event-services/brands/${brandSlug}/services/${serviceName}/gallery/${imageId}/delete/`,
+        `${serviceUrl({
+          brandSlug,
+          serviceId,
+          serviceName,
+        })}gallery/${imageId}/delete/`,
       );
-      return { brandSlug, serviceName, imageId };
+
+      return { brandSlug, serviceId, serviceName, imageId };
     } catch (error) {
-      return rejectWithValue(error.response?.data || error.message);
+      return rejectWithValue(getErrorMessage(error));
     }
   },
 );
@@ -128,7 +171,6 @@ export const deleteGalleryImage = createAsyncThunk(
 // ── Initial State ─────────────────────────────────────────────────────────
 
 const initialState = {
-  // All services list with pagination
   services: {
     data: [],
     count: 0,
@@ -138,7 +180,6 @@ const initialState = {
     error: null,
   },
 
-  // Brand-specific services
   brandServices: {
     data: [],
     count: 0,
@@ -148,21 +189,18 @@ const initialState = {
     error: null,
   },
 
-  // Single service detail
   currentService: {
     data: null,
     loading: false,
     error: null,
   },
 
-  // Service creation/update/deletion operations
   operation: {
     loading: false,
     error: null,
     success: null,
   },
 
-  // Metadata for filtering
   filters: {
     serviceType: null,
     search: null,
@@ -171,7 +209,6 @@ const initialState = {
     pageSize: 12,
   },
 
-  // Metadata for brand services
   brandFilters: {
     serviceType: null,
     search: null,
@@ -187,7 +224,6 @@ const eventServiceSlice = createSlice({
   initialState,
 
   reducers: {
-    // Manual filter updates
     setServiceTypeFilter(state, action) {
       state.filters.serviceType = action.payload;
       state.filters.currentPage = 1;
@@ -212,7 +248,6 @@ const eventServiceSlice = createSlice({
       state.filters.currentPage = 1;
     },
 
-    // Brand services filters
     setBrandServiceTypeFilter(state, action) {
       state.brandFilters.serviceType = action.payload;
       state.brandFilters.currentPage = 1;
@@ -227,55 +262,53 @@ const eventServiceSlice = createSlice({
       state.brandFilters.currentPage = action.payload;
     },
 
-    // Clear current service
     clearCurrentService(state) {
       state.currentService.data = null;
       state.currentService.error = null;
     },
 
-    // Clear operation state
     clearOperationState(state) {
       state.operation.loading = false;
       state.operation.error = null;
       state.operation.success = null;
     },
 
-    // Reset all filters
     resetFilters(state) {
       state.filters = initialState.filters;
       state.brandFilters = initialState.brandFilters;
     },
 
-    // Update gallery image sort order optimistically
     updateGalleryImageSortOrder(state, action) {
-      const { serviceSlug, images } = action.payload;
-      if (state.currentService.data?.slug === serviceSlug) {
+      const { serviceId, serviceName, images } = action.payload;
+
+      if (matchesService(state.currentService.data, serviceId, serviceName)) {
         state.currentService.data.gallery_images = images;
       }
     },
   },
 
   extraReducers: (builder) => {
-    // ── Fetch Brand Services ──────────────────────────────────────────────
     builder
+      // ── Fetch Brand Services ────────────────────────────────────────────
       .addCase(fetchBrandServices.pending, (state) => {
         state.brandServices.loading = true;
         state.brandServices.error = null;
       })
       .addCase(fetchBrandServices.fulfilled, (state, action) => {
+        const payload = normalizeList(action.payload);
+
         state.brandServices.loading = false;
-        state.brandServices.data = action.payload.results || [];
-        state.brandServices.count = action.payload.count || 0;
-        state.brandServices.next = action.payload.next || null;
-        state.brandServices.previous = action.payload.previous || null;
+        state.brandServices.data = payload.data;
+        state.brandServices.count = payload.count;
+        state.brandServices.next = payload.next;
+        state.brandServices.previous = payload.previous;
       })
       .addCase(fetchBrandServices.rejected, (state, action) => {
         state.brandServices.loading = false;
         state.brandServices.error = action.payload;
-      });
+      })
 
-    // ── Fetch Event Service Detail ────────────────────────────────────────
-    builder
+      // ── Fetch Event Service Detail ──────────────────────────────────────
       .addCase(fetchEventServiceDetail.pending, (state) => {
         state.currentService.loading = true;
         state.currentService.error = null;
@@ -287,114 +320,141 @@ const eventServiceSlice = createSlice({
       .addCase(fetchEventServiceDetail.rejected, (state, action) => {
         state.currentService.loading = false;
         state.currentService.error = action.payload;
-      });
+      })
 
-    // ── Create Event Service ──────────────────────────────────────────────
-    builder
+      // ── Create Event Service ────────────────────────────────────────────
       .addCase(createEventService.pending, (state) => {
         state.operation.loading = true;
         state.operation.error = null;
         state.operation.success = null;
       })
       .addCase(createEventService.fulfilled, (state, action) => {
+        const service = action.payload;
+
+        const existsInServices = state.services.data.some(
+          (item) => item.id === service.id,
+        );
+
+        const existsInBrandServices = state.brandServices.data.some(
+          (item) => item.id === service.id,
+        );
+
+        upsertService(state.services.data, service);
+        upsertService(state.brandServices.data, service);
+
+        if (!existsInServices) state.services.count += 1;
+        if (!existsInBrandServices) state.brandServices.count += 1;
+
         state.operation.loading = false;
         state.operation.success = "Service created successfully";
-        state.services.data.unshift(action.payload);
-        state.services.count += 1;
       })
       .addCase(createEventService.rejected, (state, action) => {
         state.operation.loading = false;
         state.operation.error = action.payload;
-      });
+      })
 
-    // ── Update Event Service ──────────────────────────────────────────────
-    builder
+      // ── Update Event Service ────────────────────────────────────────────
       .addCase(updateEventService.pending, (state) => {
         state.operation.loading = true;
         state.operation.error = null;
         state.operation.success = null;
       })
       .addCase(updateEventService.fulfilled, (state, action) => {
+        const service = action.payload;
+
+        upsertService(state.services.data, service);
+        upsertService(state.brandServices.data, service);
+
+        if (state.currentService.data?.id === service.id) {
+          state.currentService.data = service;
+        }
+
         state.operation.loading = false;
         state.operation.success = "Service updated successfully";
-
-        // Update in all services list
-        const index = state.services.data.findIndex(
-          (s) => s.id === action.payload.id,
-        );
-        if (index !== -1) {
-          state.services.data[index] = action.payload;
-        }
-
-        // Update in brand services list
-        const brandIndex = state.brandServices.data.findIndex(
-          (s) => s.id === action.payload.id,
-        );
-        if (brandIndex !== -1) {
-          state.brandServices.data[brandIndex] = action.payload;
-        }
-
-        // Update current service if viewing
-        if (state.currentService.data?.id === action.payload.id) {
-          state.currentService.data = action.payload;
-        }
       })
       .addCase(updateEventService.rejected, (state, action) => {
         state.operation.loading = false;
         state.operation.error = action.payload;
-      });
+      })
 
-    // ── Delete Event Service ──────────────────────────────────────────────
-    builder
+      // ── Delete Event Service ────────────────────────────────────────────
       .addCase(deleteEventService.pending, (state) => {
         state.operation.loading = true;
         state.operation.error = null;
         state.operation.success = null;
       })
       .addCase(deleteEventService.fulfilled, (state, action) => {
-        state.operation.loading = false;
-        state.operation.success = "Service deleted successfully";
+        const { serviceId, serviceName } = action.payload;
 
-        const { serviceName } = action.payload;
+        const oldServicesCount = state.services.data.length;
+        const oldBrandServicesCount = state.brandServices.data.length;
 
         state.services.data = state.services.data.filter(
-          (s) => s.slug !== serviceName,
+          (service) => !matchesService(service, serviceId, serviceName),
         );
 
         state.brandServices.data = state.brandServices.data.filter(
-          (s) => s.slug !== serviceName,
+          (service) => !matchesService(service, serviceId, serviceName),
         );
 
-        state.services.count = Math.max(0, state.services.count - 1);
-        state.brandServices.count = Math.max(0, state.brandServices.count - 1);
+        if (state.services.data.length < oldServicesCount) {
+          state.services.count = Math.max(0, state.services.count - 1);
+        }
 
-        if (state.currentService.data?.slug === serviceName) {
+        if (state.brandServices.data.length < oldBrandServicesCount) {
+          state.brandServices.count = Math.max(
+            0,
+            state.brandServices.count - 1,
+          );
+        }
+
+        if (matchesService(state.currentService.data, serviceId, serviceName)) {
           state.currentService.data = null;
         }
+
+        state.operation.loading = false;
+        state.operation.success = "Service deleted successfully";
       })
       .addCase(deleteEventService.rejected, (state, action) => {
         state.operation.loading = false;
         state.operation.error = action.payload;
-      });
+      })
 
-    // ── Delete Gallery Image ──────────────────────────────────────────────
-    builder
+      // ── Delete Gallery Image ────────────────────────────────────────────
       .addCase(deleteGalleryImage.pending, (state) => {
         state.operation.loading = true;
         state.operation.error = null;
+        state.operation.success = null;
       })
       .addCase(deleteGalleryImage.fulfilled, (state, action) => {
+        const { serviceId, serviceName, imageId } = action.payload;
+
+        const removeImage = (service) => {
+          if (!service?.gallery_images) return;
+
+          service.gallery_images = service.gallery_images.filter(
+            (image) => image.id !== imageId,
+          );
+        };
+
+        if (matchesService(state.currentService.data, serviceId, serviceName)) {
+          removeImage(state.currentService.data);
+        }
+
+        state.services.data.forEach((service) => {
+          if (matchesService(service, serviceId, serviceName)) {
+            removeImage(service);
+          }
+        });
+
+        state.brandServices.data.forEach((service) => {
+          if (matchesService(service, serviceId, serviceName)) {
+            removeImage(service);
+          }
+        });
+
         state.operation.loading = false;
         state.operation.success = "Gallery image deleted successfully";
-
-        const { serviceName, imageId } = action.payload;
-
-        if (state.currentService.data?.slug === serviceName) {
-          state.currentService.data.gallery_images =
-            state.currentService.data.gallery_images.filter(
-              (img) => img.id !== imageId,
-            );
-        }
       })
       .addCase(deleteGalleryImage.rejected, (state, action) => {
         state.operation.loading = false;

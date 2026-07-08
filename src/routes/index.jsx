@@ -82,7 +82,7 @@ const router = createBrowserRouter([
       },
 
       {
-        path: "/event-planner/brands/:brandSlug/services/:serviceName",
+        path: "/event-planner/brands/:brandSlug/services/:serviceId/:serviceName",
         element: <ServiceDetailsPage />,
       },
     ],

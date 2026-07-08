@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Loader2, Trash2 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 
 import {
@@ -28,28 +29,37 @@ import {
 const getErrorMessage = (error) => {
   if (!error) return "";
 
-  if (typeof error === "string") return error;
+  if (typeof error === "string") {
+    if (error.includes("<!DOCTYPE") || error.includes("<html")) {
+      return "Server error. Check backend console.";
+    }
 
-  if (error.detail) return error.detail;
+    return error
+      .replace(/<[^>]*>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
 
   if (Array.isArray(error)) {
-    return error.join(", ");
+    return error.join(" ");
   }
 
   if (typeof error === "object") {
-    return Object.entries(error)
-      .map(([key, value]) => {
-        if (Array.isArray(value)) {
-          return `${key}: ${value.join(", ")}`;
-        }
+    if (error.detail) return getErrorMessage(error.detail);
+    if (error.message) return getErrorMessage(error.message);
+    if (error.error) return getErrorMessage(error.error);
 
-        if (typeof value === "object" && value !== null) {
-          return `${key}: ${JSON.stringify(value)}`;
-        }
+    const firstError = Object.values(error)[0];
 
-        return `${key}: ${value}`;
-      })
-      .join(" | ");
+    if (Array.isArray(firstError)) {
+      return firstError.join(" ");
+    }
+
+    if (typeof firstError === "string") {
+      return firstError;
+    }
+
+    return "Something went wrong.";
   }
 
   return "Something went wrong.";
@@ -57,6 +67,7 @@ const getErrorMessage = (error) => {
 
 const ServiceDelete = ({
   brandSlug,
+  serviceId,
   serviceName,
   serviceTitle = "this service",
   trigger,
@@ -81,13 +92,14 @@ const ServiceDelete = ({
     }
   };
 
-  const handleDelete = async (e) => {
-    e.preventDefault();
+  const handleDelete = async (event) => {
+    event.preventDefault();
 
     setLocalError("");
+    dispatch(clearOperationState());
 
-    if (!brandSlug || !serviceName) {
-      setLocalError("Brand slug or service name is missing.");
+    if (!brandSlug || !serviceId || !serviceName) {
+      setLocalError("Service delete information is missing.");
       return;
     }
 
@@ -95,6 +107,7 @@ const ServiceDelete = ({
       const result = await dispatch(
         deleteEventService({
           brandSlug,
+          serviceId,
           serviceName,
         }),
       ).unwrap();
@@ -103,7 +116,6 @@ const ServiceDelete = ({
       setOpen(false);
       onSuccess?.(result);
     } catch (error) {
-      console.error("EVENT SERVICE DELETE ERROR:", error);
       setLocalError(getErrorMessage(error));
     }
   };
@@ -114,8 +126,10 @@ const ServiceDelete = ({
         {trigger || (
           <button
             type="button"
-            className="rounded-xl border border-red-200 bg-red-50 px-5 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-100"
+            disabled={loading}
+            className="inline-flex items-center justify-center gap-2 bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
           >
+            <Trash2 className="h-4 w-4" />
             Delete Service
           </button>
         )}
@@ -123,37 +137,49 @@ const ServiceDelete = ({
 
       <AlertDialogContent className="sm:max-w-md">
         <AlertDialogHeader>
-          <AlertDialogTitle>Delete service?</AlertDialogTitle>
+          <AlertDialogTitle>Delete Service</AlertDialogTitle>
 
           <AlertDialogDescription>
             Are you sure you want to delete{" "}
-            <span className="font-semibold text-gray-900">{serviceTitle}</span>?
-            This action cannot be undone.
+            <span className="font-semibold text-foreground">
+              {serviceTitle || "this service"}
+            </span>
+            ? This action cannot be undone.
           </AlertDialogDescription>
         </AlertDialogHeader>
 
         {visibleError && (
-          <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+          <div className="border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
             {visibleError}
           </div>
         )}
 
-        <AlertDialogFooter>
-          <AlertDialogCancel
+        <div className="flex justify-end gap-3 pt-4">
+          <button
+            type="button"
             disabled={loading}
-            className="rounded-xl border px-4 py-2 text-sm font-semibold"
+            onClick={() => setOpen(false)}
+            className="border px-4 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
           >
             Cancel
-          </AlertDialogCancel>
+          </button>
 
-          <AlertDialogAction
-            onClick={handleDelete}
+          <button
+            type="button"
             disabled={loading}
-            className="rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:pointer-events-none disabled:opacity-60"
+            onClick={handleDelete}
+            className="inline-flex items-center justify-center bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {loading ? "Deleting..." : "Delete Service"}
-          </AlertDialogAction>
-        </AlertDialogFooter>
+            {loading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Deleting...
+              </>
+            ) : (
+              "Yes, Delete"
+            )}
+          </button>
+        </div>
       </AlertDialogContent>
     </AlertDialog>
   );
