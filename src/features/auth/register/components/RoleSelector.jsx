@@ -1,93 +1,119 @@
+import { Link, useNavigate } from "react-router-dom";
 import { Store, ShoppingBag, ArrowRight } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 
-const roles = [
-  {
-    key: "seller",
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+const roles = {
+  seller: {
     icon: Store,
     title: "Seller",
-    subtitle: "List services & reach thousands of clients",
+    subtitle: "List services and reach thousands of clients.",
     highlights: [
       "Create service listings",
       "Manage bookings",
       "Grow your business",
     ],
   },
-  {
-    key: "customer",
+  customer: {
     icon: ShoppingBag,
     title: "Customer",
-    subtitle: "Find and book event services instantly",
-    highlights: ["Browse services", "Book instantly", "Track your orders"],
+    subtitle: "Find and book event services easily.",
+    highlights: ["Browse services", "Book services", "Track your orders"],
   },
-];
+};
 
-const RoleSelector = () => {
+const RoleCard = ({ roleKey, role }) => {
   const navigate = useNavigate();
+  const Icon = role.icon;
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-10">
-      <div className="w-full max-w-xl">
-        <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-foreground">Join as a…</h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            Choose how you want to use the platform
+    <div className="w-full border border-border bg-card p-6 shadow-sm">
+      <div className="mb-5 flex h-12 w-12 items-center justify-center border border-border bg-background text-primary">
+        <Icon className="h-6 w-6" />
+      </div>
+
+      <h2 className="text-lg font-semibold text-foreground">{role.title}</h2>
+
+      <p className="mt-2 text-sm leading-6 text-muted-foreground">
+        {role.subtitle}
+      </p>
+
+      <ul className="mt-5 space-y-2">
+        {role.highlights.map((item) => (
+          <li
+            key={item}
+            className="flex items-center gap-2 text-sm text-muted-foreground"
+          >
+            <span className="h-1.5 w-1.5 bg-primary" />
+            {item}
+          </li>
+        ))}
+      </ul>
+
+      <button
+        type="button"
+        onClick={() => navigate(`/register/${roleKey}`)}
+        className="mt-6 inline-flex h-11 w-full items-center justify-center gap-2 bg-primary px-5 text-sm font-semibold text-primary-foreground transition hover:opacity-90"
+      >
+        Continue as {role.title}
+        <ArrowRight className="h-4 w-4" />
+      </button>
+    </div>
+  );
+};
+
+const RoleSelector = () => {
+  return (
+    <section className="flex min-h-screen items-center justify-center bg-background py-10 text-foreground">
+      <div className="w-full max-w-md">
+        <div className="mb-7 text-center">
+          <p className="mb-2 text-sm font-semibold uppercase tracking-[0.22em] text-primary">
+            Create Account
+          </p>
+
+          <h1 className="text-2xl font-bold tracking-tight">
+            Choose your role
+          </h1>
+
+          <p className="mt-2 text-sm text-muted-foreground">
+            Select how you want to use the platform
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {roles.map((role) => {
-            const Icon = role.icon;
-            return (
-              <button
-                key={role.key}
-                type="button"
-                onClick={() => navigate(`/register/${role.key}`)}
-                className="group relative flex flex-col items-start gap-4 rounded-2xl border border-border bg-card p-6 text-left shadow-sm transition-all duration-200 hover:border-primary hover:shadow-md hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-              >
-                <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
-                  <Icon className="h-6 w-6" />
-                </span>
+        <Tabs defaultValue="seller" className="block w-full">
+          <TabsList className="flex h-11 w-full">
+            <TabsTrigger
+              value="seller"
+              className="flex-1 text-sm font-semibold"
+            >
+              Seller
+            </TabsTrigger>
 
-                <div className="flex-1">
-                  <h2 className="text-base font-semibold text-foreground">
-                    {role.title}
-                  </h2>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {role.subtitle}
-                  </p>
-                  <ul className="mt-3 space-y-1">
-                    {role.highlights.map((item) => (
-                      <li
-                        key={item}
-                        className="flex items-center gap-2 text-xs text-muted-foreground"
-                      >
-                        <span className="h-1 w-1 rounded-full bg-primary" />
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+            <TabsTrigger
+              value="customer"
+              className="flex-1 text-sm font-semibold"
+            >
+              Customer
+            </TabsTrigger>
+          </TabsList>
 
-                <span className="absolute right-5 top-1/2 -translate-y-1/2 text-muted-foreground opacity-0 transition-all duration-200 group-hover:opacity-100 group-hover:translate-x-1">
-                  <ArrowRight className="h-4 w-4" />
-                </span>
-              </button>
-            );
-          })}
-        </div>
+          <TabsContent value="seller" className="mt-5 w-full">
+            <RoleCard roleKey="seller" role={roles.seller} />
+          </TabsContent>
 
-        <p className="mt-6 text-center text-sm text-muted-foreground">
+          <TabsContent value="customer" className="mt-5 w-full">
+            <RoleCard roleKey="customer" role={roles.customer} />
+          </TabsContent>
+        </Tabs>
+
+        <p className="mt-7 text-center text-sm text-muted-foreground">
           Already have an account?{" "}
-          <a
-            href="/login"
-            className="underline text-primary hover:text-primary/80 transition-colors"
-          >
+          <Link to="/login" className="font-semibold text-primary">
             Login
-          </a>
+          </Link>
         </p>
       </div>
-    </div>
+    </section>
   );
 };
 
