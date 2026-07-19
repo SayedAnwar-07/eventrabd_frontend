@@ -28,6 +28,7 @@ import ServiceDetailsPage from "@/features/event-planning-feature/brand-services
 
 // Common pages
 import NotFoundPage from "@/pages/NotFoundPage";
+import SellerHireRequestsPage from "@/features/hire/pages/SellerHireRequestsPage";
 
 const router = createBrowserRouter([
   {
@@ -108,15 +109,15 @@ const router = createBrowserRouter([
           <PrivateRoute element={<EditBrandPage />} allowedRoles={["seller"]} />
         ),
       },
-      {
-        path: "event-planner/seller/brands/:slug",
-        element: (
-          <PrivateRoute
-            element={<SellerBrandDetails />}
-            allowedRoles={["seller"]}
-          />
-        ),
-      },
+      // {
+      //   path: "event-planner/seller/brands/:slug",
+      //   element: (
+      //     <PrivateRoute
+      //       element={<SellerBrandDetails />}
+      //       allowedRoles={["seller"]}
+      //     />
+      //   ),
+      // },
 
       // =========================
       // Public Event Planner Routes
@@ -128,6 +129,17 @@ const router = createBrowserRouter([
       {
         path: "event-planner/brands/:brandSlug/services/:serviceId/:serviceName",
         element: <ServiceDetailsPage />,
+      },
+
+      // hire
+      {
+        path: "/seller/hire-requests",
+        element: (
+          <PrivateRoute
+            element={<SellerHireRequestsPage />}
+            allowedRoles={["seller"]}
+          />
+        ),
       },
 
       // =========================

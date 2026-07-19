@@ -116,6 +116,9 @@ const Navbar = () => {
                   {user?.role === "seller" && (
                     <>
                       <DropdownMenuItem asChild>
+                        <Link to="/seller/hire-requests">Hire Requests</Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
                         <Link to={myBrandPath}>My Brand</Link>
                       </DropdownMenuItem>
 

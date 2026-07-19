@@ -13,6 +13,7 @@ import {
 
 import EventServiceSheet from "../components/EventServiceSheet";
 import ServiceDelete from "../components/ServiceDelete";
+import HireSellerSheet from "@/features/hire/components/HireSellerSheet";
 
 const formatServiceName = (name = "") => {
   return name
@@ -120,7 +121,7 @@ const ServiceDetailsPage = () => {
                 </div>
 
                 {isOwner ? (
-                  <div className="flex shrink-0 items-center gap-3">
+                  <div className="flex shrink-0 flex-wrap items-center gap-3">
                     <EventServiceSheet
                       brandSlug={brandSlug}
                       service={service}
@@ -165,6 +166,7 @@ const ServiceDetailsPage = () => {
                   <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
                     Brand
                   </p>
+
                   <p className="mt-1 text-sm font-medium text-gray-950">
                     {service.brand?.brand_name || "N/A"}
                   </p>
@@ -174,6 +176,7 @@ const ServiceDetailsPage = () => {
                   <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
                     Charge
                   </p>
+
                   <p className="mt-1 text-sm font-medium text-gray-950">
                     ৳{service.shift_charge}
                   </p>
@@ -183,6 +186,7 @@ const ServiceDetailsPage = () => {
                   <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
                     Shift
                   </p>
+
                   <p className="mt-1 text-sm font-medium text-gray-950">
                     {service.shift_hour ? `${service.shift_hour} hours` : "N/A"}
                   </p>
@@ -201,7 +205,7 @@ const ServiceDetailsPage = () => {
               ) : null}
             </div>
 
-            <aside className="bg-gray-950 p-6 text-white">
+            <aside className="self-start bg-gray-950 p-6 text-white">
               <p className="mb-2 text-xs font-medium uppercase tracking-[0.2em] text-gray-300">
                 Summary
               </p>
@@ -229,6 +233,17 @@ const ServiceDetailsPage = () => {
                   {service.slug}
                 </p>
               </div>
+
+              {!isOwner ? (
+                <div className="mt-8 border-t border-gray-700 pt-6">
+                  <p className="mb-4 text-sm leading-6 text-gray-300">
+                    Select your event dates and send a booking request directly
+                    to this seller.
+                  </p>
+
+                  <HireSellerSheet service={service} />
+                </div>
+              ) : null}
             </aside>
           </div>
         </section>
