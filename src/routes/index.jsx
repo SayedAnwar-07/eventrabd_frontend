@@ -28,7 +28,11 @@ import ServiceDetailsPage from "@/features/event-planning-feature/brand-services
 
 // Common pages
 import NotFoundPage from "@/pages/NotFoundPage";
-import SellerHireRequestsPage from "@/features/hire/pages/SellerHireRequestsPage";
+import SellerHireRequestsPage from "@/features/hire/sellers/pages/SellerHireRequestsPage";
+import CustomerHireRequestsPage from "@/features/hire/customers/pages/CustomerHireRequestsPage";
+import CustomerHireRequestDetailsPage from "@/features/hire/customers/pages/CustomerHireRequestDetailsPage";
+
+// hire pages
 
 const router = createBrowserRouter([
   {
@@ -133,11 +137,29 @@ const router = createBrowserRouter([
 
       // hire
       {
-        path: "/seller/hire-requests",
+        path: "/seller/hire-requests", //for seller
         element: (
           <PrivateRoute
             element={<SellerHireRequestsPage />}
             allowedRoles={["seller"]}
+          />
+        ),
+      },
+      {
+        path: "/customer/hire-requests", //for customer
+        element: (
+          <PrivateRoute
+            element={<CustomerHireRequestsPage />}
+            allowedRoles={["customer"]}
+          />
+        ),
+      },
+      {
+        path: "/customer/hire-requests/:id",
+        element: (
+          <PrivateRoute
+            element={<CustomerHireRequestDetailsPage />}
+            allowedRoles={["customer"]}
           />
         ),
       },

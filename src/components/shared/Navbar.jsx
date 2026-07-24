@@ -9,6 +9,7 @@ import { Link, NavLink } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { logoutUser } from "@/store/features/auth/authSlice";
 import { fetchMyBrand } from "@/store/features/eventPlanner/eventPlannerSlice";
+import eventraBDLogo from "../../assets/logo/eventra-bd-logo.png";
 
 import {
   DropdownMenu,
@@ -59,9 +60,9 @@ const Navbar = () => {
     <nav className="fixed top-0 left-0 w-full z-50 border-b bg-background/95 backdrop-blur">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
-          <Link to="/" className="flex items-center gap-2">
-            <Calendar className="h-6 w-6 text-primary" />
-            <span className="text-lg font-semibold">EventraBD</span>
+          <Link to="/" className="flex items-center">
+            <img src={eventraBDLogo} alt="Eventra BD" className="h-8 w-8" />
+            <span className="text-2xl font-bold text-[#9f0712]">EventraBD</span>
           </Link>
 
           <div className="hidden md:flex items-center gap-8">
@@ -130,6 +131,18 @@ const Navbar = () => {
                     </>
                   )}
 
+                  {user?.role === "customer" && (
+                    <DropdownMenuItem asChild>
+                      <Link
+                        to="/customer/hire-requests"
+                        className="flex items-center gap-2"
+                      >
+                        <Calendar className="h-4 w-4" />
+                        My Hire Orders
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
+
                   <DropdownMenuSeparator />
 
                   <DropdownMenuItem
@@ -161,8 +174,25 @@ const Navbar = () => {
                     </NavLink>
                   ))}
 
+                  {user?.role === "customer" && (
+                    <Link
+                      to="/customer/hire-requests"
+                      className="flex items-center gap-2 text-base font-medium"
+                    >
+                      <Calendar className="h-4 w-4" />
+                      My Hire Orders
+                    </Link>
+                  )}
+
                   {user?.role === "seller" && (
                     <>
+                      <Link
+                        to="/seller/hire-requests"
+                        className="block text-base font-medium"
+                      >
+                        Hire Requests
+                      </Link>
+
                       <Link
                         to={myBrandPath}
                         className="block text-base font-medium"
@@ -178,33 +208,6 @@ const Navbar = () => {
                       </Link>
                     </>
                   )}
-
-                  <div className="pt-6 space-y-2">
-                    {!user ? (
-                      <>
-                        <Button asChild variant="outline" className="w-full">
-                          <Link to="/login">Login</Link>
-                        </Button>
-                        <Button asChild className="w-full">
-                          <Link to="/register">Sign Up</Link>
-                        </Button>
-                      </>
-                    ) : (
-                      <>
-                        <Button asChild variant="outline" className="w-full">
-                          <Link to={`/profile/${user.slug}`}>Profile</Link>
-                        </Button>
-
-                        <Button
-                          variant="outline"
-                          className="w-full text-red-500"
-                          onClick={handleLogout}
-                        >
-                          Logout
-                        </Button>
-                      </>
-                    )}
-                  </div>
                 </div>
               </SheetContent>
             </Sheet>

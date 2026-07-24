@@ -112,6 +112,24 @@ export const submitHireDecision = createAsyncThunk(
   },
 );
 
+/**
+ * DELETE /hire/{hireId}/
+ *
+ * Customers can delete only their own seller-rejected hire requests.
+ */
+export const deleteHire = createAsyncThunk(
+  "hire/deleteHire",
+  async (hireId, { rejectWithValue }) => {
+    try {
+      await api.delete(`/hire/${hireId}/`);
+
+      return hireId;
+    } catch (error) {
+      return rejectWithValue(getApiError(error));
+    }
+  },
+);
+
 const getInitialState = () => ({
   hires: [],
   selectedHire: null,
@@ -131,6 +149,10 @@ const getInitialState = () => ({
 
   createSuccess: false,
   decisionSuccess: false,
+
+  deleteLoading: false,
+  deleteHireId: null,
+  deleteSuccess: false,
 });
 
 const hireSlice = createSlice({
@@ -158,6 +180,13 @@ const hireSlice = createSlice({
       state.decisionLoading = false;
       state.decisionHireId = null;
       state.decisionSuccess = false;
+      state.error = null;
+    },
+
+    resetDeleteHireState: (state) => {
+      state.deleteLoading = false;
+      state.deleteHireId = null;
+      state.deleteSuccess = false;
       state.error = null;
     },
 
@@ -288,6 +317,39 @@ const hireSlice = createSlice({
         state.error = action.payload || {
           message: "Unable to update the hire request.",
         };
+      })
+
+      // ============================================================
+      // Delete rejected hire
+      // ============================================================
+      .addCase(deleteHire.pending, (state, action) => {
+        state.deleteLoading = true;
+        state.deleteHireId = action.meta.arg;
+        state.deleteSuccess = false;
+        state.error = null;
+      })
+
+      .addCase(deleteHire.fulfilled, (state, action) => {
+        state.deleteLoading = false;
+        state.deleteHireId = null;
+        state.deleteSuccess = true;
+
+        const deletedHireId = action.payload;
+
+        state.hires = state.hires.filter((hire) => hire.id !== deletedHireId);
+
+        if (state.selectedHire?.id === deletedHireId) {
+          state.selectedHire = null;
+        }
+      })
+
+      .addCase(deleteHire.rejected, (state, action) => {
+        state.deleteLoading = false;
+        state.deleteHireId = null;
+        state.deleteSuccess = false;
+        state.error = action.payload || {
+          message: "Unable to delete the hire request.",
+        };
       });
   },
 });
@@ -297,6 +359,7 @@ export const {
   clearSelectedHire,
   resetCreateHireState,
   resetHireDecisionState,
+  resetDeleteHireState,
   resetHireState,
 } = hireSlice.actions;
 
@@ -323,5 +386,11 @@ export const selectHireDecisionLoading = (state) => state.hire.decisionLoading;
 export const selectDecisionHireId = (state) => state.hire.decisionHireId;
 
 export const selectHireDecisionSuccess = (state) => state.hire.decisionSuccess;
+
+export const selectDeleteHireLoading = (state) => state.hire.deleteLoading;
+
+export const selectDeleteHireId = (state) => state.hire.deleteHireId;
+
+export const selectDeleteHireSuccess = (state) => state.hire.deleteSuccess;
 
 export default hireSlice.reducer;

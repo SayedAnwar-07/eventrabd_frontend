@@ -13,7 +13,7 @@ import {
 
 import EventServiceSheet from "../components/EventServiceSheet";
 import ServiceDelete from "../components/ServiceDelete";
-import HireSellerSheet from "@/features/hire/components/HireSellerSheet";
+import HireSellerSheet from "@/features/hire/sellers/components/HireSellerSheet";
 
 const formatServiceName = (name = "") => {
   return name
