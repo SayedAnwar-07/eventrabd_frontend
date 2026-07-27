@@ -2,11 +2,12 @@ import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 import {
-  clearHireError,
+  acceptHire,
+  clearHireOperationError,
+  rejectHire,
   selectDecisionHireId,
+  selectHireDecisionError,
   selectHireDecisionLoading,
-  selectHireError,
-  submitHireDecision,
 } from "@/store/features/hire/hireSlice";
 
 import {
@@ -21,48 +22,40 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-const getErrorMessage = (error) => {
-  if (!error) return "";
-
-  if (typeof error === "string") {
-    return error;
-  }
-
-  if (error.detail) {
-    return error.detail;
-  }
-
-  if (error.message) {
-    return error.message;
-  }
-
-  if (error.non_field_errors?.length) {
-    return error.non_field_errors[0];
-  }
-
-  return "Unable to update this hire request.";
-};
-
 const HireDecisionDialog = ({ hire, decision, trigger, onSuccess }) => {
   const dispatch = useDispatch();
 
   const decisionLoading = useSelector(selectHireDecisionLoading);
+
   const decisionHireId = useSelector(selectDecisionHireId);
-  const error = useSelector(selectHireError);
+
+  const reduxError = useSelector(selectHireDecisionError);
 
   const [open, setOpen] = useState(false);
   const [sellerNote, setSellerNote] = useState("");
+  const [localError, setLocalError] = useState(null);
 
   const isAccepting = decision === "accept";
+
   const isCurrentHireLoading = decisionLoading && decisionHireId === hire?.id;
+
+  const displayedError = localError || reduxError;
+
+  const clearDecisionError = () => {
+    setLocalError(null);
+    dispatch(clearHireOperationError("decision"));
+  };
 
   const handleOpenChange = (nextOpen) => {
     setOpen(nextOpen);
 
-    if (!nextOpen) {
-      setSellerNote("");
-      dispatch(clearHireError());
+    if (nextOpen) {
+      clearDecisionError();
+      return;
     }
+
+    setSellerNote("");
+    clearDecisionError();
   };
 
   const handleDecision = async (event) => {
@@ -72,21 +65,43 @@ const HireDecisionDialog = ({ hire, decision, trigger, onSuccess }) => {
       return;
     }
 
+    clearDecisionError();
+
+    const payload = {
+      hireId: hire.id,
+      seller_note: sellerNote.trim(),
+    };
+
     try {
-      const updatedHire = await dispatch(
-        submitHireDecision({
-          hireId: hire.id,
-          decision,
-          seller_note: sellerNote.trim(),
-        }),
-      ).unwrap();
+      const updatedHire = isAccepting
+        ? await dispatch(acceptHire(payload)).unwrap()
+        : await dispatch(rejectHire(payload)).unwrap();
 
       setOpen(false);
       setSellerNote("");
+      setLocalError(null);
 
       onSuccess?.(updatedHire);
-    } catch {
-      // Redux stores and displays the backend validation error.
+    } catch (error) {
+      /*
+       * Redux already contains the error, but keeping it locally
+       * ensures this exact dialog displays the rejected request.
+       */
+      setLocalError(
+        error || {
+          message: isAccepting
+            ? "Unable to accept the hire request."
+            : "Unable to reject the hire request.",
+        },
+      );
+    }
+  };
+
+  const handleNoteChange = (event) => {
+    setSellerNote(event.target.value);
+
+    if (displayedError) {
+      clearDecisionError();
     }
   };
 
@@ -112,8 +127,10 @@ const HireDecisionDialog = ({ hire, decision, trigger, onSuccess }) => {
 
           <AlertDialogDescription className="text-sm leading-6 text-gray-600">
             {isAccepting
-              ? "The customer will be informed that their booking request has been accepted."
-              : "The customer will be informed that you are unable to accept this booking request."}
+              ? "The customer will be informed that their " +
+                "booking request has been accepted."
+              : "The customer will be informed that you are " +
+                "unable to accept this booking request."}
           </AlertDialogDescription>
         </AlertDialogHeader>
 
@@ -129,6 +146,7 @@ const HireDecisionDialog = ({ hire, decision, trigger, onSuccess }) => {
           <textarea
             id={`seller-note-${decision}-${hire?.id}`}
             rows={4}
+            maxLength={1000}
             value={sellerNote}
             disabled={isCurrentHireLoading}
             placeholder={
@@ -136,20 +154,21 @@ const HireDecisionDialog = ({ hire, decision, trigger, onSuccess }) => {
                 ? "Your booking request has been accepted."
                 : "I am unavailable on the selected date."
             }
-            onChange={(event) => {
-              setSellerNote(event.target.value);
-
-              if (error) {
-                dispatch(clearHireError());
-              }
-            }}
+            onChange={handleNoteChange}
             className="w-full resize-none rounded-none border border-gray-300 bg-white px-3 py-3 text-sm text-gray-950 outline-none transition placeholder:text-gray-400 focus:border-gray-950 disabled:cursor-not-allowed disabled:bg-gray-100"
           />
+
+          <p className="mt-1 text-right text-xs text-gray-500">
+            {sellerNote.length}/1000
+          </p>
         </div>
 
-        {error && decisionHireId === hire?.id ? (
-          <div className="border-l-2 border-red-600 bg-red-50 px-4 py-3">
-            <p className="text-sm text-red-700">{getErrorMessage(error)}</p>
+        {displayedError?.message ? (
+          <div
+            role="alert"
+            className="border-l-2 border-red-600 bg-red-50 px-4 py-3"
+          >
+            <p className="text-sm text-red-700">{displayedError.message}</p>
           </div>
         ) : null}
 
@@ -164,12 +183,14 @@ const HireDecisionDialog = ({ hire, decision, trigger, onSuccess }) => {
             onClick={handleDecision}
             className={
               isAccepting
-                ? "bg-green-700 text-white hover:bg-green-800"
-                : "bg-red-600 text-white hover:bg-red-700"
+                ? "bg-green-700 text-white " + "hover:bg-green-800"
+                : "bg-red-600 text-white " + "hover:bg-red-700"
             }
           >
             {isCurrentHireLoading
-              ? "Updating..."
+              ? isAccepting
+                ? "Accepting..."
+                : "Rejecting..."
               : isAccepting
                 ? "Accept Request"
                 : "Reject Request"}

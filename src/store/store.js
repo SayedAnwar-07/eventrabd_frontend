@@ -4,6 +4,7 @@ import authReducer from "./features/auth/authSlice";
 import eventPlannerReducer from "./features/eventPlanner/eventPlannerSlice";
 import eventServiceReducer from "./features/eventService/eventServiceSlice";
 import hireReducer from "./features/hire/hireSlice";
+import invoiceReducer from "./features/invoice/invoiceSlice";
 
 export const store = configureStore({
   reducer: {
@@ -11,6 +12,7 @@ export const store = configureStore({
     eventPlanner: eventPlannerReducer,
     eventServices: eventServiceReducer,
     hire: hireReducer,
+    invoice: invoiceReducer,
   },
 });
 

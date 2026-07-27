@@ -1,39 +1,69 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
+
 import { useDispatch, useSelector } from "react-redux";
 
 import {
   fetchHires,
   selectHires,
-  selectHireError,
+  selectHireListError,
   selectHireListLoading,
 } from "@/store/features/hire/hireSlice";
 
 import SellerHireRequestCard from "../components/SellerHireRequestCard";
 
-const getErrorMessage = (error) => {
-  if (!error) return "";
-
-  if (typeof error === "string") {
-    return error;
-  }
-
-  if (error.detail) {
-    return error.detail;
-  }
-
-  if (error.message) {
-    return error.message;
-  }
-
-  return "Unable to load hire requests.";
-};
+const HIRE_TABS = [
+  {
+    key: "all",
+    label: "Total",
+    countKey: "total",
+    activeClass: "border-gray-950 bg-gray-950 text-white",
+    countClass: "text-gray-950",
+  },
+  {
+    key: "pending",
+    label: "Pending",
+    countKey: "pending",
+    activeClass: "border-amber-700 bg-amber-700 text-white",
+    countClass: "text-amber-700",
+  },
+  {
+    key: "accepted",
+    label: "Accepted",
+    countKey: "accepted",
+    activeClass: "border-green-700 bg-green-700 text-white",
+    countClass: "text-green-700",
+  },
+  {
+    key: "rejected",
+    label: "Rejected",
+    countKey: "rejected",
+    activeClass: "border-red-600 bg-red-600 text-white",
+    countClass: "text-red-600",
+  },
+  {
+    key: "cancelled",
+    label: "Cancelled",
+    countKey: "cancelled",
+    activeClass: "border-gray-600 bg-gray-600 text-white",
+    countClass: "text-gray-600",
+  },
+  {
+    key: "completed",
+    label: "Completed",
+    countKey: "completed",
+    activeClass: "border-blue-700 bg-blue-700 text-white",
+    countClass: "text-blue-700",
+  },
+];
 
 const SellerHireRequestsPage = () => {
   const dispatch = useDispatch();
 
+  const [activeTab, setActiveTab] = useState("all");
+
   const hires = useSelector(selectHires);
   const loading = useSelector(selectHireListLoading);
-  const error = useSelector(selectHireError);
+  const error = useSelector(selectHireListError);
 
   useEffect(() => {
     dispatch(fetchHires());
@@ -44,7 +74,7 @@ const SellerHireRequestsPage = () => {
       (result, hire) => {
         result.total += 1;
 
-        if (hire.status in result) {
+        if (Object.prototype.hasOwnProperty.call(result, hire.status)) {
           result[hire.status] += 1;
         }
 
@@ -61,8 +91,21 @@ const SellerHireRequestsPage = () => {
     );
   }, [hires]);
 
+  const filteredHires = useMemo(() => {
+    if (activeTab === "all") {
+      return hires;
+    }
+
+    return hires.filter((hire) => hire.status === activeTab);
+  }, [activeTab, hires]);
+
+  const activeTabLabel =
+    HIRE_TABS.find((tab) => tab.key === activeTab)?.label || "Hire Requests";
+
   const handleRefresh = () => {
-    dispatch(fetchHires());
+    if (!loading) {
+      dispatch(fetchHires());
+    }
   };
 
   if (loading && hires.length === 0) {
@@ -101,83 +144,80 @@ const SellerHireRequestsPage = () => {
           </button>
         </header>
 
-        <section className="grid grid-cols-2 gap-3 py-8 sm:grid-cols-3 lg:grid-cols-6">
-          <div className="border border-gray-200 px-4 py-4">
-            <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
-              Total
-            </p>
+        <section
+          role="tablist"
+          aria-label="Filter hire requests by status"
+          className="grid grid-cols-2 gap-3 py-8 sm:grid-cols-3 lg:grid-cols-6"
+        >
+          {HIRE_TABS.map((tab) => {
+            const isActive = activeTab === tab.key;
+            const count = counts[tab.countKey];
 
-            <p className="mt-2 text-2xl font-semibold text-gray-950">
-              {counts.total}
-            </p>
-          </div>
+            return (
+              <button
+                key={tab.key}
+                type="button"
+                role="tab"
+                aria-selected={isActive}
+                onClick={() => setActiveTab(tab.key)}
+                className={`border px-4 py-4 text-left transition ${
+                  isActive
+                    ? tab.activeClass
+                    : "border-gray-200 bg-white hover:border-gray-400 hover:bg-gray-50"
+                }`}
+              >
+                <span
+                  className={`block text-xs font-medium uppercase tracking-wide ${
+                    isActive ? "text-current" : "text-gray-500"
+                  }`}
+                >
+                  {tab.label}
+                </span>
 
-          <div className="border border-gray-200 px-4 py-4">
-            <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
-              Pending
-            </p>
-
-            <p className="mt-2 text-2xl font-semibold text-amber-700">
-              {counts.pending}
-            </p>
-          </div>
-
-          <div className="border border-gray-200 px-4 py-4">
-            <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
-              Accepted
-            </p>
-
-            <p className="mt-2 text-2xl font-semibold text-green-700">
-              {counts.accepted}
-            </p>
-          </div>
-
-          <div className="border border-gray-200 px-4 py-4">
-            <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
-              Rejected
-            </p>
-
-            <p className="mt-2 text-2xl font-semibold text-red-600">
-              {counts.rejected}
-            </p>
-          </div>
-
-          <div className="border border-gray-200 px-4 py-4">
-            <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
-              Cancelled
-            </p>
-
-            <p className="mt-2 text-2xl font-semibold text-gray-600">
-              {counts.cancelled}
-            </p>
-          </div>
-
-          <div className="border border-gray-200 px-4 py-4">
-            <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
-              Completed
-            </p>
-
-            <p className="mt-2 text-2xl font-semibold text-blue-700">
-              {counts.completed}
-            </p>
-          </div>
+                <span
+                  className={`mt-2 block text-2xl font-semibold ${
+                    isActive ? "text-current" : tab.countClass
+                  }`}
+                >
+                  {count}
+                </span>
+              </button>
+            );
+          })}
         </section>
 
-        {error ? (
-          <div className="mb-6 flex flex-col gap-4 border-l-2 border-red-600 bg-red-50 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-sm text-red-700">{getErrorMessage(error)}</p>
+        {error?.message ? (
+          <div
+            role="alert"
+            className="mb-6 flex flex-col gap-4 border-l-2 border-red-600 bg-red-50 px-5 py-4 sm:flex-row sm:items-center sm:justify-between"
+          >
+            <p className="text-sm text-red-700">{error.message}</p>
 
             <button
               type="button"
               onClick={handleRefresh}
-              className="self-start text-sm font-semibold text-red-700 underline underline-offset-4 sm:self-auto"
+              disabled={loading}
+              className="self-start text-sm font-semibold text-red-700 underline underline-offset-4 disabled:cursor-not-allowed disabled:opacity-50 sm:self-auto"
             >
               Try Again
             </button>
           </div>
         ) : null}
 
-        {!loading && !error && hires.length === 0 ? (
+        {hires.length > 0 ? (
+          <div className="mb-5 flex items-center justify-between border-b border-gray-200 pb-3">
+            <h2 className="text-lg font-semibold text-gray-950">
+              {activeTabLabel} Requests
+            </h2>
+
+            <p className="text-sm text-gray-500">
+              {filteredHires.length}{" "}
+              {filteredHires.length === 1 ? "request" : "requests"}
+            </p>
+          </div>
+        ) : null}
+
+        {!loading && hires.length === 0 ? (
           <section className="border border-dashed border-gray-300 px-6 py-16 text-center">
             <p className="text-lg font-semibold text-gray-950">
               No hire requests yet
@@ -187,13 +227,31 @@ const SellerHireRequestsPage = () => {
               Customer booking requests for your services will appear here.
             </p>
           </section>
-        ) : (
-          <section className="space-y-5">
-            {hires.map((hire) => (
+        ) : null}
+
+        {!loading && hires.length > 0 && filteredHires.length === 0 ? (
+          <section className="border border-dashed border-gray-300 px-6 py-16 text-center">
+            <p className="text-lg font-semibold text-gray-950">
+              No {activeTabLabel.toLowerCase()} requests
+            </p>
+
+            <p className="mt-2 text-sm text-gray-600">
+              There are currently no hire requests with this status.
+            </p>
+          </section>
+        ) : null}
+
+        {filteredHires.length > 0 ? (
+          <section
+            role="tabpanel"
+            className="space-y-5"
+            aria-label={`${activeTabLabel} hire requests`}
+          >
+            {filteredHires.map((hire) => (
               <SellerHireRequestCard key={hire.id} hire={hire} />
             ))}
           </section>
-        )}
+        ) : null}
       </main>
     </div>
   );

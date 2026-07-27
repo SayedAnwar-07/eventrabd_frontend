@@ -31,6 +31,7 @@ import NotFoundPage from "@/pages/NotFoundPage";
 import SellerHireRequestsPage from "@/features/hire/sellers/pages/SellerHireRequestsPage";
 import CustomerHireRequestsPage from "@/features/hire/customers/pages/CustomerHireRequestsPage";
 import CustomerHireRequestDetailsPage from "@/features/hire/customers/pages/CustomerHireRequestDetailsPage";
+import SellerHireDetailsPage from "@/features/hire/sellers/pages/SellerHireDetailsPage";
 
 // hire pages
 
@@ -145,6 +146,16 @@ const router = createBrowserRouter([
           />
         ),
       },
+      {
+        path: "/seller/hire-requests/:hireId",
+        element: (
+          <PrivateRoute
+            element={<SellerHireDetailsPage />}
+            allowedRoles={["seller"]}
+          />
+        ),
+      },
+
       {
         path: "/customer/hire-requests", //for customer
         element: (

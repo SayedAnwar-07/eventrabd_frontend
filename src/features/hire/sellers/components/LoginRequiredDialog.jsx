@@ -28,7 +28,7 @@ const LoginRequiredDialog = ({ trigger }) => {
     <AlertDialog>
       <AlertDialogTrigger asChild>{trigger}</AlertDialogTrigger>
 
-      <AlertDialogContent className="">
+      <AlertDialogContent className="rounded-none border border-gray-300 bg-white shadow-none sm:max-w-md">
         <AlertDialogHeader className="text-left">
           <p className="text-xs font-medium uppercase tracking-[0.2em] text-gray-500">
             Authentication Required

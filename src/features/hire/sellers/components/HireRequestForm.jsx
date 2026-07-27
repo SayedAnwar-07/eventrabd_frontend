@@ -1,12 +1,16 @@
 import { useMemo, useState } from "react";
+
 import { useDispatch, useSelector } from "react-redux";
 
 import {
-  clearHireError,
+  clearHireOperationError,
   createHire,
+  getHireFieldError,
+  selectCreateHireError,
   selectCreateHireLoading,
-  selectHireError,
 } from "@/store/features/hire/hireSlice";
+
+const MAX_BOOKING_SLOTS = 5;
 
 const createEmptySlot = () => ({
   starts_at: "",
@@ -24,46 +28,36 @@ const getMinimumDateTime = () => {
   return now.toISOString().slice(0, 16);
 };
 
-const flattenApiErrors = (value, path = "") => {
-  if (!value) return [];
-
-  if (typeof value === "string") {
-    return [path ? `${path}: ${value}` : value];
-  }
-
-  if (Array.isArray(value)) {
-    return value.flatMap((item, index) =>
-      flattenApiErrors(item, path ? `${path} ${index + 1}` : `${index + 1}`),
-    );
-  }
-
-  if (typeof value === "object") {
-    return Object.entries(value).flatMap(([key, item]) => {
-      const formattedKey = key.replaceAll("_", " ");
-      const nextPath = path ? `${path} ${formattedKey}` : formattedKey;
-
-      return flattenApiErrors(item, nextPath);
-    });
-  }
-
-  return [String(value)];
-};
-
 const HireRequestForm = ({ serviceId, onSuccess }) => {
   const dispatch = useDispatch();
 
   const loading = useSelector(selectCreateHireLoading);
-  const apiError = useSelector(selectHireError);
+
+  const apiError = useSelector(selectCreateHireError);
 
   const minimumDateTime = useMemo(() => getMinimumDateTime(), []);
 
   const [customerNote, setCustomerNote] = useState("");
+
   const [bookingSlots, setBookingSlots] = useState([createEmptySlot()]);
+
   const [fieldErrors, setFieldErrors] = useState({});
+
   const [formError, setFormError] = useState("");
+
   const [successMessage, setSuccessMessage] = useState("");
 
-  const apiErrorMessages = flattenApiErrors(apiError);
+  const clearCreateError = () => {
+    if (apiError) {
+      dispatch(clearHireOperationError("create"));
+    }
+  };
+
+  const getDisplayedFieldError = (fieldPath) => {
+    return (
+      fieldErrors[fieldPath] || getHireFieldError(apiError, fieldPath) || ""
+    );
+  };
 
   const updateBookingSlot = (index, field, value) => {
     setBookingSlots((currentSlots) =>
@@ -84,29 +78,39 @@ const HireRequestForm = ({ serviceId, onSuccess }) => {
 
     setFormError("");
     setSuccessMessage("");
-
-    if (apiError) {
-      dispatch(clearHireError());
-    }
+    clearCreateError();
   };
 
   const addBookingSlot = () => {
+    if (loading || bookingSlots.length >= MAX_BOOKING_SLOTS) {
+      return;
+    }
+
     setBookingSlots((currentSlots) => [...currentSlots, createEmptySlot()]);
 
+    setFieldErrors({});
     setFormError("");
     setSuccessMessage("");
+    clearCreateError();
   };
 
   const removeBookingSlot = (index) => {
-    if (bookingSlots.length === 1) return;
+    if (loading || bookingSlots.length === 1) {
+      return;
+    }
 
     setBookingSlots((currentSlots) =>
       currentSlots.filter((_, slotIndex) => slotIndex !== index),
     );
 
+    /*
+     * Slot indexes change after removal. Clear existing errors
+     * instead of showing an error beneath the wrong slot.
+     */
     setFieldErrors({});
     setFormError("");
     setSuccessMessage("");
+    clearCreateError();
   };
 
   const validateForm = () => {
@@ -147,32 +151,26 @@ const HireRequestForm = ({ serviceId, onSuccess }) => {
 
       if (slot.starts_at && slot.ends_at) {
         const startsAt = new Date(slot.starts_at);
+
         const endsAt = new Date(slot.ends_at);
 
         if (Number.isNaN(endsAt.getTime())) {
           errors[`${fieldPrefix}.ends_at`] = "Enter a valid end date and time.";
-        } else if (endsAt.getTime() <= startsAt.getTime()) {
+        } else if (
+          !Number.isNaN(startsAt.getTime()) &&
+          endsAt.getTime() <= startsAt.getTime()
+        ) {
           errors[`${fieldPrefix}.ends_at`] =
             "End time must be later than start time.";
         }
       }
 
-      const duplicateKey = [
-        slot.starts_at,
-        slot.ends_at,
-        slot.venue_name.trim().toLowerCase(),
-        slot.venue_address.trim().toLowerCase(),
-      ].join("|");
+      const duplicateKey = [slot.starts_at, slot.ends_at].join("|");
 
-      if (
-        slot.starts_at &&
-        slot.ends_at &&
-        slot.venue_name.trim() &&
-        slot.venue_address.trim()
-      ) {
+      if (slot.starts_at && slot.ends_at) {
         if (duplicateKeys.has(duplicateKey)) {
           errors[`${fieldPrefix}.starts_at`] =
-            "This booking slot is duplicated.";
+            "This booking date and time is duplicated.";
         }
 
         duplicateKeys.add(duplicateKey);
@@ -189,6 +187,7 @@ const HireRequestForm = ({ serviceId, onSuccess }) => {
 
     setFormError("");
     setSuccessMessage("");
+    clearCreateError();
 
     if (!serviceId) {
       setFormError("The selected service is unavailable.");
@@ -200,21 +199,30 @@ const HireRequestForm = ({ serviceId, onSuccess }) => {
       return;
     }
 
+    if (bookingSlots.length > MAX_BOOKING_SLOTS) {
+      setFormError(
+        `You can submit a maximum of ${MAX_BOOKING_SLOTS} booking slots.`,
+      );
+      return;
+    }
+
     if (!validateForm()) {
       setFormError("Fix the highlighted fields before submitting.");
       return;
     }
-
-    dispatch(clearHireError());
 
     const payload = {
       service: serviceId,
       customer_note: customerNote.trim(),
       booking_slots: bookingSlots.map((slot) => ({
         starts_at: new Date(slot.starts_at).toISOString(),
+
         ends_at: new Date(slot.ends_at).toISOString(),
+
         venue_name: slot.venue_name.trim(),
+
         venue_address: slot.venue_address.trim(),
+
         location_note: slot.location_note.trim(),
       })),
     };
@@ -230,15 +238,60 @@ const HireRequestForm = ({ serviceId, onSuccess }) => {
 
       onSuccess?.(createdHire);
     } catch {
-      // The Redux rejected payload is displayed through apiError.
+      /*
+       * The normalized rejected payload is stored in
+       * state.hire.errors.create.
+       */
     }
   };
+
+  const bookingSlotsError = getHireFieldError(apiError, "booking_slots");
+
+  const serviceError = getHireFieldError(apiError, "service");
+
+  const customerNoteError = getHireFieldError(apiError, "customer_note");
 
   return (
     <form onSubmit={handleSubmit} noValidate>
       <div className="space-y-8">
+        {serviceError ? (
+          <div
+            role="alert"
+            className="border-l-2 border-red-600 bg-red-50 px-4 py-3"
+          >
+            <p className="text-sm text-red-700">{serviceError}</p>
+          </div>
+        ) : null}
+
+        {bookingSlotsError ? (
+          <div
+            role="alert"
+            className="border-l-2 border-red-600 bg-red-50 px-4 py-3"
+          >
+            <p className="text-sm text-red-700">{bookingSlotsError}</p>
+          </div>
+        ) : null}
+
         {bookingSlots.map((slot, index) => {
           const fieldPrefix = `booking_slots.${index}`;
+
+          const startsAtError = getDisplayedFieldError(
+            `${fieldPrefix}.starts_at`,
+          );
+
+          const endsAtError = getDisplayedFieldError(`${fieldPrefix}.ends_at`);
+
+          const venueNameError = getDisplayedFieldError(
+            `${fieldPrefix}.venue_name`,
+          );
+
+          const venueAddressError = getDisplayedFieldError(
+            `${fieldPrefix}.venue_address`,
+          );
+
+          const locationNoteError = getDisplayedFieldError(
+            `${fieldPrefix}.location_note`,
+          );
 
           return (
             <section key={index} className="border border-gray-200 bg-white">
@@ -280,16 +333,19 @@ const HireRequestForm = ({ serviceId, onSuccess }) => {
                     min={minimumDateTime}
                     value={slot.starts_at}
                     disabled={loading}
+                    aria-invalid={Boolean(startsAtError)}
                     onChange={(event) =>
                       updateBookingSlot(index, "starts_at", event.target.value)
                     }
-                    className="h-11 w-full rounded-none border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none transition focus:border-gray-950 disabled:cursor-not-allowed disabled:bg-gray-100"
+                    className={`h-11 w-full rounded-none bg-white px-3 ${"text-sm text-gray-950 outline-none transition "}disabled:cursor-not-allowed disabled:bg-gray-100 ${
+                      startsAtError
+                        ? "border border-red-600 " + "focus:border-red-700"
+                        : "border border-gray-300 " + "focus:border-gray-950"
+                    }`}
                   />
 
-                  {fieldErrors[`${fieldPrefix}.starts_at`] ? (
-                    <p className="mt-2 text-xs text-red-600">
-                      {fieldErrors[`${fieldPrefix}.starts_at`]}
-                    </p>
+                  {startsAtError ? (
+                    <p className="mt-2 text-xs text-red-600">{startsAtError}</p>
                   ) : null}
                 </div>
 
@@ -307,16 +363,19 @@ const HireRequestForm = ({ serviceId, onSuccess }) => {
                     min={slot.starts_at || minimumDateTime}
                     value={slot.ends_at}
                     disabled={loading}
+                    aria-invalid={Boolean(endsAtError)}
                     onChange={(event) =>
                       updateBookingSlot(index, "ends_at", event.target.value)
                     }
-                    className="h-11 w-full rounded-none border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none transition focus:border-gray-950 disabled:cursor-not-allowed disabled:bg-gray-100"
+                    className={`h-11 w-full rounded-none bg-white px-3 ${"text-sm text-gray-950 outline-none transition "}disabled:cursor-not-allowed disabled:bg-gray-100 ${
+                      endsAtError
+                        ? "border border-red-600 " + "focus:border-red-700"
+                        : "border border-gray-300 " + "focus:border-gray-950"
+                    }`}
                   />
 
-                  {fieldErrors[`${fieldPrefix}.ends_at`] ? (
-                    <p className="mt-2 text-xs text-red-600">
-                      {fieldErrors[`${fieldPrefix}.ends_at`]}
-                    </p>
+                  {endsAtError ? (
+                    <p className="mt-2 text-xs text-red-600">{endsAtError}</p>
                   ) : null}
                 </div>
 
@@ -333,16 +392,21 @@ const HireRequestForm = ({ serviceId, onSuccess }) => {
                     type="text"
                     value={slot.venue_name}
                     disabled={loading}
+                    aria-invalid={Boolean(venueNameError)}
                     placeholder="Royal Convention Hall"
                     onChange={(event) =>
                       updateBookingSlot(index, "venue_name", event.target.value)
                     }
-                    className="h-11 w-full rounded-none border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none transition placeholder:text-gray-400 focus:border-gray-950 disabled:cursor-not-allowed disabled:bg-gray-100"
+                    className={`h-11 w-full rounded-none bg-white px-3 ${"text-sm text-gray-950 outline-none transition "}placeholder:text-gray-400 disabled:cursor-not-allowed ${"disabled:bg-gray-100 "}${
+                      venueNameError
+                        ? "border border-red-600 " + "focus:border-red-700"
+                        : "border border-gray-300 " + "focus:border-gray-950"
+                    }`}
                   />
 
-                  {fieldErrors[`${fieldPrefix}.venue_name`] ? (
+                  {venueNameError ? (
                     <p className="mt-2 text-xs text-red-600">
-                      {fieldErrors[`${fieldPrefix}.venue_name`]}
+                      {venueNameError}
                     </p>
                   ) : null}
                 </div>
@@ -360,6 +424,7 @@ const HireRequestForm = ({ serviceId, onSuccess }) => {
                     type="text"
                     value={slot.venue_address}
                     disabled={loading}
+                    aria-invalid={Boolean(venueAddressError)}
                     placeholder="Narayanganj, Bangladesh"
                     onChange={(event) =>
                       updateBookingSlot(
@@ -368,12 +433,16 @@ const HireRequestForm = ({ serviceId, onSuccess }) => {
                         event.target.value,
                       )
                     }
-                    className="h-11 w-full rounded-none border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none transition placeholder:text-gray-400 focus:border-gray-950 disabled:cursor-not-allowed disabled:bg-gray-100"
+                    className={`h-11 w-full rounded-none bg-white px-3 ${"text-sm text-gray-950 outline-none transition "}placeholder:text-gray-400 disabled:cursor-not-allowed ${"disabled:bg-gray-100 "}${
+                      venueAddressError
+                        ? "border border-red-600 " + "focus:border-red-700"
+                        : "border border-gray-300 " + "focus:border-gray-950"
+                    }`}
                   />
 
-                  {fieldErrors[`${fieldPrefix}.venue_address`] ? (
+                  {venueAddressError ? (
                     <p className="mt-2 text-xs text-red-600">
-                      {fieldErrors[`${fieldPrefix}.venue_address`]}
+                      {venueAddressError}
                     </p>
                   ) : null}
                 </div>
@@ -394,6 +463,7 @@ const HireRequestForm = ({ serviceId, onSuccess }) => {
                     rows={3}
                     value={slot.location_note}
                     disabled={loading}
+                    aria-invalid={Boolean(locationNoteError)}
                     placeholder="Add arrival instructions or location details."
                     onChange={(event) =>
                       updateBookingSlot(
@@ -402,22 +472,41 @@ const HireRequestForm = ({ serviceId, onSuccess }) => {
                         event.target.value,
                       )
                     }
-                    className="w-full resize-none rounded-none border border-gray-300 bg-white px-3 py-3 text-sm text-gray-950 outline-none transition placeholder:text-gray-400 focus:border-gray-950 disabled:cursor-not-allowed disabled:bg-gray-100"
+                    className={`w-full resize-none rounded-none bg-white px-3 py-3 ${"text-sm text-gray-950 outline-none transition "}placeholder:text-gray-400 disabled:cursor-not-allowed ${"disabled:bg-gray-100 "}${
+                      locationNoteError
+                        ? "border border-red-600 " + "focus:border-red-700"
+                        : "border border-gray-300 " + "focus:border-gray-950"
+                    }`}
                   />
+
+                  {locationNoteError ? (
+                    <p className="mt-2 text-xs text-red-600">
+                      {locationNoteError}
+                    </p>
+                  ) : null}
                 </div>
               </div>
             </section>
           );
         })}
 
-        <button
-          type="button"
-          onClick={addBookingSlot}
-          disabled={loading}
-          className="w-full border border-dashed border-gray-400 bg-white px-5 py-3 text-sm font-semibold text-gray-950 transition hover:border-gray-950 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          + Add Another Event Date
-        </button>
+        <div>
+          <button
+            type="button"
+            onClick={addBookingSlot}
+            disabled={loading || bookingSlots.length >= MAX_BOOKING_SLOTS}
+            className="w-full border border-dashed border-gray-400 bg-white px-5 py-3 text-sm font-semibold text-gray-950 transition hover:border-gray-950 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {bookingSlots.length >= MAX_BOOKING_SLOTS
+              ? "Maximum 5 Event Dates"
+              : "+ Add Another Event Date"}
+          </button>
+
+          <p className="mt-2 text-xs text-gray-500">
+            You may add up to {MAX_BOOKING_SLOTS} event dates in one hire
+            request.
+          </p>
+        </div>
 
         <div>
           <label
@@ -431,45 +520,64 @@ const HireRequestForm = ({ serviceId, onSuccess }) => {
           <textarea
             id="customer-note"
             rows={4}
+            maxLength={1000}
             value={customerNote}
             disabled={loading}
+            aria-invalid={Boolean(customerNoteError)}
             placeholder="Describe your event or any important requirements."
             onChange={(event) => {
               setCustomerNote(event.target.value);
               setSuccessMessage("");
-
-              if (apiError) {
-                dispatch(clearHireError());
-              }
+              setFormError("");
+              clearCreateError();
             }}
-            className="w-full resize-none rounded-none border border-gray-300 bg-white px-3 py-3 text-sm text-gray-950 outline-none transition placeholder:text-gray-400 focus:border-gray-950 disabled:cursor-not-allowed disabled:bg-gray-100"
+            className={`w-full resize-none rounded-none bg-white px-3 py-3 ${"text-sm text-gray-950 outline-none transition "}placeholder:text-gray-400 disabled:cursor-not-allowed ${"disabled:bg-gray-100 "}${
+              customerNoteError
+                ? "border border-red-600 " + "focus:border-red-700"
+                : "border border-gray-300 " + "focus:border-gray-950"
+            }`}
           />
+
+          <div className="mt-1 flex items-start justify-between gap-4">
+            <div>
+              {customerNoteError ? (
+                <p className="text-xs text-red-600">{customerNoteError}</p>
+              ) : null}
+            </div>
+
+            <p className="shrink-0 text-xs text-gray-500">
+              {customerNote.length}/1000
+            </p>
+          </div>
         </div>
 
         {formError ? (
-          <div className="border-l-2 border-red-600 bg-red-50 px-4 py-3">
+          <div
+            role="alert"
+            className="border-l-2 border-red-600 bg-red-50 px-4 py-3"
+          >
             <p className="text-sm text-red-700">{formError}</p>
           </div>
         ) : null}
 
-        {apiErrorMessages.length > 0 ? (
-          <div className="border-l-2 border-red-600 bg-red-50 px-4 py-3">
+        {apiError?.message ? (
+          <div
+            role="alert"
+            className="border-l-2 border-red-600 bg-red-50 px-4 py-3"
+          >
             <p className="text-sm font-semibold text-red-700">
               The request could not be submitted.
             </p>
 
-            <div className="mt-2 space-y-1">
-              {apiErrorMessages.map((message, index) => (
-                <p key={`${message}-${index}`} className="text-sm text-red-700">
-                  {message}
-                </p>
-              ))}
-            </div>
+            <p className="mt-1 text-sm text-red-700">{apiError.message}</p>
           </div>
         ) : null}
 
         {successMessage ? (
-          <div className="border-l-2 border-green-700 bg-green-50 px-4 py-3">
+          <div
+            role="status"
+            className="border-l-2 border-green-700 bg-green-50 px-4 py-3"
+          >
             <p className="text-sm font-medium text-green-800">
               {successMessage}
             </p>

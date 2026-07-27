@@ -16,12 +16,13 @@ import {
 import {
   clearSelectedHire,
   fetchHireDetails,
+  selectHireDetailsError,
   selectHireDetailsLoading,
-  selectHireError,
   selectSelectedHire,
 } from "@/store/features/hire/hireSlice";
+import CustomerInvoiceDetails from "@/features/invoice/components/CustomerInvoiceDetails";
 
-const statusConfig = {
+const STATUS_CONFIG = {
   pending: {
     label: "Pending",
     className: "border-amber-200 bg-amber-50 text-amber-700",
@@ -53,26 +54,16 @@ const statusConfig = {
   },
 };
 
-const getErrorMessage = (error) => {
-  if (!error) return "";
-
-  if (typeof error === "string") {
-    return error;
-  }
-
-  if (error.detail) {
-    return error.detail;
-  }
-
-  if (error.message) {
-    return error.message;
-  }
-
-  return "Unable to load the hire request.";
+const formatServiceName = (name = "") => {
+  return name
+    .replaceAll("_", " ")
+    .replace(/\b\w/g, (character) => character.toUpperCase());
 };
 
 const formatDate = (value) => {
-  if (!value) return "Not available";
+  if (!value) {
+    return "Not available";
+  }
 
   const date = new Date(value);
 
@@ -80,7 +71,7 @@ const formatDate = (value) => {
     return "Not available";
   }
 
-  return new Intl.DateTimeFormat("en-GB", {
+  return new Intl.DateTimeFormat("en-US", {
     day: "2-digit",
     month: "long",
     year: "numeric",
@@ -88,7 +79,9 @@ const formatDate = (value) => {
 };
 
 const formatTime = (value) => {
-  if (!value) return "Not available";
+  if (!value) {
+    return "Not available";
+  }
 
   const date = new Date(value);
 
@@ -104,7 +97,9 @@ const formatTime = (value) => {
 };
 
 const formatDateTime = (value) => {
-  if (!value) return "Not available";
+  if (!value) {
+    return "Not available";
+  }
 
   const date = new Date(value);
 
@@ -112,7 +107,7 @@ const formatDateTime = (value) => {
     return "Not available";
   }
 
-  return new Intl.DateTimeFormat("en-GB", {
+  return new Intl.DateTimeFormat("en-US", {
     day: "2-digit",
     month: "short",
     year: "numeric",
@@ -123,13 +118,17 @@ const formatDateTime = (value) => {
 };
 
 const formatPrice = (value) => {
-  const amount = Number(value);
-
-  if (!Number.isFinite(amount)) {
+  if (value === null || value === undefined || value === "") {
     return "Not available";
   }
 
-  return `৳${amount.toLocaleString("en-BD", {
+  const amount = Number(value);
+
+  if (!Number.isFinite(amount)) {
+    return `৳${value}`;
+  }
+
+  return `৳${amount.toLocaleString("en-US", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })}`;
@@ -169,8 +168,10 @@ const CustomerHireRequestDetailsPage = () => {
   const dispatch = useDispatch();
 
   const hire = useSelector(selectSelectedHire);
+
   const loading = useSelector(selectHireDetailsLoading);
-  const error = useSelector(selectHireError);
+
+  const error = useSelector(selectHireDetailsError);
 
   useEffect(() => {
     dispatch(clearSelectedHire());
@@ -185,9 +186,11 @@ const CustomerHireRequestDetailsPage = () => {
   }, [dispatch, id]);
 
   const handleRetry = () => {
-    if (id) {
-      dispatch(fetchHireDetails(id));
+    if (!id || loading) {
+      return;
     }
+
+    dispatch(fetchHireDetails(id));
   };
 
   if (loading && !hire) {
@@ -196,31 +199,35 @@ const CustomerHireRequestDetailsPage = () => {
 
   if (error && !hire) {
     return (
-      <div className="min-h-screen bg-white">
+      <div className="min-h-screen">
         <main className="mx-auto max-w-3xl px-4 py-16 sm:px-6 lg:px-8">
-          <section className="border border-red-200 bg-red-50 px-6 py-10 text-center">
+          <section
+            role="alert"
+            className="border-l-2 border-red-600 bg-red-50 px-6 py-10 text-center"
+          >
             <h1 className="text-xl font-semibold text-gray-950">
               Unable to load request
             </h1>
 
             <p className="mt-2 text-sm text-red-700">
-              {getErrorMessage(error)}
+              {error.message || "Unable to load the hire request."}
             </p>
 
             <div className="mt-6 flex flex-wrap justify-center gap-3">
               <button
                 type="button"
                 onClick={handleRetry}
-                className="bg-gray-950 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-gray-800"
+                disabled={loading}
+                className="bg-gray-950 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                Try again
+                {loading ? "Loading..." : "Try Again"}
               </button>
 
               <Link
                 to="/customer/hire-requests"
                 className="border border-gray-300 px-5 py-2.5 text-sm font-semibold text-gray-800 transition hover:border-gray-950"
               >
-                Back to orders
+                Back to Bookings
               </Link>
             </div>
           </section>
@@ -239,14 +246,15 @@ const CustomerHireRequestDetailsPage = () => {
             </h1>
 
             <p className="mt-2 text-sm text-gray-600">
-              This order may have been removed or is unavailable.
+              This booking may have been removed or you may not have permission
+              to view it.
             </p>
 
             <Link
               to="/customer/hire-requests"
               className="mt-6 inline-flex border border-gray-950 px-5 py-2.5 text-sm font-semibold text-gray-950 transition hover:bg-gray-950 hover:text-white"
             >
-              Back to orders
+              Back to Bookings
             </Link>
           </section>
         </main>
@@ -254,30 +262,31 @@ const CustomerHireRequestDetailsPage = () => {
     );
   }
 
-  const normalizedStatus = hire.status?.toLowerCase() || "pending";
+  const normalizedStatus = hire?.status?.toLowerCase() || "pending";
 
-  const currentStatus = statusConfig[normalizedStatus] || statusConfig.pending;
+  const currentStatus =
+    STATUS_CONFIG[normalizedStatus] || STATUS_CONFIG.pending;
 
   const serviceName =
-    hire.service?.service_display_name ||
-    hire.service?.service_name ||
+    hire?.service?.service_display_name ||
+    formatServiceName(hire?.service?.service_name) ||
     "Event service";
 
-  const brandName = hire.brand?.brand_name || "Service provider";
+  const brandName = hire?.brand?.brand_name || "Service provider";
 
-  const bookingSlots = Array.isArray(hire.booking_slots)
+  const bookingSlots = Array.isArray(hire?.booking_slots)
     ? hire.booking_slots
     : [];
 
   return (
-    <div className="min-h-screen bg-white text-gray-950">
+    <div className="min-h-screen">
       <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
         <Link
           to="/customer/hire-requests"
           className="inline-flex items-center gap-2 text-sm font-medium text-gray-600 transition hover:text-gray-950"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back to my orders
+          Back to My Bookings
         </Link>
 
         <section className="mt-7 border border-gray-200">
@@ -285,12 +294,12 @@ const CustomerHireRequestDetailsPage = () => {
             <div>
               <div className="flex flex-wrap items-center gap-3">
                 <span
-                  className={`inline-flex border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] ${currentStatus.className}`}
+                  className={`inline-flex border px-3 py-1 text-[11px] ${"font-semibold uppercase tracking-[0.14em]"} ${currentStatus.className}`}
                 >
                   {currentStatus.label}
                 </span>
 
-                <span className="text-xs text-gray-500">
+                <span className="break-all text-xs text-gray-500">
                   Request #{hire.id}
                 </span>
               </div>
@@ -306,18 +315,23 @@ const CustomerHireRequestDetailsPage = () => {
 
             <div className="sm:text-right">
               <p className="text-xs font-medium uppercase tracking-[0.12em] text-gray-500">
-                Service charge
+                Service Charge
               </p>
 
               <p className="mt-1 text-xl font-semibold text-gray-950">
-                {formatPrice(hire.service?.shift_charge)}
+                {formatPrice(hire?.service?.shift_charge)}
               </p>
 
-              {hire.service?.shift_hour ? (
+              {hire?.service?.shift_hour !== null &&
+              hire?.service?.shift_hour !== undefined ? (
                 <p className="mt-1 text-xs text-gray-500">
                   {hire.service.shift_hour} hours per shift
                 </p>
-              ) : null}
+              ) : (
+                <p className="mt-1 text-xs text-gray-500">
+                  Shift duration unavailable
+                </p>
+              )}
             </div>
           </div>
 
@@ -326,16 +340,19 @@ const CustomerHireRequestDetailsPage = () => {
           </div>
         </section>
 
-        {error ? (
-          <div className="mt-5 border-l-2 border-red-600 bg-red-50 px-5 py-4">
-            <p className="text-sm text-red-700">{getErrorMessage(error)}</p>
+        {error?.message ? (
+          <div
+            role="alert"
+            className="mt-5 border-l-2 border-red-600 bg-red-50 px-5 py-4"
+          >
+            <p className="text-sm text-red-700">{error.message}</p>
           </div>
         ) : null}
 
         <div className="mt-5 grid gap-5 lg:grid-cols-3">
           <section className="border border-gray-200 lg:col-span-2">
             <div className="border-b border-gray-200 px-5 py-4 sm:px-6">
-              <h2 className="font-semibold text-gray-950">Booking schedule</h2>
+              <h2 className="font-semibold text-gray-950">Booking Schedule</h2>
 
               <p className="mt-1 text-sm text-gray-500">
                 {bookingSlots.length}{" "}
@@ -351,81 +368,90 @@ const CustomerHireRequestDetailsPage = () => {
               </div>
             ) : (
               <div className="divide-y divide-gray-200">
-                {bookingSlots.map((slot, index) => (
-                  <article key={slot.id} className="p-5 sm:p-6">
-                    <div className="flex items-center justify-between gap-4">
-                      <p className="text-sm font-semibold text-gray-950">
-                        Booking {index + 1}
-                      </p>
+                {bookingSlots.map((slot, index) => {
+                  const startsDate = formatDate(slot?.starts_at);
 
-                      <span className="text-xs text-gray-500">
-                        {formatDate(slot.starts_at)}
-                      </span>
-                    </div>
+                  const endsDate = formatDate(slot?.ends_at);
 
-                    <div className="mt-5 grid gap-5 sm:grid-cols-2">
-                      <div className="flex gap-3">
-                        <CalendarDays className="mt-0.5 h-4 w-4 shrink-0 text-gray-400" />
+                  return (
+                    <article
+                      key={slot?.id || `${slot?.starts_at}-${index}`}
+                      className="p-5 sm:p-6"
+                    >
+                      <div className="flex items-center justify-between gap-4">
+                        <p className="text-sm font-semibold text-gray-950">
+                          Booking {index + 1}
+                        </p>
 
-                        <div>
-                          <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
-                            Date
-                          </p>
+                        <span className="text-xs text-gray-500">
+                          {startsDate}
+                        </span>
+                      </div>
 
-                          <p className="mt-1 text-sm font-medium text-gray-950">
-                            {formatDate(slot.starts_at)}
-                          </p>
+                      <div className="mt-5 grid gap-5 sm:grid-cols-2">
+                        <div className="flex gap-3">
+                          <CalendarDays className="mt-0.5 h-4 w-4 shrink-0 text-gray-400" />
 
-                          {formatDate(slot.ends_at) !==
-                          formatDate(slot.starts_at) ? (
-                            <p className="mt-1 text-xs text-gray-500">
-                              Ends {formatDate(slot.ends_at)}
+                          <div>
+                            <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                              Date
                             </p>
-                          ) : null}
-                        </div>
-                      </div>
 
-                      <div className="flex gap-3">
-                        <Clock3 className="mt-0.5 h-4 w-4 shrink-0 text-gray-400" />
-
-                        <div>
-                          <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
-                            Time
-                          </p>
-
-                          <p className="mt-1 text-sm font-medium text-gray-950">
-                            {formatTime(slot.starts_at)} –{" "}
-                            {formatTime(slot.ends_at)}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="flex gap-3 sm:col-span-2">
-                        <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-gray-400" />
-
-                        <div>
-                          <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
-                            Venue
-                          </p>
-
-                          <p className="mt-1 text-sm font-medium text-gray-950">
-                            {slot.venue_name || "Venue not provided"}
-                          </p>
-
-                          <p className="mt-1 text-sm text-gray-600">
-                            {slot.venue_address || "Address not provided"}
-                          </p>
-
-                          {slot.location_note ? (
-                            <p className="mt-2 text-xs leading-5 text-gray-500">
-                              {slot.location_note}
+                            <p className="mt-1 text-sm font-medium text-gray-950">
+                              {startsDate}
                             </p>
-                          ) : null}
+
+                            {endsDate !== startsDate ? (
+                              <p className="mt-1 text-xs text-gray-500">
+                                Ends {endsDate}
+                              </p>
+                            ) : null}
+                          </div>
+                        </div>
+
+                        <div className="flex gap-3">
+                          <Clock3 className="mt-0.5 h-4 w-4 shrink-0 text-gray-400" />
+
+                          <div>
+                            <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                              Time
+                            </p>
+
+                            <p className="mt-1 text-sm font-medium text-gray-950">
+                              {formatTime(slot?.starts_at)}
+                              {" – "}
+                              {formatTime(slot?.ends_at)}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex gap-3 sm:col-span-2">
+                          <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-gray-400" />
+
+                          <div className="min-w-0">
+                            <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                              Venue
+                            </p>
+
+                            <p className="mt-1 text-sm font-medium text-gray-950">
+                              {slot?.venue_name || "Venue not provided"}
+                            </p>
+
+                            <p className="mt-1 text-sm leading-6 text-gray-600">
+                              {slot?.venue_address || "Address not provided"}
+                            </p>
+
+                            {slot?.location_note ? (
+                              <p className="mt-2 whitespace-pre-line text-xs leading-5 text-gray-500">
+                                {slot.location_note}
+                              </p>
+                            ) : null}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </article>
-                ))}
+                    </article>
+                  );
+                })}
               </div>
             )}
           </section>
@@ -434,7 +460,7 @@ const CustomerHireRequestDetailsPage = () => {
             <section className="border border-gray-200">
               <div className="border-b border-gray-200 px-5 py-4">
                 <h2 className="font-semibold text-gray-950">
-                  Service provider
+                  Service Provider
                 </h2>
               </div>
 
@@ -451,7 +477,7 @@ const CustomerHireRequestDetailsPage = () => {
                       {brandName}
                     </p>
 
-                    {hire.brand?.service_area ? (
+                    {hire?.brand?.service_area ? (
                       <p className="mt-1 text-xs text-gray-500">
                         {hire.brand.service_area}
                       </p>
@@ -468,12 +494,12 @@ const CustomerHireRequestDetailsPage = () => {
                     </p>
 
                     <p className="mt-1 text-sm font-semibold text-gray-950">
-                      {hire.seller?.full_name || "Not available"}
+                      {hire?.seller?.full_name || "Not available"}
                     </p>
                   </div>
                 </div>
 
-                {hire.seller?.email ? (
+                {hire?.seller?.email ? (
                   <div className="flex gap-3">
                     <Mail className="mt-0.5 h-4 w-4 shrink-0 text-gray-400" />
 
@@ -484,7 +510,7 @@ const CustomerHireRequestDetailsPage = () => {
 
                       <a
                         href={`mailto:${hire.seller.email}`}
-                        className="mt-1 block truncate text-sm text-gray-700 hover:text-gray-950 hover:underline"
+                        className="mt-1 block break-all text-sm text-gray-700 hover:text-gray-950 hover:underline"
                       >
                         {hire.seller.email}
                       </a>
@@ -492,7 +518,7 @@ const CustomerHireRequestDetailsPage = () => {
                   </div>
                 ) : null}
 
-                {hire.seller?.contact_number ? (
+                {hire?.seller?.contact_number ? (
                   <div className="flex gap-3">
                     <Phone className="mt-0.5 h-4 w-4 shrink-0 text-gray-400" />
 
@@ -511,7 +537,7 @@ const CustomerHireRequestDetailsPage = () => {
                   </div>
                 ) : null}
 
-                {hire.brand?.whatsapp_number ? (
+                {hire?.brand?.whatsapp_number ? (
                   <div className="flex gap-3">
                     <Phone className="mt-0.5 h-4 w-4 shrink-0 text-gray-400" />
 
@@ -532,7 +558,7 @@ const CustomerHireRequestDetailsPage = () => {
             <section className="border border-gray-200">
               <div className="border-b border-gray-200 px-5 py-4">
                 <h2 className="font-semibold text-gray-950">
-                  Request information
+                  Request Information
                 </h2>
               </div>
 
@@ -543,21 +569,21 @@ const CustomerHireRequestDetailsPage = () => {
                   </p>
 
                   <p className="mt-1 text-sm font-medium text-gray-950">
-                    {formatDateTime(hire.created_at)}
+                    {formatDateTime(hire?.created_at)}
                   </p>
                 </div>
 
                 <div>
                   <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
-                    Last updated
+                    Last Updated
                   </p>
 
                   <p className="mt-1 text-sm font-medium text-gray-950">
-                    {formatDateTime(hire.updated_at)}
+                    {formatDateTime(hire?.updated_at)}
                   </p>
                 </div>
 
-                {hire.accepted_at ? (
+                {hire?.accepted_at ? (
                   <div>
                     <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
                       Accepted
@@ -569,7 +595,7 @@ const CustomerHireRequestDetailsPage = () => {
                   </div>
                 ) : null}
 
-                {hire.rejected_at ? (
+                {hire?.rejected_at ? (
                   <div>
                     <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
                       Rejected
@@ -581,7 +607,19 @@ const CustomerHireRequestDetailsPage = () => {
                   </div>
                 ) : null}
 
-                {hire.completed_at ? (
+                {hire?.cancelled_at ? (
+                  <div>
+                    <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                      Cancelled
+                    </p>
+
+                    <p className="mt-1 text-sm font-medium text-gray-950">
+                      {formatDateTime(hire.cancelled_at)}
+                    </p>
+                  </div>
+                ) : null}
+
+                {hire?.completed_at ? (
                   <div>
                     <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
                       Completed
@@ -597,7 +635,7 @@ const CustomerHireRequestDetailsPage = () => {
           </div>
         </div>
 
-        {hire.customer_note || hire.seller_note ? (
+        {hire?.customer_note || hire?.seller_note ? (
           <section className="mt-5 border border-gray-200">
             <div className="border-b border-gray-200 px-5 py-4 sm:px-6">
               <h2 className="font-semibold text-gray-950">Notes</h2>
@@ -606,42 +644,58 @@ const CustomerHireRequestDetailsPage = () => {
             <div className="grid gap-6 p-5 sm:grid-cols-2 sm:p-6">
               <div>
                 <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
-                  Your note
+                  Your Note
                 </p>
 
-                <p className="mt-2 text-sm leading-6 text-gray-700">
-                  {hire.customer_note || "No note was provided."}
+                <p className="mt-2 whitespace-pre-line text-sm leading-6 text-gray-700">
+                  {hire?.customer_note || "No note was provided."}
                 </p>
               </div>
 
               <div>
                 <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
-                  Seller note
+                  Seller Note
                 </p>
 
-                <p className="mt-2 text-sm leading-6 text-gray-700">
-                  {hire.seller_note || "No note was provided."}
+                <p className="mt-2 whitespace-pre-line text-sm leading-6 text-gray-700">
+                  {hire?.seller_note || "No note was provided."}
                 </p>
               </div>
             </div>
           </section>
         ) : null}
 
-        <section className="mt-5 flex items-center gap-3 border border-gray-200 p-5">
-          <Banknote className="h-5 w-5 shrink-0 text-gray-400" />
+        {hire?.customer_note || hire?.seller_note ? (
+          <section className="mt-5 border border-gray-200">
+            <div className="border-b border-gray-200 px-5 py-4 sm:px-6">
+              <h2 className="font-semibold text-gray-950">Notes</h2>
+            </div>
 
-          <div>
-            <p className="text-sm font-semibold text-gray-950">
-              Invoice availability
-            </p>
+            <div className="grid gap-6 p-5 sm:grid-cols-2 sm:p-6">
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                  Your Note
+                </p>
 
-            <p className="mt-1 text-xs leading-5 text-gray-500">
-              {hire.can_create_invoice
-                ? "An invoice can now be created for this accepted request."
-                : "Invoice creation will become available after the request is accepted."}
-            </p>
-          </div>
-        </section>
+                <p className="mt-2 whitespace-pre-line text-sm leading-6 text-gray-700">
+                  {hire?.customer_note || "No note was provided."}
+                </p>
+              </div>
+
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                  Seller Note
+                </p>
+
+                <p className="mt-2 whitespace-pre-line text-sm leading-6 text-gray-700">
+                  {hire?.seller_note || "No note was provided."}
+                </p>
+              </div>
+            </div>
+          </section>
+        ) : null}
+
+        <CustomerInvoiceDetails hireId={hire.id} />
       </main>
     </div>
   );
