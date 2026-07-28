@@ -11,9 +11,9 @@ import {
   selectCurrentServiceGallery,
 } from "@/store/features/eventService/eventServiceSelector";
 
-import EventServiceSheet from "../components/EventServiceSheet";
 import ServiceDelete from "../components/ServiceDelete";
 import HireSellerSheet from "@/features/hire/sellers/components/HireSellerSheet";
+import EventServiceSheet from "../components/event-service-sheet/EventServiceSheet";
 
 const formatServiceName = (name = "") => {
   return name

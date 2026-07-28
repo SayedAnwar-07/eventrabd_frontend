@@ -9,8 +9,8 @@ import {
 } from "@/store/features/eventPlanner/eventPlannerSlice";
 
 import BrandDeleteDialog from "../components/BrandDeleteDialog";
-import EventServiceSheet from "../../brand-services-feature/components/EventServiceSheet";
 import ServiceCard from "../../brand-services-feature/components/ServiceCard";
+import EventServiceSheet from "../../brand-services-feature/components/event-service-sheet/EventServiceSheet";
 
 const GALLERY_ONLY_SERVICE_TYPES = new Set([
   "photography",
