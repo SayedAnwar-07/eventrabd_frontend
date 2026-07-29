@@ -1,14 +1,23 @@
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+
 import api from "@/store/constant/api";
 
 // ── Error handler ─────────────────────────────────────────────────────────────
+
 const getErrorPayload = (error) => {
   const data = error.response?.data;
-  if (!data) return { detail: "Something went wrong. Please try again." };
+
+  if (!data) {
+    return {
+      detail: "Something went wrong. Please try again.",
+    };
+  }
+
   return data;
 };
 
 // ── Local storage helpers ─────────────────────────────────────────────────────
+
 const fromStorage = (key) => {
   try {
     return localStorage.getItem(key) ?? null;
@@ -17,13 +26,34 @@ const fromStorage = (key) => {
   }
 };
 
-const saveSession = (access, refresh, user) => {
+const getStoredUser = () => {
+  try {
+    const rawUser = localStorage.getItem("user");
+
+    return rawUser ? JSON.parse(rawUser) : null;
+  } catch {
+    return null;
+  }
+};
+
+const saveSession = (access, user) => {
   try {
     localStorage.setItem("accessToken", access);
-    localStorage.setItem("refreshToken", refresh);
+
+    localStorage.setItem("user", JSON.stringify(user));
+
+    // Remove old insecure refresh-token storage.
+    localStorage.removeItem("refreshToken");
+  } catch {
+    // Ignore browser storage errors.
+  }
+};
+
+const saveUser = (user) => {
+  try {
     localStorage.setItem("user", JSON.stringify(user));
   } catch {
-    /* ignore quota / private mode errors */
+    // Ignore browser storage errors.
   }
 };
 
@@ -33,17 +63,25 @@ const clearSession = () => {
     localStorage.removeItem("refreshToken");
     localStorage.removeItem("user");
   } catch {
-    /* ignore */
+    // Ignore browser storage errors.
   }
 };
 
-// ── Thunks ────────────────────────────────────────────────────────────────────
+// Remove any refresh token saved by the previous implementation.
+try {
+  localStorage.removeItem("refreshToken");
+} catch {
+  // Ignore browser storage errors.
+}
+
+// ── Authentication thunks ─────────────────────────────────────────────────────
 
 export const registerUser = createAsyncThunk(
   "auth/register",
   async (userData, { rejectWithValue }) => {
     try {
       const { data } = await api.post("/users/register/", userData);
+
       return data;
     } catch (error) {
       return rejectWithValue(getErrorPayload(error));
@@ -56,6 +94,7 @@ export const verifyOtp = createAsyncThunk(
   async (otpData, { rejectWithValue }) => {
     try {
       const { data } = await api.post("/users/verify-otp/", otpData);
+
       return data;
     } catch (error) {
       return rejectWithValue(getErrorPayload(error));
@@ -68,6 +107,7 @@ export const loginUser = createAsyncThunk(
   async (loginData, { rejectWithValue }) => {
     try {
       const { data } = await api.post("/users/login/", loginData);
+
       return data;
     } catch (error) {
       return rejectWithValue(getErrorPayload(error));
@@ -75,11 +115,13 @@ export const loginUser = createAsyncThunk(
   },
 );
 
-export const getProfile = createAsyncThunk(
-  "auth/getProfile",
-  async (slug, { rejectWithValue }) => {
+// Private authenticated profile only.
+export const getMyProfile = createAsyncThunk(
+  "auth/getMyProfile",
+  async (_, { rejectWithValue }) => {
     try {
-      const { data } = await api.get(`/users/${slug}/`);
+      const { data } = await api.get("/users/me/");
+
       return data;
     } catch (error) {
       return rejectWithValue(getErrorPayload(error));
@@ -92,6 +134,7 @@ export const updateProfile = createAsyncThunk(
   async ({ slug, updateData }, { rejectWithValue }) => {
     try {
       const { data } = await api.patch(`/users/${slug}/settings/`, updateData);
+
       return data;
     } catch (error) {
       return rejectWithValue(getErrorPayload(error));
@@ -99,12 +142,12 @@ export const updateProfile = createAsyncThunk(
   },
 );
 
-// Works for both logged-in and public users (backend has AllowAny)
 export const forgotPassword = createAsyncThunk(
   "auth/forgotPassword",
   async (emailData, { rejectWithValue }) => {
     try {
       const { data } = await api.post("/users/forgot-password/", emailData);
+
       return data;
     } catch (error) {
       return rejectWithValue(getErrorPayload(error));
@@ -112,12 +155,12 @@ export const forgotPassword = createAsyncThunk(
   },
 );
 
-// Works for both logged-in and public users (backend has AllowAny)
 export const resetPassword = createAsyncThunk(
   "auth/resetPassword",
   async (passwordData, { rejectWithValue }) => {
     try {
       const { data } = await api.post("/users/reset-password/", passwordData);
+
       return data;
     } catch (error) {
       return rejectWithValue(getErrorPayload(error));
@@ -125,50 +168,50 @@ export const resetPassword = createAsyncThunk(
   },
 );
 
-// Blacklists the current refresh token on the server (single device logout)
-export const logoutUser = createAsyncThunk(
-  "auth/logout",
-  async (_, { getState }) => {
-    const refresh = getState().auth.refreshToken;
-    if (refresh) {
-      try {
-        await api.post("/users/logout/", { refresh });
-      } catch {
-        /* clear locally regardless of server response */
-      }
-    }
-  },
-);
+// Refresh token automatically comes from the HttpOnly cookie.
+export const logoutUser = createAsyncThunk("auth/logout", async () => {
+  try {
+    await api.post("/users/logout/", {});
+  } catch {
+    // Clear frontend session regardless.
+  }
+});
 
-// Bumps token_version on the server, invalidating all active sessions
-export const logoutAll = createAsyncThunk(
-  "auth/logoutAll",
-  async (_, { getState }) => {
-    const refresh = getState().auth.refreshToken;
-    try {
-      await api.post("/users/logout/all/", { refresh });
-    } catch {
-      /* clear locally regardless of server response */
-    }
-  },
-);
+// Requires the current access token.
+// If expired, api.js refreshes it automatically first.
+export const logoutAll = createAsyncThunk("auth/logoutAll", async () => {
+  try {
+    await api.post("/users/logout/all/", {});
+  } catch {
+    // Clear frontend session regardless.
+  }
+});
 
 // ── Initial state ─────────────────────────────────────────────────────────────
-const rawUser = fromStorage("user");
+
+const initialAccessToken = fromStorage("accessToken");
 
 const initialState = {
-  user: rawUser ? JSON.parse(rawUser) : null,
-  accessToken: fromStorage("accessToken"),
-  refreshToken: fromStorage("refreshToken"),
-  isAuthenticated: !!fromStorage("accessToken"),
+  user: getStoredUser(),
+
+  accessToken: initialAccessToken,
+
+  // Kept only for compatibility with existing components.
+  // The real refresh token is now an HttpOnly cookie.
+  refreshToken: null,
+
+  isAuthenticated: Boolean(initialAccessToken),
+
   loading: false,
   error: null,
   success: false,
+
   forgotSuccess: false,
   resetSuccess: false,
 };
 
 // ── Shared reducer helpers ────────────────────────────────────────────────────
+
 const setPending = (state) => {
   state.loading = true;
   state.error = null;
@@ -177,29 +220,38 @@ const setPending = (state) => {
 
 const setRejected = (state, action) => {
   state.loading = false;
-  state.error = action.payload ?? { detail: "An unexpected error occurred." };
+
+  state.error = action.payload ?? {
+    detail: "An unexpected error occurred.",
+  };
 };
 
 const setLoggedOut = (state) => {
   state.user = null;
+
   state.accessToken = null;
   state.refreshToken = null;
+
   state.isAuthenticated = false;
+
   state.loading = false;
   state.error = null;
   state.success = false;
+
   state.forgotSuccess = false;
   state.resetSuccess = false;
+
   clearSession();
 };
 
 // ── Slice ─────────────────────────────────────────────────────────────────────
+
 const authSlice = createSlice({
   name: "auth",
+
   initialState,
 
   reducers: {
-    // Instant client-side session clear (no API call)
     clearLocalSession: setLoggedOut,
 
     clearError: (state) => {
@@ -212,13 +264,20 @@ const authSlice = createSlice({
       state.resetSuccess = false;
     },
 
-    // Used by axios interceptor to sync a refreshed access token into Redux
     setAccessToken: (state, action) => {
-      state.accessToken = action.payload;
+      const accessToken = action.payload;
+
+      state.accessToken = accessToken;
+      state.isAuthenticated = Boolean(accessToken);
+
       try {
-        localStorage.setItem("accessToken", action.payload);
+        if (accessToken) {
+          localStorage.setItem("accessToken", accessToken);
+        } else {
+          localStorage.removeItem("accessToken");
+        }
       } catch {
-        /* ignore */
+        // Ignore browser storage errors.
       }
     },
   },
@@ -246,49 +305,61 @@ const authSlice = createSlice({
       .addCase(loginUser.pending, setPending)
       .addCase(loginUser.rejected, (state, action) => {
         setRejected(state, action);
+
         state.isAuthenticated = false;
       })
       .addCase(loginUser.fulfilled, (state, action) => {
-        const { access, refresh, user } = action.payload;
+        const { access, user } = action.payload;
+
         state.loading = false;
         state.success = true;
+
         state.user = user;
         state.accessToken = access;
-        state.refreshToken = refresh;
+
+        // Refresh token is not returned in JSON.
+        state.refreshToken = null;
+
         state.isAuthenticated = true;
-        saveSession(access, refresh, user);
+
+        saveSession(access, user);
       })
 
-      // ── Get profile
-      .addCase(getProfile.pending, setPending)
-      .addCase(getProfile.rejected, setRejected)
-      .addCase(getProfile.fulfilled, (state, action) => {
+      // ── Get own profile
+      .addCase(getMyProfile.pending, setPending)
+      .addCase(getMyProfile.rejected, setRejected)
+      .addCase(getMyProfile.fulfilled, (state, action) => {
         state.loading = false;
         state.user = action.payload;
+
+        saveUser(action.payload);
       })
 
       // ── Update profile
       .addCase(updateProfile.pending, setPending)
       .addCase(updateProfile.rejected, (state, action) => {
         state.loading = false;
+
         const payload = action.payload;
-        // Flatten DRF field-level errors into a single readable message
+
         if (payload && typeof payload === "object" && !payload.detail) {
-          state.error = { detail: Object.values(payload).flat().join(" ") };
+          state.error = {
+            detail: Object.values(payload).flat().join(" "),
+          };
         } else {
-          state.error = payload ?? { detail: "Failed to update profile." };
+          state.error = payload ?? {
+            detail: "Failed to update profile.",
+          };
         }
       })
       .addCase(updateProfile.fulfilled, (state, action) => {
+        const updatedUser = action.payload.user ?? action.payload;
+
         state.loading = false;
         state.success = true;
-        const updatedUser = action.payload.user ?? action.payload;
         state.user = updatedUser;
-        try {
-          localStorage.setItem("user", JSON.stringify(updatedUser));
-        } catch {
-          /* ignore */
-        }
+
+        saveUser(updatedUser);
       })
 
       // ── Forgot password
@@ -309,13 +380,19 @@ const authSlice = createSlice({
         state.resetSuccess = true;
       })
 
-      // ── Logout (single device)
-      .addCase(logoutUser.pending, setPending)
+      // ── Logout current device
+      .addCase(logoutUser.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
       .addCase(logoutUser.fulfilled, setLoggedOut)
       .addCase(logoutUser.rejected, setLoggedOut)
 
       // ── Logout all devices
-      .addCase(logoutAll.pending, setPending)
+      .addCase(logoutAll.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
       .addCase(logoutAll.fulfilled, setLoggedOut)
       .addCase(logoutAll.rejected, setLoggedOut);
   },

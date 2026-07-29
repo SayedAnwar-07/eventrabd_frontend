@@ -1,8 +1,5 @@
 import { useState } from "react";
-import {
-  useLocation,
-  useNavigate,
-} from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import {
   AlertDialog,
@@ -27,25 +24,24 @@ import {
 } from "@/components/ui/sheet";
 
 import HireRequestForm from "./HireRequestForm";
-
+import { useSelector } from "react-redux";
 
 const formatServiceName = (name = "") => {
   return name
     .replaceAll("_", " ")
-    .replace(
-      /\b\w/g,
-      (character) => character.toUpperCase(),
-    );
+    .replace(/\b\w/g, (character) => character.toUpperCase());
 };
 
-
 const HireSellerSheet = ({ service }) => {
+  const { user, isAuthenticated } = useSelector((state) => state.auth);
+
+  const [authDialogType, setAuthDialogType] = useState(null);
+
   const navigate = useNavigate();
   const location = useLocation();
 
   const [sheetOpen, setSheetOpen] = useState(false);
-  const [loginDialogOpen, setLoginDialogOpen] =
-    useState(false);
+  // const [loginDialogOpen, setLoginDialogOpen] = useState(false);
 
   const isOwner = service?.brand?.is_owner === true;
 
@@ -55,12 +51,15 @@ const HireSellerSheet = ({ service }) => {
       return;
     }
 
-    const accessToken =
-      localStorage.getItem("accessToken");
-
-    if (!accessToken) {
+    if (!isAuthenticated || !user) {
       setSheetOpen(false);
-      setLoginDialogOpen(true);
+      setAuthDialogType("login");
+      return;
+    }
+
+    if (user.role !== "customer") {
+      setSheetOpen(false);
+      setAuthDialogType("customer-only");
       return;
     }
 
@@ -68,7 +67,7 @@ const HireSellerSheet = ({ service }) => {
   };
 
   const handleLogin = () => {
-    setLoginDialogOpen(false);
+    setAuthDialogType(null);
 
     navigate("/login", {
       state: {
@@ -87,10 +86,7 @@ const HireSellerSheet = ({ service }) => {
 
   return (
     <>
-      <Sheet
-        open={sheetOpen}
-        onOpenChange={handleSheetOpenChange}
-      >
+      <Sheet open={sheetOpen} onOpenChange={handleSheetOpenChange}>
         <SheetTrigger asChild>
           <button
             type="button"
@@ -111,8 +107,7 @@ const HireSellerSheet = ({ service }) => {
             </SheetTitle>
 
             <SheetDescription className="text-sm leading-6 text-gray-600">
-              Submit your event dates and venue information
-              for this service.
+              Submit your event dates and venue information for this service.
             </SheetDescription>
           </SheetHeader>
 
@@ -123,24 +118,19 @@ const HireSellerSheet = ({ service }) => {
               </p>
 
               <p className="mt-1 text-base font-semibold text-gray-950">
-                {formatServiceName(
-                  service?.service_name,
-                )}
+                {formatServiceName(service?.service_name)}
               </p>
 
               <p className="mt-1 text-sm text-gray-600">
-                {service?.brand?.brand_name
-                  || "Unknown brand"}
+                {service?.brand?.brand_name || "Unknown brand"}
               </p>
 
               <p className="mt-2 text-sm font-medium text-gray-950">
-                {service?.shift_charge !== undefined
-                && service?.shift_charge !== null
-                  ? (
-                    `৳${Number(
-                      service.shift_charge,
-                    ).toLocaleString("en-US")} per shift`
-                  )
+                {service?.shift_charge !== undefined &&
+                service?.shift_charge !== null
+                  ? `৳${Number(service.shift_charge).toLocaleString(
+                      "en-US",
+                    )} per shift`
                   : "Shift charge unavailable"}
               </p>
             </div>
@@ -167,37 +157,48 @@ const HireSellerSheet = ({ service }) => {
       </Sheet>
 
       <AlertDialog
-        open={loginDialogOpen}
-        onOpenChange={setLoginDialogOpen}
+        open={Boolean(authDialogType)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setAuthDialogType(null);
+          }
+        }}
       >
         <AlertDialogContent className="rounded-none border border-gray-300 bg-white shadow-none sm:max-w-md">
           <AlertDialogHeader className="text-left">
             <p className="text-xs font-medium uppercase tracking-[0.2em] text-gray-500">
-              Authentication Required
+              {authDialogType === "login"
+                ? "Authentication Required"
+                : "Customer Account Required"}
             </p>
 
             <AlertDialogTitle className="text-2xl font-semibold tracking-tight text-gray-950">
-              Log in to hire this seller
+              {authDialogType === "login"
+                ? "Log in to hire this seller"
+                : "Only customers can hire sellers"}
             </AlertDialogTitle>
 
             <AlertDialogDescription className="text-sm leading-6 text-gray-600">
-              You must log in to your customer account before
-              submitting a hire request.
+              {authDialogType === "login"
+                ? "You must log in to your customer account before submitting a hire request."
+                : "Seller and admin accounts cannot submit hire requests. Please use a customer account."}
             </AlertDialogDescription>
           </AlertDialogHeader>
 
           <AlertDialogFooter className="mt-4 gap-3 sm:space-x-0">
             <AlertDialogCancel className="rounded-none border-gray-300 bg-white px-5 text-gray-950 hover:bg-gray-100">
-              Cancel
+              Close
             </AlertDialogCancel>
 
-            <AlertDialogAction
-              type="button"
-              onClick={handleLogin}
-              className="rounded-none bg-gray-950 px-5 text-white hover:bg-gray-800"
-            >
-              Log In
-            </AlertDialogAction>
+            {authDialogType === "login" && (
+              <AlertDialogAction
+                type="button"
+                onClick={handleLogin}
+                className="rounded-none bg-gray-950 px-5 text-white hover:bg-gray-800"
+              >
+                Log In
+              </AlertDialogAction>
+            )}
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

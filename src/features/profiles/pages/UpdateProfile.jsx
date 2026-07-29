@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useForm } from "react-hook-form";
 
 import {
-  getProfile,
+  getMyProfile,
   updateProfile,
   clearError,
   clearSuccess,
@@ -63,7 +63,7 @@ const UpdateProfile = () => {
 
   useEffect(() => {
     if (!user || user.slug !== routeSlug) {
-      dispatch(getProfile(routeSlug));
+      dispatch(getMyProfile(routeSlug));
     }
   }, [routeSlug, user, dispatch]);
 
