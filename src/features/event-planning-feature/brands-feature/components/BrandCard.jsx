@@ -24,7 +24,8 @@ const formatServiceName = (value = "") => {
 
 const BrandCard = ({ brand }) => {
   const logoUrl = getSafeImageUrl(brand?.logo_url);
-  const sellerImage = getSafeImageUrl(brand?.seller_profile);
+  const sellerImage = getSafeImageUrl(brand?.seller_info.profile_image_url);
+  const resolvedBrandSlug = brand?.slug || "";
 
   const services = Array.isArray(brand?.services) ? brand.services : [];
   const serviceCount = brand?.total_services ?? services.length;
@@ -51,22 +52,19 @@ const BrandCard = ({ brand }) => {
             {brand?.brand_name || "Unnamed Brand"}
           </h2>
 
-          <p className="mt-1 text-sm text-muted-foreground">
-            {brand?.service_area || "Service area not added"}
+          <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted-foreground">
+            <strong>Division : </strong>
+            {brand.division}
           </p>
         </div>
       </div>
-
-      <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted-foreground">
-        {brand?.short_description || "No description available."}
-      </p>
 
       <div className="mt-5 flex items-center gap-3 border-t border-border pt-4">
         {sellerImage ? (
           <img
             src={sellerImage}
             alt={brand?.seller_name || "Seller"}
-            className="h-10 w-10 border border-border object-cover"
+            className="h-10 w-10 border border-border object-top"
             loading="lazy"
           />
         ) : (
@@ -77,7 +75,7 @@ const BrandCard = ({ brand }) => {
 
         <div className="min-w-0">
           <p className="truncate text-sm font-medium text-foreground">
-            {brand?.seller_name || "Seller"}
+            {brand?.seller_info.full_name || "Seller"}
           </p>
 
           <p className="text-xs text-muted-foreground">
@@ -89,14 +87,39 @@ const BrandCard = ({ brand }) => {
       <div className="mt-5">
         <div className="grid grid-cols-2 gap-2">
           {visibleServices.length > 0 ? (
-            visibleServices.map((service) => (
-              <span
-                key={service.id}
-                className="border border-border px-3 py-1 text-xs font-medium text-foreground"
-              >
-                {formatServiceName(service.service_name)}
-              </span>
-            ))
+            visibleServices.map((service) => {
+              const serviceName = service?.slug || service?.service_name || "";
+
+              const detailPath =
+                resolvedBrandSlug && service?.id && serviceName
+                  ? `/event-planner/brands/${encodeURIComponent(
+                      resolvedBrandSlug,
+                    )}/services/${encodeURIComponent(
+                      service.id,
+                    )}/${encodeURIComponent(serviceName)}`
+                  : null;
+
+              if (!detailPath) {
+                return (
+                  <span
+                    key={service?.id || serviceName}
+                    className="border border-border px-3 py-1 text-xs font-medium text-muted-foreground"
+                  >
+                    {formatServiceName(serviceName)}
+                  </span>
+                );
+              }
+
+              return (
+                <Link
+                  key={service.id}
+                  to={detailPath}
+                  className="border border-border px-3 py-1 text-xs font-medium text-foreground transition hover:border-primary hover:bg-muted"
+                >
+                  {formatServiceName(service.service_name)}
+                </Link>
+              );
+            })
           ) : (
             <span className="border border-border px-3 py-1 text-xs font-medium text-muted-foreground">
               No service added

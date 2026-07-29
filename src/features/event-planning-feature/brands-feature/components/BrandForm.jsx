@@ -3,6 +3,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import StatusAlert from "@/components/shared/status-alert";
 
+import {
+  DIVISION_DISTRICTS,
+  DIVISION_OPTIONS,
+} from "@/store/features/eventPlanner/bangladeshLocations";
+
 export default function BrandForm({
   values,
   onChange,
@@ -17,6 +22,30 @@ export default function BrandForm({
   onRemoveLogo,
   existingLogo,
 }) {
+  const selectedDivision = values.division || "";
+
+  const availableDistricts = selectedDivision
+    ? DIVISION_DISTRICTS[selectedDivision] || []
+    : [];
+
+  const renderErrors = (fieldName) => {
+    const fieldErrors = errors[fieldName];
+
+    if (!fieldErrors) {
+      return null;
+    }
+
+    const normalizedErrors = Array.isArray(fieldErrors)
+      ? fieldErrors
+      : [fieldErrors];
+
+    return normalizedErrors.map((item, index) => (
+      <p key={`${fieldName}-${index}`} className="text-sm text-destructive">
+        {item}
+      </p>
+    ));
+  };
+
   return (
     <form
       onSubmit={onSubmit}
@@ -39,47 +68,50 @@ export default function BrandForm({
           />
         )}
 
+        {/* Brand name */}
         <div className="grid gap-2">
           <Label htmlFor="brand_name">Brand Name</Label>
+
           <Input
             id="brand_name"
             name="brand_name"
-            value={values.brand_name}
+            type="text"
+            value={values.brand_name || ""}
             onChange={onChange}
             placeholder="Dream Weddings"
+            maxLength={255}
+            required
+            disabled={loading}
+            aria-invalid={Boolean(errors.brand_name)}
             className="h-11 rounded-xl"
           />
-          {errors.brand_name?.map((item, index) => (
-            <p key={index} className="text-sm text-destructive">
-              {item}
-            </p>
-          ))}
+
+          {renderErrors("brand_name")}
         </div>
 
+        {/* Logo */}
         <div className="grid gap-2">
           <Label htmlFor="logo">Brand Logo</Label>
 
-          <div className="flex items-center gap-4">
-            <div className="relative">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+            <div className="relative w-fit">
               {logoPreview || existingLogo ? (
                 <>
                   <img
                     src={logoPreview || existingLogo}
-                    alt="Brand Logo"
-                    className={`h-24 w-24 rounded-2xl border object-cover ${
-                      !logoPreview && existingLogo ? "" : ""
-                    }`}
+                    alt="Brand logo preview"
+                    className="h-24 w-24 rounded-2xl border object-cover"
                   />
 
-                  {(logoPreview || existingLogo) && (
-                    <button
-                      type="button"
-                      onClick={onRemoveLogo}
-                      className="absolute -right-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full bg-black text-white"
-                    >
-                      X
-                    </button>
-                  )}
+                  <button
+                    type="button"
+                    onClick={onRemoveLogo}
+                    disabled={loading}
+                    aria-label="Remove brand logo"
+                    className="absolute -right-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full bg-black text-sm text-white disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    ×
+                  </button>
                 </>
               ) : (
                 <div className="flex h-24 w-24 items-center justify-center rounded-2xl border bg-muted text-sm text-muted-foreground">
@@ -88,84 +120,134 @@ export default function BrandForm({
               )}
             </div>
 
-            <div>
+            <div className="flex-1">
               <Input
                 id="logo"
                 name="logo"
                 type="file"
-                accept="image/*"
+                accept="image/jpeg,image/png,image/webp"
                 onChange={onLogoChange}
+                disabled={loading}
               />
 
               <p className="mt-1 text-xs text-muted-foreground">
-                Maximum size: 1MB
+                JPEG, PNG or WebP. Maximum size: 1MB.
               </p>
             </div>
           </div>
 
-          {errors.logo?.map((item, index) => (
-            <p key={index} className="text-sm text-destructive">
-              {item}
-            </p>
-          ))}
+          {renderErrors("logo")}
         </div>
 
+        {/* WhatsApp */}
+        <div className="grid gap-2">
+          <Label htmlFor="whatsapp_number">WhatsApp Number</Label>
+
+          <Input
+            id="whatsapp_number"
+            name="whatsapp_number"
+            type="tel"
+            value={values.whatsapp_number || ""}
+            onChange={onChange}
+            placeholder="+8801XXXXXXXXX"
+            maxLength={30}
+            required
+            disabled={loading}
+            aria-invalid={Boolean(errors.whatsapp_number)}
+            className="h-11 rounded-xl"
+          />
+
+          {renderErrors("whatsapp_number")}
+        </div>
+
+        {/* Division and district */}
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="grid gap-2">
-            <Label htmlFor="whatsapp_number">WhatsApp Number</Label>
-            <Input
-              id="whatsapp_number"
-              name="whatsapp_number"
-              value={values.whatsapp_number}
+            <Label htmlFor="division">Division</Label>
+
+            <select
+              id="division"
+              name="division"
+              value={selectedDivision}
               onChange={onChange}
-              placeholder="+8801XXXXXXXXX"
-              className="h-11 rounded-xl"
-            />
-            {errors.whatsapp_number?.map((item, index) => (
-              <p key={index} className="text-sm text-destructive">
-                {item}
-              </p>
-            ))}
+              required
+              disabled={loading}
+              aria-invalid={Boolean(errors.division)}
+              className="h-11 w-full rounded-xl border border-input bg-background px-3 text-sm text-foreground outline-none transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <option value="">Select a division</option>
+
+              {DIVISION_OPTIONS.map((division) => (
+                <option key={division.value} value={division.value}>
+                  {division.label}
+                </option>
+              ))}
+            </select>
+
+            {renderErrors("division")}
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="service_area">Service Area</Label>
-            <Input
-              id="service_area"
-              name="service_area"
-              value={values.service_area}
+            <Label htmlFor="district">District</Label>
+
+            <select
+              id="district"
+              name="district"
+              value={values.district || ""}
               onChange={onChange}
-              placeholder="Dhaka"
-              className="h-11 rounded-xl"
-            />
-            {errors.service_area?.map((item, index) => (
-              <p key={index} className="text-sm text-destructive">
-                {item}
-              </p>
-            ))}
+              required
+              disabled={loading || !selectedDivision}
+              aria-invalid={Boolean(errors.district)}
+              className="h-11 w-full rounded-xl border border-input bg-background px-3 text-sm text-foreground outline-none transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <option value="">
+                {selectedDivision
+                  ? "Select a district"
+                  : "Select division first"}
+              </option>
+
+              {availableDistricts.map((district) => (
+                <option key={district} value={district}>
+                  {district}
+                </option>
+              ))}
+            </select>
+
+            {renderErrors("district")}
           </div>
         </div>
 
+        {/* Description */}
         <div className="grid gap-2">
-          <Label htmlFor="short_description">Short Description</Label>
+          <div className="flex items-center justify-between gap-3">
+            <Label htmlFor="short_description">Short Description</Label>
+
+            <span className="text-xs text-muted-foreground">
+              {(values.short_description || "").length}/500
+            </span>
+          </div>
+
           <Textarea
             id="short_description"
             name="short_description"
-            value={values.short_description}
+            value={values.short_description || ""}
             onChange={onChange}
             placeholder="Write a short summary about your brand and what makes it special."
+            maxLength={500}
+            disabled={loading}
+            aria-invalid={Boolean(errors.short_description)}
             className="min-h-30 rounded-2xl"
           />
-          {errors.short_description?.map((item, index) => (
-            <p key={index} className="text-sm text-destructive">
-              {item}
-            </p>
-          ))}
+
+          {renderErrors("short_description")}
         </div>
 
-        {errors.non_field_errors?.length > 0 && (
+        {errors.non_field_errors && (
           <div className="rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-            {errors.non_field_errors.map((item, index) => (
+            {(Array.isArray(errors.non_field_errors)
+              ? errors.non_field_errors
+              : [errors.non_field_errors]
+            ).map((item, index) => (
               <p key={index}>{item}</p>
             ))}
           </div>
@@ -175,7 +257,7 @@ export default function BrandForm({
           <button
             type="submit"
             disabled={loading}
-            className="gradient-button disabled:opacity-60 disabled:cursor-not-allowed"
+            className="gradient-button disabled:cursor-not-allowed disabled:opacity-60"
           >
             {loading ? "Please wait..." : submitLabel}
           </button>

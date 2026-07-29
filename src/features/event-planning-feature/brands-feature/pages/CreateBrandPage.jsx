@@ -13,7 +13,8 @@ import { clearCreateBrandState } from "@/store/features/eventPlanner/eventPlanne
 const initialValues = {
   brand_name: "",
   whatsapp_number: "",
-  service_area: "",
+  division: "",
+  district: "",
   short_description: "",
   logo: null,
 };
@@ -25,21 +26,44 @@ export default function CreateBrandPage() {
   const { createState, createBrand } = useBrandActions();
 
   const [values, setValues] = useState(initialValues);
-
   const [logoPreview, setLogoPreview] = useState(null);
 
+  /*
+   * Clear any stale create-brand result when entering the page
+   * and again when leaving the page.
+   */
   useEffect(() => {
+    dispatch(clearCreateBrandState());
+
     return () => {
       dispatch(clearCreateBrandState());
     };
   }, [dispatch]);
 
+  /*
+   * Revoke the current browser-generated preview URL whenever
+   * it changes or when the component unmounts.
+   */
+  useEffect(() => {
+    return () => {
+      if (logoPreview) {
+        URL.revokeObjectURL(logoPreview);
+      }
+    };
+  }, [logoPreview]);
+
   const handleChange = (event) => {
     const { name, value } = event.target;
 
-    setValues((prev) => ({
-      ...prev,
+    setValues((previousValues) => ({
+      ...previousValues,
       [name]: value,
+
+      /*
+       * A district belongs to one division only.
+       * Clear the previous district whenever division changes.
+       */
+      ...(name === "division" ? { district: "" } : {}),
     }));
   };
 
@@ -50,8 +74,8 @@ export default function CreateBrandPage() {
       return;
     }
 
-    setValues((prev) => ({
-      ...prev,
+    setValues((previousValues) => ({
+      ...previousValues,
       logo: file,
     }));
 
@@ -59,8 +83,8 @@ export default function CreateBrandPage() {
   };
 
   const handleRemoveLogo = () => {
-    setValues((prev) => ({
-      ...prev,
+    setValues((previousValues) => ({
+      ...previousValues,
       logo: null,
     }));
 
@@ -70,18 +94,36 @@ export default function CreateBrandPage() {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
+    if (createState.loading) {
+      return;
+    }
+
     const formData = new FormData();
 
-    Object.entries(values).forEach(([key, value]) => {
-      if (value) {
-        formData.append(key, value);
-      }
-    });
+    /*
+     * Build the payload explicitly instead of sending every
+     * property from the React state.
+     */
+    formData.append("brand_name", values.brand_name.trim());
+    formData.append("whatsapp_number", values.whatsapp_number.trim());
+    formData.append("division", values.division);
+    formData.append("district", values.district);
+    formData.append("short_description", values.short_description.trim());
+
+    if (values.logo instanceof File) {
+      formData.append("logo", values.logo);
+    }
 
     const result = await createBrand(formData);
 
     if (result?.meta?.requestStatus === "fulfilled") {
-      navigate(`/event-planner/brands/${result.payload.slug}`);
+      const createdSlug = result.payload?.slug;
+
+      if (createdSlug) {
+        navigate(`/event-planner/brands/${createdSlug}`, {
+          replace: true,
+        });
+      }
     }
   };
 
@@ -102,6 +144,7 @@ export default function CreateBrandPage() {
         errorMessage={createState.errorMessage}
         successMessage={createState.success ? createState.message : ""}
         logoPreview={logoPreview}
+        existingLogo={null}
         onLogoChange={handleLogoChange}
         onRemoveLogo={handleRemoveLogo}
       />

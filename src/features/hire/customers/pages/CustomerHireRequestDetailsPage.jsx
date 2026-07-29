@@ -477,9 +477,9 @@ const CustomerHireRequestDetailsPage = () => {
                       {brandName}
                     </p>
 
-                    {hire?.brand?.service_area ? (
+                    {hire?.brand?.division ? (
                       <p className="mt-1 text-xs text-gray-500">
-                        {hire.brand.service_area}
+                        {hire.brand.division}
                       </p>
                     ) : null}
                   </div>

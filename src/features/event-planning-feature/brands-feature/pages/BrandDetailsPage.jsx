@@ -268,15 +268,6 @@ const BrandDetailsPage = () => {
             </p>
 
             <div className="mt-8 grid max-w-xl grid-cols-2 gap-4">
-              <div className="border-l-2 border-primary pl-4">
-                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  Area
-                </p>
-
-                <p className="mt-1 text-sm font-medium text-foreground">
-                  {publicBrandDetails.service_area}
-                </p>
-              </div>
 
               <div className="border-l-2 border-primary pl-4">
                 <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
@@ -433,7 +424,7 @@ const BrandDetailsPage = () => {
 
                 <p>
                   <span className="font-medium text-foreground">Area:</span>{" "}
-                  {publicBrandDetails.service_area}
+                  {publicBrandDetails.division}
                 </p>
 
                 <p>

@@ -1,16 +1,18 @@
-"use client";
-
 import { useEffect } from "react";
-import { Moon, Sun, Menu, Calendar } from "lucide-react";
+import {
+  Moon,
+  Sun,
+  Menu,
+  Calendar,
+  UserRound,
+  LogIn,
+  UserPlus,
+} from "lucide-react";
+import { Link, NavLink } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetTrigger, SheetContent } from "@/components/ui/sheet";
-import { useTheme } from "@/hooks/useTheme";
-import { Link, NavLink } from "react-router-dom";
-import { useSelector, useDispatch } from "react-redux";
-import { logoutUser } from "@/store/features/auth/authSlice";
-import { fetchMyBrand } from "@/store/features/eventPlanner/eventPlannerSlice";
-import eventraBDLogo from "../../assets/logo/eventra-bd-logo.png";
-
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -18,8 +20,13 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+
+import { useTheme } from "@/hooks/useTheme";
+import { logoutUser } from "@/store/features/auth/authSlice";
+import { fetchMyBrand } from "@/store/features/eventPlanner/eventPlannerSlice";
+
+import eventraBDLogo from "../../assets/logo/eventra-bd-logo.png";
 
 const Navbar = () => {
   const { theme, setTheme } = useTheme();
@@ -57,15 +64,18 @@ const Navbar = () => {
     }`;
 
   return (
-    <nav className="fixed top-0 left-0 w-full z-50 border-b bg-background/95 backdrop-blur">
+    <nav className="fixed left-0 top-0 z-50 w-full border-b bg-background/95 backdrop-blur">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
+          {/* Logo */}
           <Link to="/" className="flex items-center">
             <img src={eventraBDLogo} alt="Eventra BD" className="h-8 w-8" />
+
             <span className="text-2xl font-bold text-[#9f0712]">EventraBD</span>
           </Link>
 
-          <div className="hidden md:flex items-center gap-8">
+          {/* Desktop navigation */}
+          <div className="hidden items-center gap-8 md:flex">
             {navItems.map((item) => (
               <NavLink key={item.to} to={item.to} className={navLinkClass}>
                 {item.label}
@@ -73,52 +83,104 @@ const Navbar = () => {
             ))}
           </div>
 
-          <div className="flex items-center gap-3">
+          {/* Right-side actions */}
+          <div className="flex items-center gap-2 sm:gap-3">
+            {/* Theme button */}
             <Button
+              type="button"
               variant="ghost"
               size="icon"
               onClick={toggleTheme}
               className="h-9 w-9"
+              aria-label="Toggle theme"
             >
               <Sun className="h-4 w-4 dark:hidden" />
-              <Moon className="h-4 w-4 hidden dark:block" />
+              <Moon className="hidden h-4 w-4 dark:block" />
             </Button>
 
             {!user ? (
-              <div className="hidden sm:flex items-center gap-2">
-                <Button variant="ghost" size="sm" asChild>
-                  <Link to="/login">Login</Link>
-                </Button>
-                <Button size="sm" asChild>
-                  <Link to="/register">Sign Up</Link>
-                </Button>
-              </div>
+              <>
+                {/* Desktop guest buttons */}
+                <div className="hidden items-center gap-2 sm:flex">
+                  <Button variant="ghost" size="sm" asChild>
+                    <Link to="/login">Login</Link>
+                  </Button>
+
+                  <Button size="sm" asChild>
+                    <Link to="/register">Sign Up</Link>
+                  </Button>
+                </div>
+
+                {/* Mobile guest user dropdown */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-9 w-9 sm:hidden"
+                      aria-label="Open account menu"
+                    >
+                      <UserRound className="h-5 w-5" />
+                    </Button>
+                  </DropdownMenuTrigger>
+
+                  <DropdownMenuContent align="end" className="w-40 sm:hidden">
+                    <DropdownMenuItem asChild>
+                      <Link
+                        to="/login"
+                        className="flex cursor-pointer items-center gap-2"
+                      >
+                        <LogIn className="h-4 w-4" />
+                        Login
+                      </Link>
+                    </DropdownMenuItem>
+
+                    <DropdownMenuItem asChild>
+                      <Link
+                        to="/register"
+                        className="flex cursor-pointer items-center gap-2"
+                      >
+                        <UserPlus className="h-4 w-4" />
+                        Sign Up
+                      </Link>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </>
             ) : (
+              /* Logged-in user dropdown */
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="rounded-full">
+                  <button
+                    type="button"
+                    className="rounded-full"
+                    aria-label="Open profile menu"
+                  >
                     <Avatar className="h-9 w-9 cursor-pointer">
                       <AvatarImage
                         src={user.profile_image_url}
-                        alt={user.full_name}
+                        alt={user.full_name || "User"}
                       />
+
                       <AvatarFallback>
-                        {user.full_name?.charAt(0) || "U"}
+                        {user.full_name?.charAt(0)?.toUpperCase() || "U"}
                       </AvatarFallback>
                     </Avatar>
                   </button>
                 </DropdownMenuTrigger>
 
-                <DropdownMenuContent align="end" className="w-44">
+                <DropdownMenuContent align="end" className="w-48">
                   <DropdownMenuItem asChild>
                     <Link to={`/profile/${user.slug}`}>Profile</Link>
                   </DropdownMenuItem>
 
-                  {user?.role === "seller" && (
+                  {user.role === "seller" && (
                     <>
                       <DropdownMenuItem asChild>
                         <Link to="/seller/hire-requests">Hire Requests</Link>
                       </DropdownMenuItem>
+
                       <DropdownMenuItem asChild>
                         <Link to={myBrandPath}>My Brand</Link>
                       </DropdownMenuItem>
@@ -131,7 +193,7 @@ const Navbar = () => {
                     </>
                   )}
 
-                  {user?.role === "customer" && (
+                  {user.role === "customer" && (
                     <DropdownMenuItem asChild>
                       <Link
                         to="/customer/hire-requests"
@@ -147,7 +209,7 @@ const Navbar = () => {
 
                   <DropdownMenuItem
                     onClick={handleLogout}
-                    className="text-red-500 cursor-pointer"
+                    className="cursor-pointer text-destructive focus:text-destructive"
                   >
                     Logout
                   </DropdownMenuItem>
@@ -155,57 +217,94 @@ const Navbar = () => {
               </DropdownMenu>
             )}
 
+            {/* Mobile navigation sheet */}
             <Sheet>
-              <SheetTrigger asChild className="md:hidden">
-                <Button variant="ghost" size="icon">
+              <SheetTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="md:hidden"
+                  aria-label="Open navigation menu"
+                >
                   <Menu className="h-5 w-5" />
                 </Button>
               </SheetTrigger>
 
               <SheetContent side="right" className="w-64 p-4">
-                <div className="mt-6 space-y-4">
+                <div className="mt-8 space-y-4">
                   {navItems.map((item) => (
                     <NavLink
                       key={item.to}
                       to={item.to}
-                      className="block text-base font-medium"
+                      className={({ isActive }) =>
+                        `block text-base font-medium transition-colors ${
+                          isActive
+                            ? "text-primary"
+                            : "text-foreground/80 hover:text-primary"
+                        }`
+                      }
                     >
                       {item.label}
                     </NavLink>
                   ))}
 
                   {user?.role === "customer" && (
-                    <Link
+                    <NavLink
                       to="/customer/hire-requests"
-                      className="flex items-center gap-2 text-base font-medium"
+                      className={({ isActive }) =>
+                        `flex items-center gap-2 text-base font-medium transition-colors ${
+                          isActive
+                            ? "text-primary"
+                            : "text-foreground/80 hover:text-primary"
+                        }`
+                      }
                     >
                       <Calendar className="h-4 w-4" />
                       My Hire Orders
-                    </Link>
+                    </NavLink>
                   )}
 
                   {user?.role === "seller" && (
                     <>
-                      <Link
+                      <NavLink
                         to="/seller/hire-requests"
-                        className="block text-base font-medium"
+                        className={({ isActive }) =>
+                          `block text-base font-medium transition-colors ${
+                            isActive
+                              ? "text-primary"
+                              : "text-foreground/80 hover:text-primary"
+                          }`
+                        }
                       >
                         Hire Requests
-                      </Link>
+                      </NavLink>
 
-                      <Link
+                      <NavLink
                         to={myBrandPath}
-                        className="block text-base font-medium"
+                        className={({ isActive }) =>
+                          `block text-base font-medium transition-colors ${
+                            isActive
+                              ? "text-primary"
+                              : "text-foreground/80 hover:text-primary"
+                          }`
+                        }
                       >
                         My Brand
-                      </Link>
+                      </NavLink>
 
-                      <Link
+                      <NavLink
                         to="/event-planner/brands/create"
-                        className="block text-base font-medium"
+                        className={({ isActive }) =>
+                          `block text-base font-medium transition-colors ${
+                            isActive
+                              ? "text-primary"
+                              : "text-foreground/80 hover:text-primary"
+                          }`
+                        }
                       >
                         Create Brand
-                      </Link>
+                      </NavLink>
                     </>
                   )}
                 </div>

@@ -220,7 +220,7 @@ const ServiceDetailsPage = () => {
 
                 <p>
                   <span className="font-medium text-white">Area:</span>{" "}
-                  {service.brand?.service_area || "N/A"}
+                  {service.brand?.division || "N/A"}
                 </p>
 
                 <p>
@@ -361,7 +361,7 @@ const ServiceDetailsPage = () => {
 
                 <p>
                   <span className="font-medium text-gray-950">Area:</span>{" "}
-                  {service.brand?.service_area || "N/A"}
+                  {service.brand?.division || "N/A"}
                 </p>
 
                 <p>
