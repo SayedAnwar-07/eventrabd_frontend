@@ -278,7 +278,7 @@ const Info = ({ icon: Icon, label, value }) => {
       <div className="min-w-0 flex-1">
         <p className="text-sm font-medium">{label}</p>
 
-        <p className="break-words text-sm text-muted-foreground">{value}</p>
+        <p className="wrap-break-word text-sm text-muted-foreground">{value}</p>
 
         <Separator className="mt-4" />
       </div>
