@@ -41,18 +41,16 @@ export const sellerRegisterSchema = z
   });
 
 // ─── Customer Schema ───────────────────────────────────────────────────────────
-export const customerRegisterSchema = z
-  .object({
-    ...baseFields,
-    contact_number: z
-      .string()
-      .min(7, "Enter a valid contact number")
-      .max(20, "Number too long"),
-  })
-  .refine((d) => d.password === d.confirm_password, {
-    message: "Passwords do not match",
-    path: ["confirm_password"],
-  });
+export const customerRegisterSchema = z.object({
+  ...baseFields,
+  confirm_password: z.string().optional(),
+  contact_number: z
+    .string()
+    .min(7, "Enter a valid contact number")
+    .max(20, "Number too long")
+    .optional()
+    .or(z.literal("")),
+});
 
 // ─── Legacy combined schema (kept for backward compat) ────────────────────────
 export const registerSchema = sellerRegisterSchema;

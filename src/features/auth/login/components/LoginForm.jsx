@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { loginUser, clearError } from "@/store/features/auth/authSlice";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,14 +16,19 @@ const LoginForm = () => {
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const { loading, error, isAuthenticated } = useSelector(
     (state) => state.auth,
   );
 
+  const from = location.state?.from
+    ? `${location.state.from.pathname}${location.state.from.search || ""}`
+    : "/";
+
   useEffect(() => {
-    if (isAuthenticated) navigate("/");
-  }, [isAuthenticated, navigate]);
+    if (isAuthenticated) navigate(from, { replace: true });
+  }, [isAuthenticated, navigate, from]);
 
   const handleSubmit = (e) => {
     e.preventDefault();

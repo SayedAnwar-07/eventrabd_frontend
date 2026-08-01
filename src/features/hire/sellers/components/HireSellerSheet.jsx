@@ -71,7 +71,7 @@ const HireSellerSheet = ({ service }) => {
 
     navigate("/login", {
       state: {
-        from: `${location.pathname}${location.search}`,
+        from: { pathname: location.pathname, search: location.search },
       },
     });
   };

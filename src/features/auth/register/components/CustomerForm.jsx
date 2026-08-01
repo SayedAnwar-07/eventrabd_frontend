@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Textarea } from "@/components/ui/textarea";
 import { Loader2, Eye, EyeOff, X, ArrowLeft } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -25,7 +24,6 @@ const CustomerForm = () => {
   const { loading, error, success } = useSelector((state) => state.auth);
 
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [registeredEmail, setRegisteredEmail] = useState("");
 
   const [dismissedError, setDismissedError] = useState(null);
@@ -33,23 +31,18 @@ const CustomerForm = () => {
   const errorVisible = !!errorKey && errorKey !== dismissedError;
   const handleDismissError = () => setDismissedError(errorKey);
 
-  // Manual error state for Zod validation
   const [validationErrors, setValidationErrors] = useState({});
 
   const { register, handleSubmit, setValue } = useForm({
-    // Removed resolver
     defaultValues: { role: "customer", terms_accept: false },
   });
 
   const onSubmit = (data) => {
-    // Clear previous manual validation errors
     setValidationErrors({});
 
-    // Manually parse the data using the schema
     const result = customerRegisterSchema.safeParse(data);
 
     if (!result.success) {
-      // Convert Zod errors into a flat object: { fieldName: "ErrorMessage" }
       const formattedErrors = result.error.format();
       const errorMap = {};
 
@@ -60,10 +53,9 @@ const CustomerForm = () => {
       });
 
       setValidationErrors(errorMap);
-      return; // Stop the submission
+      return;
     }
 
-    // If validation passes
     setRegisteredEmail(data.email);
     dispatch(registerUser({ ...data, role: "customer" }));
   };
@@ -160,31 +152,6 @@ const CustomerForm = () => {
               </div>
 
               <div className="space-y-2 sm:col-span-2">
-                <Label>Contact Number</Label>
-                <Input
-                  placeholder="+8801XXXXXXXX"
-                  {...register("contact_number")}
-                  className="h-11"
-                />
-                <p className="min-h-4 text-xs font-medium text-red-500">
-                  {validationErrors.contact_number}
-                </p>
-              </div>
-
-              <div className="space-y-2 sm:col-span-2">
-                <Label>Bio (Optional)</Label>
-                <Textarea
-                  placeholder="Write something about yourself..."
-                  {...register("bio")}
-                  className="min-h-28 resize-none"
-                  rows={3}
-                />
-                <p className="min-h-4 text-xs font-medium text-red-500">
-                  {validationErrors.bio}
-                </p>
-              </div>
-
-              <div className="space-y-2 sm:col-span-2">
                 <Label>Password</Label>
 
                 <div className="relative">
@@ -210,35 +177,6 @@ const CustomerForm = () => {
 
                 <p className="min-h-4 text-xs font-medium text-red-500">
                   {validationErrors.password}
-                </p>
-              </div>
-
-              <div className="space-y-2 sm:col-span-2">
-                <Label>Confirm Password</Label>
-
-                <div className="relative">
-                  <Input
-                    type={showConfirmPassword ? "text" : "password"}
-                    placeholder="••••••••"
-                    {...register("confirm_password")}
-                    className="h-11 pr-11"
-                  />
-
-                  <button
-                    type="button"
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition hover:text-foreground"
-                    onClick={() => setShowConfirmPassword((v) => !v)}
-                  >
-                    {showConfirmPassword ? (
-                      <EyeOff className="h-5 w-5" />
-                    ) : (
-                      <Eye className="h-5 w-5" />
-                    )}
-                  </button>
-                </div>
-
-                <p className="min-h-4 text-xs font-medium text-red-500">
-                  {validationErrors.confirm_password}
                 </p>
               </div>
             </div>

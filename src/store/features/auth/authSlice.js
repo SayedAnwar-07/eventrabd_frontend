@@ -296,9 +296,20 @@ const authSlice = createSlice({
       // ── Verify OTP
       .addCase(verifyOtp.pending, setPending)
       .addCase(verifyOtp.rejected, setRejected)
-      .addCase(verifyOtp.fulfilled, (state) => {
+      .addCase(verifyOtp.fulfilled, (state, action) => {
+        const { access, user } = action.payload;
+
         state.loading = false;
         state.success = true;
+
+        state.user = user;
+        state.accessToken = access;
+
+        state.refreshToken = null;
+
+        state.isAuthenticated = true;
+
+        saveSession(access, user);
       })
 
       // ── Login
