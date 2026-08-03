@@ -335,12 +335,14 @@ const CustomerInvoiceDetails = ({ hireId }) => {
 
             <p className="mt-1 text-sm text-gray-700">{sellerName}</p>
 
-            {invoice?.seller?.contact_number ? (
+            {invoice?.customer?.whatsapp_number ? (
               <a
-                href={`tel:${invoice.seller.contact_number}`}
+                href={`https://wa.me/${invoice.customer.whatsapp_number.replace(/\D/g, "")}`}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="mt-2 block text-sm text-gray-500 hover:text-gray-950 hover:underline"
               >
-                {invoice.seller.contact_number}
+                {invoice.customer.whatsapp_number}
               </a>
             ) : null}
           </div>

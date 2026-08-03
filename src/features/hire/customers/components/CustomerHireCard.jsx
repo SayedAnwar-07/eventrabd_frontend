@@ -204,8 +204,6 @@ const CustomerHireCard = ({ hire }) => {
 
                   <p className="mt-1 text-xs text-muted-foreground">
                     {formatTime(slot?.starts_at)}
-
-                    {slot?.ends_at ? ` – ${formatTime(slot.ends_at)}` : ""}
                   </p>
                 </div>
               ))}

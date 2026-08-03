@@ -14,7 +14,7 @@ const MAX_BOOKING_SLOTS = 5;
 
 const createEmptySlot = () => ({
   starts_at: "",
-  ends_at: "",
+  whatsapp_number: "",
   venue_name: "",
   venue_address: "",
   location_note: "",
@@ -125,8 +125,9 @@ const HireRequestForm = ({ serviceId, onSuccess }) => {
           "Start date and time are required.";
       }
 
-      if (!slot.ends_at) {
-        errors[`${fieldPrefix}.ends_at`] = "End date and time are required.";
+      if (!slot.whatsapp_number.trim()) {
+        errors[`${fieldPrefix}.whatsapp_number`] =
+          "WhatsApp number is required.";
       }
 
       if (!slot.venue_name.trim()) {
@@ -149,31 +150,13 @@ const HireRequestForm = ({ serviceId, onSuccess }) => {
         }
       }
 
-      if (slot.starts_at && slot.ends_at) {
-        const startsAt = new Date(slot.starts_at);
-
-        const endsAt = new Date(slot.ends_at);
-
-        if (Number.isNaN(endsAt.getTime())) {
-          errors[`${fieldPrefix}.ends_at`] = "Enter a valid end date and time.";
-        } else if (
-          !Number.isNaN(startsAt.getTime()) &&
-          endsAt.getTime() <= startsAt.getTime()
-        ) {
-          errors[`${fieldPrefix}.ends_at`] =
-            "End time must be later than start time.";
-        }
-      }
-
-      const duplicateKey = [slot.starts_at, slot.ends_at].join("|");
-
-      if (slot.starts_at && slot.ends_at) {
-        if (duplicateKeys.has(duplicateKey)) {
+      if (slot.starts_at) {
+        if (duplicateKeys.has(slot.starts_at)) {
           errors[`${fieldPrefix}.starts_at`] =
             "This booking date and time is duplicated.";
         }
 
-        duplicateKeys.add(duplicateKey);
+        duplicateKeys.add(slot.starts_at);
       }
     });
 
@@ -217,7 +200,7 @@ const HireRequestForm = ({ serviceId, onSuccess }) => {
       booking_slots: bookingSlots.map((slot) => ({
         starts_at: new Date(slot.starts_at).toISOString(),
 
-        ends_at: new Date(slot.ends_at).toISOString(),
+        whatsapp_number: `+88${slot.whatsapp_number.trim()}`,
 
         venue_name: slot.venue_name.trim(),
 
@@ -279,7 +262,9 @@ const HireRequestForm = ({ serviceId, onSuccess }) => {
             `${fieldPrefix}.starts_at`,
           );
 
-          const endsAtError = getDisplayedFieldError(`${fieldPrefix}.ends_at`);
+          const whatsappNumberError = getDisplayedFieldError(
+            `${fieldPrefix}.whatsapp_number`,
+          );
 
           const venueNameError = getDisplayedFieldError(
             `${fieldPrefix}.venue_name`,
@@ -351,32 +336,45 @@ const HireRequestForm = ({ serviceId, onSuccess }) => {
 
                 <div>
                   <label
-                    htmlFor={`ends-at-${index}`}
+                    htmlFor={`whatsapp-number-${index}`}
                     className="mb-2 block text-sm font-medium text-gray-950"
                   >
-                    End date and time
+                    WhatsApp Number
                   </label>
 
-                  <input
-                    id={`ends-at-${index}`}
-                    type="datetime-local"
-                    min={slot.starts_at || minimumDateTime}
-                    value={slot.ends_at}
-                    disabled={loading}
-                    aria-invalid={Boolean(endsAtError)}
-                    onChange={(event) =>
-                      updateBookingSlot(index, "ends_at", event.target.value)
-                    }
-                    className={`h-11 w-full rounded-none bg-white px-3 ${"text-sm text-gray-950 outline-none transition "}disabled:cursor-not-allowed disabled:bg-gray-100 ${
-                      endsAtError
-                        ? "border border-red-600 " + "focus:border-red-700"
-                        : "border border-gray-300 " + "focus:border-gray-950"
-                    }`}
-                  />
+                  <div
+                    className={`flex h-11 w-full items-center rounded-none bg-white transition ${
+                      whatsappNumberError
+                        ? "border border-red-600 focus-within:border-red-700"
+                        : "border border-gray-300 focus-within:border-gray-950"
+                    } ${loading ? "cursor-not-allowed bg-gray-100" : ""}`}
+                  >
+                    <span className="select-none pl-3 pr-1 text-sm text-primary">
+                      +88
+                    </span>
 
-                  {endsAtError ? (
-                    <p className="mt-2 text-xs text-red-600">{endsAtError}</p>
-                  ) : null}
+                    <input
+                      id={`whatsapp-number-${index}`}
+                      type="tel"
+                      value={slot.whatsapp_number}
+                      disabled={loading}
+                      aria-invalid={Boolean(whatsappNumberError)}
+                      placeholder="Enter your WhatsApp number"
+                      onChange={(event) => {
+                        const digitsOnly = event.target.value
+                          .replace(/\D/g, "")
+                          .slice(0, 11);
+                        updateBookingSlot(index, "whatsapp_number", digitsOnly);
+                      }}
+                      className="h-full w-full bg-transparent px-1 text-sm text-gray-950 outline-none disabled:cursor-not-allowed"
+                    />
+                  </div>
+
+                  {whatsappNumberError && (
+                    <p className="mt-2 text-xs text-red-600">
+                      {whatsappNumberError}
+                    </p>
+                  )}
                 </div>
 
                 <div>

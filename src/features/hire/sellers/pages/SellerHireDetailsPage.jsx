@@ -73,6 +73,7 @@ const SellerHireDetailsPage = () => {
   const dispatch = useDispatch();
 
   const hire = useSelector(selectSelectedHire);
+  console.log("customer ", hire);
   const loading = useSelector(selectHireDetailsLoading);
 
   useEffect(() => {
@@ -186,7 +187,7 @@ const SellerHireDetailsPage = () => {
 
             <InformationItem
               label="Contact Number"
-              value={hire.customer?.contact_number}
+              value={hire?.booking_slots?.[0]?.customer_whatsapp_number}
             />
           </div>
         </section>
@@ -214,15 +215,14 @@ const SellerHireDetailsPage = () => {
                     {slot.venue_address || "Address not provided"}
                   </p>
 
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {slot.customer_whatsapp_number || "WhatsApp not provided"}
+                  </p>
+
                   <div className="mt-4 grid gap-4 sm:grid-cols-2">
                     <InformationItem
                       label="Starts"
                       value={formatDateTime(slot.starts_at)}
-                    />
-
-                    <InformationItem
-                      label="Ends"
-                      value={formatDateTime(slot.ends_at)}
                     />
                   </div>
 
