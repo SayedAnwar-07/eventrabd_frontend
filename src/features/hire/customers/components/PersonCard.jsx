@@ -16,7 +16,7 @@ export default function PersonCard({
   noteLabel,
 }) {
   return (
-    <div>
+    <div className="bg-amber-50 p-6">
       <div className="flex items-center gap-4">
         <img
           src={person?.profile_image_url}

@@ -14,8 +14,6 @@ export default function CustomerHireRequestDetailsPage() {
 
   const { hire, loading, error, retry } = useHireDetails(id);
 
-  // console.log(hire);
-
   if (loading && !hire) {
     return <LoadingState />;
   }

@@ -18,6 +18,7 @@ const createEmptySlot = () => ({
   venue_name: "",
   venue_address: "",
   location_note: "",
+  google_map_link: "",
 });
 
 const getMinimumDateTime = () => {
@@ -200,13 +201,15 @@ const HireRequestForm = ({ serviceId, onSuccess }) => {
       booking_slots: bookingSlots.map((slot) => ({
         starts_at: new Date(slot.starts_at).toISOString(),
 
-        whatsapp_number: `+88${slot.whatsapp_number.trim()}`,
+        customer_whatsapp_number: `+88${slot.whatsapp_number.trim()}`,
 
         venue_name: slot.venue_name.trim(),
 
         venue_address: slot.venue_address.trim(),
 
         location_note: slot.location_note.trim(),
+
+        google_map_link: slot.google_map_link.trim(),
       })),
     };
 
@@ -276,6 +279,10 @@ const HireRequestForm = ({ serviceId, onSuccess }) => {
 
           const locationNoteError = getDisplayedFieldError(
             `${fieldPrefix}.location_note`,
+          );
+
+          const googleMapLinkError = getDisplayedFieldError(
+            `${fieldPrefix}.google_map_link`,
           );
 
           return (
@@ -375,6 +382,45 @@ const HireRequestForm = ({ serviceId, onSuccess }) => {
                       {whatsappNumberError}
                     </p>
                   )}
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label
+                    htmlFor={`google-map-link-${index}`}
+                    className="mb-2 block text-sm font-medium text-gray-950"
+                  >
+                    Google Maps Location
+                    <span className="ml-1 font-normal text-gray-500">
+                      Optional
+                    </span>
+                  </label>
+
+                  <input
+                    id={`google-map-link-${index}`}
+                    type="url"
+                    value={slot.google_map_link}
+                    disabled={loading}
+                    aria-invalid={Boolean(googleMapLinkError)}
+                    placeholder="https://maps.app.goo.gl/example"
+                    onChange={(event) =>
+                      updateBookingSlot(
+                        index,
+                        "google_map_link",
+                        event.target.value,
+                      )
+                    }
+                    className={`h-11 w-full rounded-none bg-white px-3 text-sm text-gray-950 outline-none transition placeholder:text-gray-400 disabled:cursor-not-allowed disabled:bg-gray-100 ${
+                      googleMapLinkError
+                        ? "border border-red-600 focus:border-red-700"
+                        : "border border-gray-300 focus:border-gray-950"
+                    }`}
+                  />
+
+                  {googleMapLinkError ? (
+                    <p className="mt-2 text-xs text-red-600">
+                      {googleMapLinkError}
+                    </p>
+                  ) : null}
                 </div>
 
                 <div>
