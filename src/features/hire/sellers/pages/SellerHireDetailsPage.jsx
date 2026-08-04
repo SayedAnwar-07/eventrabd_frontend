@@ -1,285 +1,103 @@
-import { useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { useParams } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
+import { Link } from "react-router-dom";
 
 import SellerHireInvoiceSection from "@/features/invoice/components/SellerHireInvoiceSection";
 
-import {
-  fetchHireDetails,
-  selectHireDetailsLoading,
-  selectSelectedHire,
-} from "@/store/features/hire/hireSlice";
-
-const formatMoney = (value) => {
-  if (value === null || value === undefined || value === "") {
-    return "Not available";
-  }
-
-  const amount = Number(value);
-
-  if (!Number.isFinite(amount)) {
-    return `৳${value}`;
-  }
-
-  return `৳${amount.toLocaleString("en-US", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
-};
-
-const formatDateTime = (value) => {
-  if (!value) {
-    return "Not available";
-  }
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return "Invalid date";
-  }
-
-  return new Intl.DateTimeFormat("en-US", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(date);
-};
-
-const formatServiceName = (value = "") => {
-  return value
-    .replaceAll("_", " ")
-    .replace(/\b\w/g, (character) => character.toUpperCase());
-};
-
-const InformationItem = ({ label, value, capitalize = false }) => {
-  return (
-    <div className="min-w-0">
-      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-        {label}
-      </p>
-
-      <p
-        className={`mt-1 wrap-break-word font-medium ${
-          capitalize ? "capitalize" : ""
-        }`}
-      >
-        {value || "Not available"}
-      </p>
-    </div>
-  );
-};
+import BookingSlots from "../components/sellerHireDetails/BookingSlots";
+import ErrorState from "../components/sellerHireDetails/ErrorState";
+import HireSummary from "../components/sellerHireDetails/HireSummary";
+import HireTimeline from "../components/sellerHireDetails/HireTimeline";
+import LoadingState from "../components/sellerHireDetails/LoadingState";
+import PeopleInformation from "../components/sellerHireDetails/PeopleInformation";
+import useHireDetails from "../hooks/useHireDetails";
 
 const SellerHireDetailsPage = () => {
-  const { hireId } = useParams();
-  const dispatch = useDispatch();
+  const { hire, loading, error, retry } = useHireDetails();
 
-  const hire = useSelector(selectSelectedHire);
-  console.log("customer ", hire);
-  const loading = useSelector(selectHireDetailsLoading);
+  if (loading && !hire) {
+    return <LoadingState />;
+  }
 
-  useEffect(() => {
-    if (!hireId) {
-      return undefined;
-    }
-
-    const request = dispatch(fetchHireDetails(hireId));
-
-    return () => {
-      request.abort?.();
-    };
-  }, [dispatch, hireId]);
-
-  if (loading) {
+  if (error && !hire) {
     return (
-      <main className="mx-auto max-w-5xl px-5 py-8">
-        <div className="border border-border p-6">
-          <p className="text-sm text-muted-foreground">
-            Loading hire details...
-          </p>
-        </div>
-      </main>
+      <ErrorState
+        error={error}
+        loading={loading}
+        onRetry={retry}
+        backTo="/seller/hire-requests"
+        backLabel="Back to Hire Requests"
+      />
     );
   }
 
   if (!hire) {
     return (
-      <main className="mx-auto max-w-5xl px-5 py-8">
-        <div className="border border-border p-6">
-          <p className="text-sm text-muted-foreground">
-            Hire request not found.
-          </p>
-        </div>
-      </main>
+      <div className="min-h-screen">
+        <main className="mx-auto max-w-3xl px-4 py-16">
+          <section className="rounded-2xl border border-gray-200 bg-white px-6 py-12 text-center shadow-sm dark:border-gray-800 dark:bg-gray-950">
+            <h1 className="text-xl font-semibold text-gray-950 dark:text-white">
+              Hire request not found
+            </h1>
+
+            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+              This hire request may have been removed or you may not have
+              permission to view it.
+            </p>
+
+            <Link
+              to="/seller/hire-requests"
+              className="mt-6 inline-flex rounded-full border border-red-600 px-5 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-600 hover:text-white"
+            >
+              Back to Hire Requests
+            </Link>
+          </section>
+        </main>
+      </div>
     );
   }
 
-  const bookingSlots = Array.isArray(hire.booking_slots)
-    ? hire.booking_slots
-    : [];
-
-  const serviceName =
-    hire.service?.service_display_name ||
-    formatServiceName(hire.service?.service_name) ||
-    "Event Service";
-
   return (
-    <main className="mx-auto max-w-5xl px-5 py-8">
-      <div className="border border-border">
-        {/* Header */}
-        <header className="border-b border-border px-6 py-5">
-          <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
-            Hire Details
-          </p>
+    <div className="min-h-screen">
+      <main className="mx-auto max-w-6xl px-4 py-8 lg:py-10">
+        <Link
+          to="/seller/hire-requests"
+          className="inline-flex items-center gap-2 text-sm font-medium text-gray-600 transition hover:text-gray-950 dark:text-gray-400 dark:hover:text-white"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to Hire Requests
+        </Link>
 
-          <h1 className="mt-2 text-2xl font-semibold text-foreground">
-            {serviceName}
-          </h1>
+        {error?.message && (
+          <div className="mt-5 rounded-xl border border-red-100 bg-red-50 px-5 py-4 dark:border-red-950 dark:bg-red-950/30">
+            <p className="text-sm text-red-700 dark:text-red-400">
+              {error.message}
+            </p>
+          </div>
+        )}
 
-          <p className="mt-2 text-sm text-muted-foreground">
-            Customer: {hire.customer?.full_name || "Unknown customer"}
-          </p>
-        </header>
-
-        {/* Main information */}
-        <section className="grid gap-6 p-6 md:grid-cols-2">
-          <InformationItem label="Brand" value={hire.brand?.brand_name} />
-
-          <InformationItem label="Status" value={hire.status} capitalize />
-
-          <InformationItem
-            label="Service Charge"
-            value={formatMoney(hire.service?.shift_charge)}
-          />
-
-          <InformationItem
-            label="Shift Duration"
-            value={
-              hire.service?.shift_hour
-                ? `${hire.service.shift_hour} ${
-                    Number(hire.service.shift_hour) === 1 ? "hour" : "hours"
-                  }`
-                : "Not available"
-            }
-          />
-
-          <InformationItem
-            label="Booking Dates"
-            value={`${bookingSlots.length} ${
-              bookingSlots.length === 1 ? "booking" : "bookings"
-            }`}
-          />
-
-          <InformationItem
-            label="Accepted At"
-            value={formatDateTime(hire.accepted_at)}
-          />
+        <section className="mt-6">
+          <HireTimeline hire={hire} />
         </section>
 
-        {/* Customer information */}
-        <section className="border-t border-border px-6 py-5">
-          <h2 className="font-semibold text-foreground">
-            Customer Information
-          </h2>
+        <section className="mt-12 grid gap-5 lg:grid-cols-3">
+          <div className="overflow-hidden lg:col-span-2">
+            <BookingSlots hire={hire} />
+          </div>
 
-          <div className="mt-4 grid gap-5 md:grid-cols-3">
-            <InformationItem label="Name" value={hire.customer?.full_name} />
-
-            <InformationItem label="Email" value={hire.customer?.email} />
-
-            <InformationItem
-              label="Contact Number"
-              value={hire?.booking_slots?.[0]?.customer_whatsapp_number}
-            />
+          <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-950">
+            <HireSummary hire={hire} />
           </div>
         </section>
 
-        {/* Booking schedule */}
-        <section className="border-t border-border px-6 py-5">
-          <h2 className="font-semibold text-foreground">Booking Schedule</h2>
-
-          {bookingSlots.length > 0 ? (
-            <div className="mt-4 space-y-4">
-              {bookingSlots.map((slot, index) => (
-                <article
-                  key={slot.id || `${slot.starts_at}-${index}`}
-                  className="border border-border p-4"
-                >
-                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    Booking {index + 1}
-                  </p>
-
-                  <h3 className="mt-2 font-semibold text-foreground">
-                    {slot.venue_name || "Venue not provided"}
-                  </h3>
-
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {slot.venue_address || "Address not provided"}
-                  </p>
-
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {slot.customer_whatsapp_number || "WhatsApp not provided"}
-                  </p>
-
-                  <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                    <InformationItem
-                      label="Starts"
-                      value={formatDateTime(slot.starts_at)}
-                    />
-                  </div>
-
-                  {slot.location_note ? (
-                    <div className="mt-4 border-t border-border pt-4">
-                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                        Location Note
-                      </p>
-
-                      <p className="mt-1 whitespace-pre-wrap text-sm text-foreground">
-                        {slot.location_note}
-                      </p>
-                    </div>
-                  ) : null}
-                </article>
-              ))}
-            </div>
-          ) : (
-            <p className="mt-4 text-sm text-muted-foreground">
-              No booking schedule is available.
-            </p>
-          )}
+        <section className="mt-10">
+          <PeopleInformation hire={hire} customerRole="Customer" />
         </section>
 
-        {/* Notes */}
-        {hire.customer_note || hire.seller_note ? (
-          <section className="border-t border-border px-6 py-5">
-            <h2 className="font-semibold text-foreground">Notes</h2>
-
-            <div className="mt-4 grid gap-5 md:grid-cols-2">
-              <div>
-                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  Customer Note
-                </p>
-
-                <p className="mt-2 whitespace-pre-wrap text-sm text-foreground">
-                  {hire.customer_note || "No customer note"}
-                </p>
-              </div>
-
-              <div>
-                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  Seller Note
-                </p>
-
-                <p className="mt-2 whitespace-pre-wrap text-sm text-foreground">
-                  {hire.seller_note || "No seller note"}
-                </p>
-              </div>
-            </div>
-          </section>
-        ) : null}
-
-        {/* Existing invoice or create invoice */}
-        <SellerHireInvoiceSection key={hire.id} hire={hire} />
-      </div>
-    </main>
+        <section className="mt-5 overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-950">
+          <SellerHireInvoiceSection key={hire.id} hire={hire} />
+        </section>
+      </main>
+    </div>
   );
 };
 
