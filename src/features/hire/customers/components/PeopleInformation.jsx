@@ -1,13 +1,19 @@
 import PersonCard from "./PersonCard";
 
-export default function PeopleInformation({ hire }) {
+export default function PeopleInformation({ hire, customerRole = "Customer" }) {
   return (
-    <section className="relative">
-      <div className="flex flex-col md:flex-row gap-8 md:items-start">
-        <div className="flex flex-1 flex-col">
-          <p className="mb-4 text-xs font-semibold text-gray-400 dark:text-gray-500">
-            Seller Information
-          </p>
+    <section>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <div className="flex min-w-0 flex-col">
+          <div className="mb-3 flex items-center gap-3">
+            <span className="h-px flex-1 bg-gray-200 dark:bg-gray-800" />
+
+            <p className="shrink-0 text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+              Seller Information
+            </p>
+
+            <span className="h-px flex-1 bg-gray-200 dark:bg-gray-800" />
+          </div>
 
           <PersonCard
             role="Seller"
@@ -22,21 +28,27 @@ export default function PeopleInformation({ hire }) {
           />
         </div>
 
-        <div className="flex flex-1 flex-col">
-          <p className="mb-4 text-xs font-semibold text-gray-400 dark:text-gray-500">
-            Customer Information
-          </p>
+        <div className="flex min-w-0 flex-col">
+          <div className="mb-3 flex items-center gap-3">
+            <span className="h-px flex-1 bg-gray-200 dark:bg-gray-800" />
+
+            <p className="shrink-0 text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+              Customer Information
+            </p>
+
+            <span className="h-px flex-1 bg-gray-200 dark:bg-gray-800" />
+          </div>
 
           <PersonCard
-            role="You"
+            role={customerRole}
             person={hire?.customer}
             whatsapp={hire?.booking_slots?.[0]?.customer_whatsapp_number}
             location={{
-              division: hire?.brand?.division,
-              district: hire?.brand?.district,
+              division: hire?.customer?.division,
+              district: hire?.customer?.district,
             }}
             note={hire?.customer_note}
-            noteLabel="My Note"
+            noteLabel="Customer Note"
           />
         </div>
       </div>

@@ -1,5 +1,15 @@
 import { useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import {
+  CalendarDays,
+  Check,
+  CircleDollarSign,
+  FilePlus2,
+  Save,
+  X,
+} from "lucide-react";
+
+import InvoiceDocument from "./InvoiceDocument";
 
 import {
   clearInvoiceError,
@@ -13,16 +23,31 @@ const getLocalToday = () => {
   const today = new Date();
 
   const year = today.getFullYear();
+
   const month = String(today.getMonth() + 1).padStart(2, "0");
+
   const day = String(today.getDate()).padStart(2, "0");
 
   return `${year}-${month}-${day}`;
 };
 
+const getInitialFormData = () => ({
+  due_payment_last_date: "",
+  discount_price: "0.00",
+  advance_payment: "0.00",
+  seller_note: "",
+});
+
 const parseMoney = (value) => {
   const amount = Number(value);
 
   return Number.isFinite(amount) ? amount : 0;
+};
+
+const toDecimalString = (value) => {
+  const amount = Number(value);
+
+  return Number.isFinite(amount) ? amount.toFixed(2) : "0.00";
 };
 
 const formatMoney = (value) => {
@@ -38,38 +63,111 @@ const formatMoney = (value) => {
   })}`;
 };
 
-const toDecimalString = (value) => {
-  const amount = Number(value);
-
-  if (!Number.isFinite(amount)) {
-    return "0.00";
+const getErrorMessage = (error) => {
+  if (!error) {
+    return "";
   }
 
-  return amount.toFixed(2);
+  if (typeof error === "string") {
+    return error;
+  }
+
+  if (typeof error?.detail === "string") {
+    return error.detail;
+  }
+
+  if (typeof error?.message === "string") {
+    return error.message;
+  }
+
+  return "Unable to create the invoice.";
 };
 
-const getInitialFormData = (hire) => ({
-  due_payment_last_date: "",
-  service_price: hire?.service?.shift_charge
-    ? String(hire.service.shift_charge)
-    : "",
-  discount_price: "0.00",
-  advance_payment: "0.00",
-  seller_note: "",
-});
+const FormField = ({ id, label, icon: Icon, error, children }) => {
+  return (
+    <div>
+      <label
+        htmlFor={id}
+        className="flex items-center gap-2 text-sm font-semibold text-gray-800"
+      >
+        {Icon ? <Icon className="h-4 w-4 text-[#b60018]" /> : null}
+
+        {label}
+      </label>
+
+      {children}
+
+      {error ? <p className="mt-1.5 text-sm text-red-600">{error}</p> : null}
+    </div>
+  );
+};
+
+const PreviewItem = ({ label, value, emphasized = false }) => {
+  return (
+    <div
+      className={
+        emphasized
+          ? "rounded-xl bg-[#b60018] p-4 text-white"
+          : "rounded-xl border border-gray-200 bg-white p-4"
+      }
+    >
+      <p
+        className={`text-[10px] font-bold uppercase tracking-[0.12em] ${
+          emphasized ? "text-red-100" : "text-gray-500"
+        }`}
+      >
+        {label}
+      </p>
+
+      <p
+        className={`mt-1 ${
+          emphasized ? "text-lg font-bold" : "font-semibold text-gray-950"
+        }`}
+      >
+        {formatMoney(value)}
+      </p>
+    </div>
+  );
+};
 
 const CreateInvoiceSection = ({ hire }) => {
   const dispatch = useDispatch();
 
   const createLoading = useSelector(selectInvoiceCreateLoading);
+
   const apiError = useSelector(selectInvoiceError);
 
   const [isOpen, setIsOpen] = useState(false);
+
   const [createdInvoice, setCreatedInvoice] = useState(null);
-  const [formData, setFormData] = useState(() => getInitialFormData(hire));
+
+  const [formData, setFormData] = useState(getInitialFormData);
+
   const [validationErrors, setValidationErrors] = useState({});
 
   const today = getLocalToday();
+
+  const serviceSummary = hire?.service_summary || {};
+
+  const slotCount = Number(
+    serviceSummary?.slot_count || hire?.booking_slots?.length || 0,
+  );
+
+  const shiftHourPerSlot = Number(
+    serviceSummary?.shift_hour_per_slot || hire?.service?.shift_hour || 0,
+  );
+
+  const totalShiftHours = Number(
+    serviceSummary?.total_shift_hours || shiftHourPerSlot * slotCount,
+  );
+
+  const shiftChargePerSlot = parseMoney(
+    serviceSummary?.shift_charge_per_slot || hire?.service?.shift_charge,
+  );
+
+  const servicePrice = parseMoney(
+    serviceSummary?.total_amount || shiftChargePerSlot * slotCount,
+  );
 
   const isEligible =
     hire?.status === "accepted" &&
@@ -77,29 +175,50 @@ const CreateInvoiceSection = ({ hire }) => {
     hire?.can_create_invoice === true;
 
   const financialPreview = useMemo(() => {
-    const servicePrice = parseMoney(formData.service_price);
     const discountPrice = parseMoney(formData.discount_price);
+
     const advancePayment = parseMoney(formData.advance_payment);
 
-    const total = servicePrice - discountPrice;
-    const duePayment = total - advancePayment;
+    const subtotal = Math.max(servicePrice - discountPrice, 0);
+
+    const duePayment = Math.max(subtotal - advancePayment, 0);
 
     return {
       servicePrice,
       discountPrice,
       advancePayment,
-      total: Math.max(total, 0),
-      duePayment: Math.max(duePayment, 0),
+      subtotal,
+      total: subtotal,
+      duePayment,
     };
-  }, [
-    formData.service_price,
-    formData.discount_price,
-    formData.advance_payment,
-  ]);
+  }, [servicePrice, formData.discount_price, formData.advance_payment]);
 
-  if (!isEligible) {
+  if (!isEligible && !createdInvoice) {
     return null;
   }
+
+  const clearFormState = () => {
+    setValidationErrors({});
+    dispatch(clearInvoiceError());
+    dispatch(clearInvoiceSuccessMessage());
+  };
+
+  const handleOpen = () => {
+    clearFormState();
+
+    setFormData(getInitialFormData());
+
+    setIsOpen(true);
+  };
+
+  const handleCancel = () => {
+    if (createLoading) {
+      return;
+    }
+
+    clearFormState();
+    setIsOpen(false);
+  };
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -122,9 +241,9 @@ const CreateInvoiceSection = ({ hire }) => {
   const validateForm = () => {
     const errors = {};
 
-    const servicePrice = parseMoney(formData.service_price);
-    const discountPrice = parseMoney(formData.discount_price);
-    const advancePayment = parseMoney(formData.advance_payment);
+    const discountPrice = Number(formData.discount_price);
+
+    const advancePayment = Number(formData.advance_payment);
 
     const calculatedTotal = servicePrice - discountPrice;
 
@@ -134,17 +253,14 @@ const CreateInvoiceSection = ({ hire }) => {
       errors.due_payment_last_date = "Due payment date cannot be in the past.";
     }
 
-    if (
-      formData.service_price === "" ||
-      !Number.isFinite(Number(formData.service_price)) ||
-      servicePrice <= 0
-    ) {
-      errors.service_price = "Service price must be greater than zero.";
+    if (!Number.isFinite(servicePrice) || servicePrice <= 0) {
+      errors.service_price =
+        "The calculated service price must be greater than zero.";
     }
 
     if (
       formData.discount_price === "" ||
-      !Number.isFinite(Number(formData.discount_price)) ||
+      !Number.isFinite(discountPrice) ||
       discountPrice < 0
     ) {
       errors.discount_price = "Discount price cannot be negative.";
@@ -154,7 +270,7 @@ const CreateInvoiceSection = ({ hire }) => {
 
     if (
       formData.advance_payment === "" ||
-      !Number.isFinite(Number(formData.advance_payment)) ||
+      !Number.isFinite(advancePayment) ||
       advancePayment < 0
     ) {
       errors.advance_payment = "Advance payment cannot be negative.";
@@ -180,10 +296,13 @@ const CreateInvoiceSection = ({ hire }) => {
 
     const invoiceData = {
       hire: hire.id,
+
       due_payment_last_date: formData.due_payment_last_date,
-      service_price: toDecimalString(formData.service_price),
+
       discount_price: toDecimalString(formData.discount_price),
+
       advance_payment: toDecimalString(formData.advance_payment),
+
       seller_note: formData.seller_note.trim(),
     };
 
@@ -192,41 +311,106 @@ const CreateInvoiceSection = ({ hire }) => {
 
       setCreatedInvoice(invoice);
       setIsOpen(false);
+      setValidationErrors({});
     } catch {
-      // The rejected message is already stored in the Redux slice.
+      // Redux stores the backend error.
     }
   };
 
   if (createdInvoice) {
-    return (
-      <section className="border-t border-border px-6 py-5">
-        <div className="border border-emerald-600 bg-emerald-50 p-5 dark:bg-emerald-950/20">
-          <p className="text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
-            Invoice Created
+    const createdInvoiceActions = (
+      <div className="flex items-start gap-3">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-100">
+          <Check className="h-5 w-5 text-emerald-700" />
+        </div>
+
+        <div>
+          <p className="font-semibold text-emerald-700">
+            Invoice created successfully
           </p>
 
-          <h2 className="mt-2 text-lg font-semibold text-foreground">
-            {createdInvoice.invoice_number || "Invoice created successfully"}
-          </h2>
+          <p className="mt-1 text-sm leading-6 text-gray-600">
+            The invoice is now available for the customer to review.
+          </p>
+        </div>
+      </div>
+    );
 
-          <div className="mt-4 grid gap-4 sm:grid-cols-2">
-            <div>
-              <p className="text-xs uppercase text-muted-foreground">Total</p>
+    return (
+      <InvoiceDocument
+        invoice={createdInvoice}
+        hire={hire}
+        actions={createdInvoiceActions}
+      />
+    );
+  }
 
-              <p className="mt-1 font-semibold">
-                {formatMoney(createdInvoice.total)}
-              </p>
+  if (!isOpen) {
+    return (
+      <section className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-[0_18px_55px_rgba(15,23,42,0.06)]">
+        <div className="border-b border-gray-100 bg-[linear-gradient(135deg,#fff7f8_0%,#ffffff_60%)] px-6 py-7 sm:px-8">
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-red-50">
+                <FilePlus2 className="h-6 w-6 text-[#b60018]" />
+              </div>
+
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#b60018]">
+                  Invoice
+                </p>
+
+                <h2 className="mt-1 text-xl font-semibold text-gray-950">
+                  Create customer invoice
+                </h2>
+
+                <p className="mt-2 max-w-xl text-sm leading-6 text-gray-600">
+                  This accepted hire is ready for invoice creation. Service
+                  price will be calculated from the booked slots.
+                </p>
+              </div>
             </div>
 
-            <div>
-              <p className="text-xs uppercase text-muted-foreground">
-                Due Payment
-              </p>
+            <button
+              type="button"
+              onClick={handleOpen}
+              className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-lg bg-[#b60018] px-6 text-sm font-semibold text-white transition hover:bg-[#960014]"
+            >
+              <FilePlus2 className="h-4 w-4" />
+              Create Invoice
+            </button>
+          </div>
+        </div>
 
-              <p className="mt-1 font-semibold">
-                {formatMoney(createdInvoice.due_payment)}
-              </p>
-            </div>
+        <div className="grid gap-5 px-6 py-6 sm:grid-cols-3 sm:px-8">
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-gray-500">
+              Booked Slots
+            </p>
+
+            <p className="mt-1 text-lg font-semibold text-gray-950">
+              {slotCount}
+            </p>
+          </div>
+
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-gray-500">
+              Total Shift Hours
+            </p>
+
+            <p className="mt-1 text-lg font-semibold text-gray-950">
+              {totalShiftHours} Hours
+            </p>
+          </div>
+
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-gray-500">
+              Service Price
+            </p>
+
+            <p className="mt-1 text-lg font-semibold text-[#b60018]">
+              {formatMoney(servicePrice)}
+            </p>
           </div>
         </div>
       </section>
@@ -234,277 +418,221 @@ const CreateInvoiceSection = ({ hire }) => {
   }
 
   return (
-    <section className="border-t border-border px-6 py-5">
-      {!isOpen ? (
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h2 className="font-semibold">Create Invoice</h2>
+    <section className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-[0_18px_55px_rgba(15,23,42,0.07)]">
+      <header className="border-b border-gray-200 bg-[linear-gradient(135deg,#fff7f8_0%,#ffffff_60%)] px-6 py-6 sm:px-8">
+        <div className="flex items-start justify-between gap-5">
+          <div className="flex items-start gap-4">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-red-50">
+              <FilePlus2 className="h-5 w-5 text-[#b60018]" />
+            </div>
 
-            <p className="mt-1 text-sm text-muted-foreground">
-              This accepted hire is eligible for invoice creation.
-            </p>
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#b60018]">
+                New Invoice
+              </p>
+
+              <h2 className="mt-1 text-xl font-semibold text-gray-950">
+                Create Invoice
+              </h2>
+
+              <p className="mt-1 text-sm text-gray-600">
+                Invoice for{" "}
+                <span className="font-semibold text-gray-900">
+                  {hire?.service?.service_display_name ||
+                    hire?.service?.service_name ||
+                    "this service"}
+                </span>
+              </p>
+            </div>
           </div>
 
           <button
             type="button"
-            onClick={() => {
-              dispatch(clearInvoiceError());
-              setIsOpen(true);
-            }}
-            className="min-h-10 border border-foreground bg-foreground px-5 py-2 text-sm font-semibold text-background transition hover:opacity-85"
+            onClick={handleCancel}
+            disabled={createLoading}
+            aria-label="Close invoice form"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 transition hover:border-red-200 hover:bg-red-50 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Create Invoice
+            <X className="h-4 w-4" />
           </button>
         </div>
-      ) : (
-        <form onSubmit={handleSubmit}>
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <h2 className="text-lg font-semibold">Create Invoice</h2>
+      </header>
 
-              <p className="mt-1 text-sm text-muted-foreground">
-                Invoice for{" "}
-                {hire.service?.service_display_name ||
-                  hire.service?.service_name ||
-                  "this service"}
-              </p>
-            </div>
-
-            <button
-              type="button"
-              disabled={createLoading}
-              onClick={() => {
-                setIsOpen(false);
-                setValidationErrors({});
-                dispatch(clearInvoiceError());
-              }}
-              className="text-sm font-medium text-muted-foreground hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              Cancel
-            </button>
+      <form onSubmit={handleSubmit} className="px-6 py-6 sm:px-8 sm:py-8">
+        {apiError ? (
+          <div
+            role="alert"
+            className="mb-6 border-l-2 border-red-600 bg-red-50 px-4 py-3 text-sm text-red-700"
+          >
+            {getErrorMessage(apiError)}
           </div>
+        ) : null}
 
-          {apiError ? (
-            <div
-              role="alert"
-              className="mt-5 border border-red-500 bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-950/20 dark:text-red-400"
-            >
-              {apiError}
-            </div>
-          ) : null}
-
-          <div className="mt-6 grid gap-5 md:grid-cols-2">
-            <div>
-              <label
-                htmlFor="due_payment_last_date"
-                className="text-sm font-medium"
-              >
-                Due Payment Date
-              </label>
-
-              <input
-                id="due_payment_last_date"
-                name="due_payment_last_date"
-                type="date"
-                min={today}
-                value={formData.due_payment_last_date}
-                onChange={handleChange}
-                disabled={createLoading}
-                aria-invalid={Boolean(validationErrors.due_payment_last_date)}
-                className="mt-2 h-11 w-full border border-input bg-background px-3 text-sm outline-none focus:border-foreground disabled:cursor-not-allowed disabled:opacity-60"
-              />
-
-              {validationErrors.due_payment_last_date ? (
-                <p className="mt-1 text-sm text-red-600">
-                  {validationErrors.due_payment_last_date}
-                </p>
-              ) : null}
-            </div>
-
-            <div>
-              <label htmlFor="service_price" className="text-sm font-medium">
-                Service Price
-              </label>
-
-              <input
-                id="service_price"
-                name="service_price"
-                type="number"
-                min="0.01"
-                step="0.01"
-                inputMode="decimal"
-                value={formData.service_price}
-                onChange={handleChange}
-                disabled={createLoading}
-                aria-invalid={Boolean(validationErrors.service_price)}
-                className="mt-2 h-11 w-full border border-input bg-background px-3 text-sm outline-none focus:border-foreground disabled:cursor-not-allowed disabled:opacity-60"
-              />
-
-              {validationErrors.service_price ? (
-                <p className="mt-1 text-sm text-red-600">
-                  {validationErrors.service_price}
-                </p>
-              ) : null}
-            </div>
-
-            <div>
-              <label htmlFor="discount_price" className="text-sm font-medium">
-                Discount Price
-              </label>
-
-              <input
-                id="discount_price"
-                name="discount_price"
-                type="number"
-                min="0"
-                step="0.01"
-                inputMode="decimal"
-                value={formData.discount_price}
-                onChange={handleChange}
-                disabled={createLoading}
-                aria-invalid={Boolean(validationErrors.discount_price)}
-                className="mt-2 h-11 w-full border border-input bg-background px-3 text-sm outline-none focus:border-foreground disabled:cursor-not-allowed disabled:opacity-60"
-              />
-
-              {validationErrors.discount_price ? (
-                <p className="mt-1 text-sm text-red-600">
-                  {validationErrors.discount_price}
-                </p>
-              ) : null}
-            </div>
-
-            <div>
-              <label htmlFor="advance_payment" className="text-sm font-medium">
-                Advance Payment
-              </label>
-
-              <input
-                id="advance_payment"
-                name="advance_payment"
-                type="number"
-                min="0"
-                step="0.01"
-                inputMode="decimal"
-                value={formData.advance_payment}
-                onChange={handleChange}
-                disabled={createLoading}
-                aria-invalid={Boolean(validationErrors.advance_payment)}
-                className="mt-2 h-11 w-full border border-input bg-background px-3 text-sm outline-none focus:border-foreground disabled:cursor-not-allowed disabled:opacity-60"
-              />
-
-              {validationErrors.advance_payment ? (
-                <p className="mt-1 text-sm text-red-600">
-                  {validationErrors.advance_payment}
-                </p>
-              ) : null}
-            </div>
+        {validationErrors.service_price ? (
+          <div
+            role="alert"
+            className="mb-6 border-l-2 border-red-600 bg-red-50 px-4 py-3 text-sm text-red-700"
+          >
+            {validationErrors.service_price}
           </div>
+        ) : null}
 
-          <div className="mt-5">
-            <label htmlFor="seller_note" className="text-sm font-medium">
-              Seller Note
-            </label>
-
-            <textarea
-              id="seller_note"
-              name="seller_note"
-              rows={4}
-              maxLength={1000}
-              value={formData.seller_note}
+        <div className="grid gap-5 md:grid-cols-2">
+          <FormField
+            id="invoice-due-payment-date"
+            label="Due Payment Date"
+            icon={CalendarDays}
+            error={validationErrors.due_payment_last_date}
+          >
+            <input
+              id="invoice-due-payment-date"
+              name="due_payment_last_date"
+              type="date"
+              min={today}
+              value={formData.due_payment_last_date}
               onChange={handleChange}
               disabled={createLoading}
-              placeholder="Add payment instructions or other invoice information."
-              className="mt-2 w-full resize-y border border-input bg-background px-3 py-3 text-sm outline-none focus:border-foreground disabled:cursor-not-allowed disabled:opacity-60"
+              aria-invalid={Boolean(validationErrors.due_payment_last_date)}
+              className="mt-2 h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none transition focus:border-[#b60018] focus:ring-2 focus:ring-red-100 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:opacity-60"
+            />
+          </FormField>
+
+          <FormField
+            id="invoice-shift-duration"
+            label="Booked Shift Duration"
+            icon={CalendarDays}
+          >
+            <input
+              id="invoice-shift-duration"
+              type="text"
+              value={`${shiftHourPerSlot} Hours × ${slotCount} Slots = ${totalShiftHours} Hours`}
+              readOnly
+              aria-readonly="true"
+              className="mt-2 h-11 w-full cursor-not-allowed rounded-lg border border-gray-200 bg-gray-100 px-3 text-sm text-gray-600 outline-none"
+            />
+          </FormField>
+
+          <FormField
+            id="invoice-discount-price"
+            label="Discount Price"
+            icon={CircleDollarSign}
+            error={validationErrors.discount_price}
+          >
+            <input
+              id="invoice-discount-price"
+              name="discount_price"
+              type="number"
+              min="0"
+              step="0.01"
+              inputMode="decimal"
+              value={formData.discount_price}
+              onChange={handleChange}
+              disabled={createLoading}
+              aria-invalid={Boolean(validationErrors.discount_price)}
+              className="mt-2 h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none transition focus:border-[#b60018] focus:ring-2 focus:ring-red-100 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:opacity-60"
+            />
+          </FormField>
+
+          <FormField
+            id="invoice-advance-payment"
+            label="Advance Payment"
+            icon={CircleDollarSign}
+            error={validationErrors.advance_payment}
+          >
+            <input
+              id="invoice-advance-payment"
+              name="advance_payment"
+              type="number"
+              min="0"
+              step="0.01"
+              inputMode="decimal"
+              value={formData.advance_payment}
+              onChange={handleChange}
+              disabled={createLoading}
+              aria-invalid={Boolean(validationErrors.advance_payment)}
+              className="mt-2 h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none transition focus:border-[#b60018] focus:ring-2 focus:ring-red-100 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:opacity-60"
+            />
+          </FormField>
+        </div>
+
+        <div className="mt-5">
+          <label
+            htmlFor="invoice-seller-note"
+            className="text-sm font-semibold text-gray-800"
+          >
+            Seller Note
+          </label>
+
+          <textarea
+            id="invoice-seller-note"
+            name="seller_note"
+            rows={4}
+            maxLength={1000}
+            value={formData.seller_note}
+            onChange={handleChange}
+            disabled={createLoading}
+            placeholder="Add payment instructions or other invoice information."
+            className="mt-2 w-full resize-y rounded-lg border border-gray-300 bg-white px-3 py-3 text-sm text-gray-950 outline-none transition focus:border-[#b60018] focus:ring-2 focus:ring-red-100 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:opacity-60"
+          />
+        </div>
+
+        <div className="mt-7 rounded-2xl border border-gray-200 bg-gray-50 p-4 sm:p-5">
+          <div>
+            <h3 className="font-semibold text-gray-950">Financial Preview</h3>
+
+            <p className="mt-1 text-xs leading-5 text-gray-500">
+              Service price is calculated from the booked slots. Final values
+              will come from the backend.
+            </p>
+          </div>
+
+          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+            <PreviewItem
+              label="Service Price"
+              value={financialPreview.servicePrice}
+            />
+
+            <PreviewItem
+              label="Discount"
+              value={financialPreview.discountPrice}
+            />
+
+            <PreviewItem label="Subtotal" value={financialPreview.subtotal} />
+
+            <PreviewItem
+              label="Advance"
+              value={financialPreview.advancePayment}
+            />
+
+            <PreviewItem
+              label="Due Payment"
+              value={financialPreview.duePayment}
+              emphasized
             />
           </div>
+        </div>
 
-          <div className="mt-6 border border-border">
-            <div className="border-b border-border px-4 py-3">
-              <h3 className="font-semibold">Financial Preview</h3>
+        <div className="mt-7 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+          <button
+            type="button"
+            onClick={handleCancel}
+            disabled={createLoading}
+            className="h-11 rounded-lg border border-gray-300 bg-white px-6 text-sm font-semibold text-gray-800 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            Cancel
+          </button>
 
-              <p className="mt-1 text-xs text-muted-foreground">
-                The backend response remains the authoritative financial
-                calculation.
-              </p>
-            </div>
+          <button
+            type="submit"
+            disabled={createLoading}
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[#b60018] px-6 text-sm font-semibold text-white transition hover:bg-[#960014] disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <Save className="h-4 w-4" />
 
-            <div className="grid grid-cols-2 gap-5 p-4 md:grid-cols-5">
-              <div>
-                <p className="text-xs uppercase text-muted-foreground">
-                  Service Price
-                </p>
-
-                <p className="mt-1 font-medium">
-                  {formatMoney(financialPreview.servicePrice)}
-                </p>
-              </div>
-
-              <div>
-                <p className="text-xs uppercase text-muted-foreground">
-                  Discount
-                </p>
-
-                <p className="mt-1 font-medium">
-                  {formatMoney(financialPreview.discountPrice)}
-                </p>
-              </div>
-
-              <div>
-                <p className="text-xs uppercase text-muted-foreground">Total</p>
-
-                <p className="mt-1 font-semibold">
-                  {formatMoney(financialPreview.total)}
-                </p>
-              </div>
-
-              <div>
-                <p className="text-xs uppercase text-muted-foreground">
-                  Advance
-                </p>
-
-                <p className="mt-1 font-medium">
-                  {formatMoney(financialPreview.advancePayment)}
-                </p>
-              </div>
-
-              <div>
-                <p className="text-xs uppercase text-muted-foreground">
-                  Due Payment
-                </p>
-
-                <p className="mt-1 font-semibold">
-                  {formatMoney(financialPreview.duePayment)}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-6 flex justify-end gap-3">
-            <button
-              type="button"
-              disabled={createLoading}
-              onClick={() => {
-                setIsOpen(false);
-                setValidationErrors({});
-                dispatch(clearInvoiceError());
-              }}
-              className="min-h-10 border border-border px-5 py-2 text-sm font-semibold transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              Cancel
-            </button>
-
-            <button
-              type="submit"
-              disabled={createLoading}
-              className="min-h-10 border border-foreground bg-foreground px-5 py-2 text-sm font-semibold text-background transition hover:opacity-85 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {createLoading
-                ? "Creating Invoice..."
-                : "Confirm & Create Invoice"}
-            </button>
-          </div>
-        </form>
-      )}
+            {createLoading ? "Creating Invoice..." : "Confirm & Create Invoice"}
+          </button>
+        </div>
+      </form>
     </section>
   );
 };

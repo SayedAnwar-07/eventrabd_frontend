@@ -1,5 +1,11 @@
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import {
+  CalendarDays,
+  CircleDollarSign,
+  FilePenLine,
+  Save,
+} from "lucide-react";
 
 import {
   Dialog,
@@ -22,7 +28,9 @@ const getLocalToday = () => {
   const today = new Date();
 
   const year = today.getFullYear();
+
   const month = String(today.getMonth() + 1).padStart(2, "0");
+
   const day = String(today.getDate()).padStart(2, "0");
 
   return `${year}-${month}-${day}`;
@@ -30,9 +38,13 @@ const getLocalToday = () => {
 
 const getInitialFormData = (invoice) => ({
   due_payment_last_date: invoice?.due_payment_last_date || "",
+
   service_price: invoice?.service_price || "",
+
   discount_price: invoice?.discount_price || "0.00",
+
   advance_payment: invoice?.advance_payment || "0.00",
+
   seller_note: invoice?.seller_note || "",
 });
 
@@ -61,10 +73,78 @@ const formatMoney = (value) => {
   })}`;
 };
 
+const getErrorMessage = (error) => {
+  if (!error) {
+    return "";
+  }
+
+  if (typeof error === "string") {
+    return error;
+  }
+
+  if (typeof error?.detail === "string") {
+    return error.detail;
+  }
+
+  if (typeof error?.message === "string") {
+    return error.message;
+  }
+
+  return "Unable to update the invoice.";
+};
+
+const FormField = ({ id, label, icon: Icon, error, children }) => {
+  return (
+    <div>
+      <label
+        htmlFor={id}
+        className="flex items-center gap-2 text-sm font-semibold text-gray-800"
+      >
+        {Icon ? <Icon className="h-4 w-4 text-[#b60018]" /> : null}
+
+        {label}
+      </label>
+
+      {children}
+
+      {error ? <p className="mt-1.5 text-sm text-red-600">{error}</p> : null}
+    </div>
+  );
+};
+
+const PreviewItem = ({ label, value, emphasized = false }) => {
+  return (
+    <div
+      className={
+        emphasized
+          ? "rounded-xl bg-[#b60018] p-4 text-white"
+          : "rounded-xl border border-gray-200 bg-white p-4"
+      }
+    >
+      <p
+        className={`text-[10px] font-bold uppercase tracking-[0.12em] ${
+          emphasized ? "text-red-100" : "text-gray-500"
+        }`}
+      >
+        {label}
+      </p>
+
+      <p
+        className={`mt-1 ${
+          emphasized ? "text-lg font-bold" : "font-semibold text-gray-950"
+        }`}
+      >
+        {formatMoney(value)}
+      </p>
+    </div>
+  );
+};
+
 const EditInvoiceDialog = ({ invoice }) => {
   const dispatch = useDispatch();
 
   const updateLoading = useSelector(selectInvoiceUpdateLoading);
+
   const apiError = useSelector(selectInvoiceError);
 
   const [open, setOpen] = useState(false);
@@ -72,15 +152,19 @@ const EditInvoiceDialog = ({ invoice }) => {
   const [formData, setFormData] = useState(() => getInitialFormData(invoice));
 
   const [validationErrors, setValidationErrors] = useState({});
+
   const [localMessage, setLocalMessage] = useState("");
 
   const today = getLocalToday();
 
   const servicePrice = parseMoney(formData.service_price);
+
   const discountPrice = parseMoney(formData.discount_price);
+
   const advancePayment = parseMoney(formData.advance_payment);
 
   const previewTotal = Math.max(servicePrice - discountPrice, 0);
+
   const previewDuePayment = Math.max(previewTotal - advancePayment, 0);
 
   const handleOpenChange = (nextOpen) => {
@@ -90,6 +174,7 @@ const EditInvoiceDialog = ({ invoice }) => {
 
     if (nextOpen) {
       setFormData(getInitialFormData(invoice));
+
       setValidationErrors({});
       setLocalMessage("");
 
@@ -124,7 +209,9 @@ const EditInvoiceDialog = ({ invoice }) => {
     const errors = {};
 
     const currentServicePrice = Number(formData.service_price);
+
     const currentDiscountPrice = Number(formData.discount_price);
+
     const currentAdvancePayment = Number(formData.advance_payment);
 
     const calculatedTotal = currentServicePrice - currentDiscountPrice;
@@ -207,6 +294,7 @@ const EditInvoiceDialog = ({ invoice }) => {
     }
 
     const nextSellerNote = formData.seller_note.trim();
+
     const currentSellerNote = String(invoice?.seller_note || "").trim();
 
     if (nextSellerNote !== currentSellerNote) {
@@ -226,11 +314,13 @@ const EditInvoiceDialog = ({ invoice }) => {
 
     if (!invoice?.id) {
       setLocalMessage("Invoice ID is missing.");
+
       return;
     }
 
     if (!invoice?.can_edit) {
       setLocalMessage("This invoice can no longer be edited.");
+
       return;
     }
 
@@ -242,6 +332,7 @@ const EditInvoiceDialog = ({ invoice }) => {
 
     if (Object.keys(changedFields).length === 0) {
       setLocalMessage("No invoice changes were detected.");
+
       return;
     }
 
@@ -257,7 +348,7 @@ const EditInvoiceDialog = ({ invoice }) => {
       setValidationErrors({});
       setLocalMessage("");
     } catch {
-      // Redux stores and displays the backend error.
+      // Redux stores the backend error.
     }
   };
 
@@ -267,51 +358,58 @@ const EditInvoiceDialog = ({ invoice }) => {
         <button
           type="button"
           disabled={!invoice?.can_edit}
-          className="min-h-10 border border-foreground bg-foreground px-5 py-2 text-sm font-semibold text-background transition hover:opacity-85 disabled:cursor-not-allowed disabled:border-border disabled:bg-muted disabled:text-muted-foreground disabled:opacity-60"
+          className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[#b60018] px-6 text-sm font-semibold text-white transition hover:bg-[#960014] disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-500"
         >
+          <FilePenLine className="h-4 w-4" />
           Edit Invoice
         </button>
       </DialogTrigger>
 
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>Edit Invoice</DialogTitle>
+      <DialogContent className="max-h-[92vh] overflow-y-auto border-gray-200 bg-white p-0 sm:max-w-3xl">
+        <DialogHeader className="border-b border-gray-200 px-6 py-5 text-left sm:px-8">
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-red-50">
+            <FilePenLine className="h-5 w-5 text-[#b60018]" />
+          </div>
 
-          <DialogDescription>
+          <DialogTitle className="pt-2 text-xl text-gray-950">
+            Edit Invoice
+          </DialogTitle>
+
+          <DialogDescription className="leading-6 text-gray-600">
             Update payment information for{" "}
-            {invoice?.invoice_number || "this invoice"}. Only changed fields
-            will be submitted.
+            <span className="font-semibold text-gray-900">
+              {invoice?.invoice_number || "this invoice"}
+            </span>
+            . Only changed fields will be submitted.
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="mt-2">
+        <form onSubmit={handleSubmit} className="px-6 py-6 sm:px-8">
           {apiError ? (
             <div
               role="alert"
-              className="mb-5 border border-red-500 bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-950/20 dark:text-red-400"
+              className="mb-5 border-l-2 border-red-600 bg-red-50 px-4 py-3 text-sm text-red-700"
             >
-              {apiError}
+              {getErrorMessage(apiError)}
             </div>
           ) : null}
 
           {localMessage ? (
             <div
               role="status"
-              className="mb-5 border border-amber-500 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:bg-amber-950/20 dark:text-amber-400"
+              className="mb-5 border-l-2 border-amber-600 bg-amber-50 px-4 py-3 text-sm text-amber-800"
             >
               {localMessage}
             </div>
           ) : null}
 
           <div className="grid gap-5 md:grid-cols-2">
-            <div>
-              <label
-                htmlFor={`invoice-due-date-${invoice?.id}`}
-                className="text-sm font-medium"
-              >
-                Due Payment Date
-              </label>
-
+            <FormField
+              id={`invoice-due-date-${invoice?.id}`}
+              label="Due Payment Date"
+              icon={CalendarDays}
+              error={validationErrors.due_payment_last_date}
+            >
               <input
                 id={`invoice-due-date-${invoice?.id}`}
                 name="due_payment_last_date"
@@ -321,24 +419,16 @@ const EditInvoiceDialog = ({ invoice }) => {
                 onChange={handleChange}
                 disabled={updateLoading}
                 aria-invalid={Boolean(validationErrors.due_payment_last_date)}
-                className="mt-2 h-11 w-full border border-input bg-background px-3 text-sm outline-none focus:border-foreground disabled:cursor-not-allowed disabled:opacity-60"
+                className="mt-2 h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none transition focus:border-[#b60018] focus:ring-2 focus:ring-red-100 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:opacity-60"
               />
+            </FormField>
 
-              {validationErrors.due_payment_last_date ? (
-                <p className="mt-1 text-sm text-red-600">
-                  {validationErrors.due_payment_last_date}
-                </p>
-              ) : null}
-            </div>
-
-            <div>
-              <label
-                htmlFor={`invoice-service-price-${invoice?.id}`}
-                className="text-sm font-medium"
-              >
-                Service Price
-              </label>
-
+            <FormField
+              id={`invoice-service-price-${invoice?.id}`}
+              label="Service Price"
+              icon={CircleDollarSign}
+              error={validationErrors.service_price}
+            >
               <input
                 id={`invoice-service-price-${invoice?.id}`}
                 name="service_price"
@@ -350,24 +440,16 @@ const EditInvoiceDialog = ({ invoice }) => {
                 onChange={handleChange}
                 disabled={updateLoading}
                 aria-invalid={Boolean(validationErrors.service_price)}
-                className="mt-2 h-11 w-full border border-input bg-background px-3 text-sm outline-none focus:border-foreground disabled:cursor-not-allowed disabled:opacity-60"
+                className="mt-2 h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none transition focus:border-[#b60018] focus:ring-2 focus:ring-red-100 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:opacity-60"
               />
+            </FormField>
 
-              {validationErrors.service_price ? (
-                <p className="mt-1 text-sm text-red-600">
-                  {validationErrors.service_price}
-                </p>
-              ) : null}
-            </div>
-
-            <div>
-              <label
-                htmlFor={`invoice-discount-${invoice?.id}`}
-                className="text-sm font-medium"
-              >
-                Discount Price
-              </label>
-
+            <FormField
+              id={`invoice-discount-${invoice?.id}`}
+              label="Discount Price"
+              icon={CircleDollarSign}
+              error={validationErrors.discount_price}
+            >
               <input
                 id={`invoice-discount-${invoice?.id}`}
                 name="discount_price"
@@ -379,24 +461,16 @@ const EditInvoiceDialog = ({ invoice }) => {
                 onChange={handleChange}
                 disabled={updateLoading}
                 aria-invalid={Boolean(validationErrors.discount_price)}
-                className="mt-2 h-11 w-full border border-input bg-background px-3 text-sm outline-none focus:border-foreground disabled:cursor-not-allowed disabled:opacity-60"
+                className="mt-2 h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none transition focus:border-[#b60018] focus:ring-2 focus:ring-red-100 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:opacity-60"
               />
+            </FormField>
 
-              {validationErrors.discount_price ? (
-                <p className="mt-1 text-sm text-red-600">
-                  {validationErrors.discount_price}
-                </p>
-              ) : null}
-            </div>
-
-            <div>
-              <label
-                htmlFor={`invoice-advance-${invoice?.id}`}
-                className="text-sm font-medium"
-              >
-                Advance Payment
-              </label>
-
+            <FormField
+              id={`invoice-advance-${invoice?.id}`}
+              label="Advance Payment"
+              icon={CircleDollarSign}
+              error={validationErrors.advance_payment}
+            >
               <input
                 id={`invoice-advance-${invoice?.id}`}
                 name="advance_payment"
@@ -408,21 +482,15 @@ const EditInvoiceDialog = ({ invoice }) => {
                 onChange={handleChange}
                 disabled={updateLoading}
                 aria-invalid={Boolean(validationErrors.advance_payment)}
-                className="mt-2 h-11 w-full border border-input bg-background px-3 text-sm outline-none focus:border-foreground disabled:cursor-not-allowed disabled:opacity-60"
+                className="mt-2 h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none transition focus:border-[#b60018] focus:ring-2 focus:ring-red-100 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:opacity-60"
               />
-
-              {validationErrors.advance_payment ? (
-                <p className="mt-1 text-sm text-red-600">
-                  {validationErrors.advance_payment}
-                </p>
-              ) : null}
-            </div>
+            </FormField>
           </div>
 
           <div className="mt-5">
             <label
               htmlFor={`invoice-seller-note-${invoice?.id}`}
-              className="text-sm font-medium"
+              className="text-sm font-semibold text-gray-800"
             >
               Seller Note
             </label>
@@ -431,76 +499,47 @@ const EditInvoiceDialog = ({ invoice }) => {
               id={`invoice-seller-note-${invoice?.id}`}
               name="seller_note"
               rows={4}
+              maxLength={1000}
               value={formData.seller_note}
               onChange={handleChange}
               disabled={updateLoading}
               placeholder="Add payment instructions or invoice information."
-              className="mt-2 w-full resize-y border border-input bg-background px-3 py-3 text-sm outline-none focus:border-foreground disabled:cursor-not-allowed disabled:opacity-60"
+              className="mt-2 w-full resize-y rounded-lg border border-gray-300 bg-white px-3 py-3 text-sm text-gray-950 outline-none transition focus:border-[#b60018] focus:ring-2 focus:ring-red-100 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:opacity-60"
             />
           </div>
 
-          <div className="mt-6 border border-border">
-            <div className="border-b border-border px-4 py-3">
-              <h3 className="font-semibold">Financial Preview</h3>
+          <div className="mt-6 rounded-2xl border border-gray-200 bg-gray-50 p-4 sm:p-5">
+            <div>
+              <h3 className="font-semibold text-gray-950">Financial Preview</h3>
 
-              <p className="mt-1 text-xs text-muted-foreground">
-                Final totals will come from the backend.
+              <p className="mt-1 text-xs text-gray-500">
+                Final totals will be calculated and returned by the backend.
               </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-5 p-4 sm:grid-cols-3">
-              <div>
-                <p className="text-xs uppercase text-muted-foreground">
-                  Service Price
-                </p>
+            <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
+              <PreviewItem label="Service Price" value={servicePrice} />
 
-                <p className="mt-1 font-medium">{formatMoney(servicePrice)}</p>
-              </div>
+              <PreviewItem label="Discount" value={discountPrice} />
 
-              <div>
-                <p className="text-xs uppercase text-muted-foreground">
-                  Discount
-                </p>
+              <PreviewItem label="Subtotal" value={previewTotal} />
 
-                <p className="mt-1 font-medium">{formatMoney(discountPrice)}</p>
-              </div>
+              <PreviewItem label="Advance" value={advancePayment} />
 
-              <div>
-                <p className="text-xs uppercase text-muted-foreground">Total</p>
-
-                <p className="mt-1 font-semibold">
-                  {formatMoney(previewTotal)}
-                </p>
-              </div>
-
-              <div>
-                <p className="text-xs uppercase text-muted-foreground">
-                  Advance
-                </p>
-
-                <p className="mt-1 font-medium">
-                  {formatMoney(advancePayment)}
-                </p>
-              </div>
-
-              <div>
-                <p className="text-xs uppercase text-muted-foreground">
-                  Due Payment
-                </p>
-
-                <p className="mt-1 font-semibold">
-                  {formatMoney(previewDuePayment)}
-                </p>
-              </div>
+              <PreviewItem
+                label="Due Payment"
+                value={previewDuePayment}
+                emphasized
+              />
             </div>
           </div>
 
-          <div className="mt-6 flex justify-end gap-3">
+          <div className="mt-7 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
             <button
               type="button"
               disabled={updateLoading}
               onClick={() => handleOpenChange(false)}
-              className="min-h-10 border border-border px-5 py-2 text-sm font-semibold transition hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
+              className="h-11 rounded-lg border border-gray-300 bg-white px-6 text-sm font-semibold text-gray-800 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
             >
               Cancel
             </button>
@@ -508,8 +547,10 @@ const EditInvoiceDialog = ({ invoice }) => {
             <button
               type="submit"
               disabled={updateLoading || !invoice?.can_edit}
-              className="min-h-10 border border-foreground bg-foreground px-5 py-2 text-sm font-semibold text-background transition hover:opacity-85 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[#b60018] px-6 text-sm font-semibold text-white transition hover:bg-[#960014] disabled:cursor-not-allowed disabled:opacity-60"
             >
+              <Save className="h-4 w-4" />
+
               {updateLoading ? "Saving Changes..." : "Save Changes"}
             </button>
           </div>

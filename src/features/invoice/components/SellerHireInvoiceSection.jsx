@@ -1,7 +1,11 @@
-import { useEffect } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { AlertCircle, Check, Clock3, FileCheck2, X } from "lucide-react";
 
 import CreateInvoiceSection from "./CreateInvoiceSection";
+import DownloadInvoiceButton from "./DownloadInvoiceButton";
+import EditInvoiceDialog from "./EditInvoiceDialog";
+import InvoiceDocument from "./InvoiceDocument";
 
 import {
   fetchInvoices,
@@ -9,80 +13,6 @@ import {
   selectInvoiceLoading,
   selectInvoices,
 } from "@/store/features/invoice/invoiceSlice";
-import EditInvoiceDialog from "./EditInvoiceDialog";
-
-const PAYMENT_STATUS_CONFIG = {
-  paid: {
-    label: "Paid",
-    className:
-      "border-emerald-600 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/20 dark:text-emerald-400",
-  },
-  partially_paid: {
-    label: "Partially Paid",
-    className:
-      "border-amber-600 bg-amber-50 text-amber-700 dark:bg-amber-950/20 dark:text-amber-400",
-  },
-  unpaid: {
-    label: "Unpaid",
-    className:
-      "border-slate-500 bg-slate-50 text-slate-700 dark:bg-slate-950/20 dark:text-slate-300",
-  },
-  overdue: {
-    label: "Overdue",
-    className:
-      "border-red-600 bg-red-50 text-red-700 dark:bg-red-950/20 dark:text-red-400",
-  },
-};
-
-const formatMoney = (value) => {
-  if (value === null || value === undefined || value === "") {
-    return "৳0.00";
-  }
-
-  const amount = Number(value);
-
-  if (!Number.isFinite(amount)) {
-    return `৳${value}`;
-  }
-
-  return `৳${amount.toLocaleString("en-US", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
-};
-
-const formatDate = (value) => {
-  if (!value) {
-    return "Not available";
-  }
-
-  const date = new Date(`${value}T00:00:00`);
-
-  if (Number.isNaN(date.getTime())) {
-    return "Invalid date";
-  }
-
-  return new Intl.DateTimeFormat("en-US", {
-    dateStyle: "medium",
-  }).format(date);
-};
-
-const formatDateTime = (value) => {
-  if (!value) {
-    return "Not available";
-  }
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return "Invalid date";
-  }
-
-  return new Intl.DateTimeFormat("en-US", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(date);
-};
 
 const getInvoiceHireId = (invoice) => {
   if (!invoice) {
@@ -96,193 +26,55 @@ const getInvoiceHireId = (invoice) => {
   return invoice.hire ?? invoice.hire_id ?? null;
 };
 
-const PaymentStatusBadge = ({ status }) => {
-  const config = PAYMENT_STATUS_CONFIG[status] ?? PAYMENT_STATUS_CONFIG.unpaid;
+const getErrorMessage = (error) => {
+  if (!error) {
+    return "";
+  }
 
-  return (
-    <span
-      className={`inline-flex min-h-7 items-center border px-3 py-1 text-xs font-semibold ${config.className}`}
-    >
-      {config.label}
-    </span>
-  );
+  if (typeof error === "string") {
+    return error;
+  }
+
+  if (typeof error?.detail === "string") {
+    return error.detail;
+  }
+
+  if (typeof error?.message === "string") {
+    return error.message;
+  }
+
+  return "Unable to load invoice information.";
 };
 
-const FinancialItem = ({ label, value, emphasized = false }) => {
+const InvoiceLoadingState = () => {
   return (
-    <div>
-      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-        {label}
-      </p>
+    <section className="animate-pulse overflow-hidden rounded-2xl border border-gray-200 bg-white">
+      <div className="px-6 py-10 sm:px-10">
+        <div className="mx-auto h-8 w-44 rounded bg-gray-200" />
 
-      <p
-        className={`mt-1 ${
-          emphasized ? "text-lg font-semibold" : "text-sm font-medium"
-        }`}
-      >
-        {formatMoney(value)}
-      </p>
-    </div>
-  );
-};
+        <div className="mt-10 grid gap-8 sm:grid-cols-3">
+          <div className="space-y-3">
+            <div className="h-3 w-20 rounded bg-gray-200" />
+            <div className="h-3 w-full rounded bg-gray-100" />
+            <div className="h-3 w-4/5 rounded bg-gray-100" />
+          </div>
 
-const ExistingInvoiceDetails = ({ invoice }) => {
-  const customerName =
-    invoice.customer?.full_name ||
-    invoice.customer_name_snapshot ||
-    "Not available";
+          <div className="space-y-3">
+            <div className="h-3 w-20 rounded bg-gray-200" />
+            <div className="h-3 w-full rounded bg-gray-100" />
+            <div className="h-3 w-4/5 rounded bg-gray-100" />
+          </div>
 
-  const sellerName =
-    invoice.seller?.full_name ||
-    invoice.seller_name_snapshot ||
-    "Not available";
-
-  const brandName =
-    invoice.brand?.brand_name || invoice.brand_name_snapshot || "Not available";
-
-  const serviceName =
-    invoice.service?.service_display_name ||
-    invoice.service?.service_name ||
-    invoice.service_name_snapshot ||
-    "Not available";
-
-  return (
-    <section className="border-t border-border">
-      <div className="flex flex-col gap-4 border-b border-border px-6 py-5 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-            Existing Invoice
-          </p>
-
-          <h2 className="mt-2 text-xl font-semibold">
-            {invoice.invoice_number || "Invoice details"}
-          </h2>
-
-          <p className="mt-1 text-sm text-muted-foreground">
-            Created {formatDateTime(invoice.created_at)}
-          </p>
+          <div className="space-y-3">
+            <div className="h-3 w-20 rounded bg-gray-200" />
+            <div className="h-3 w-full rounded bg-gray-100" />
+            <div className="h-3 w-4/5 rounded bg-gray-100" />
+          </div>
         </div>
 
-        <PaymentStatusBadge status={invoice.payment_status} />
-      </div>
+        <div className="mt-10 h-40 rounded bg-gray-100" />
 
-      {invoice.is_overdue ? (
-        <div className="border-b border-red-600 bg-red-50 px-6 py-4 text-sm text-red-700 dark:bg-red-950/20 dark:text-red-400">
-          This invoice is overdue. The payment due date was{" "}
-          <strong>{formatDate(invoice.due_payment_last_date)}</strong>.
-        </div>
-      ) : null}
-
-      {!invoice.is_overdue && invoice.payment_status !== "paid" ? (
-        <div className="border-b border-amber-600 bg-amber-50 px-6 py-4 text-sm text-amber-800 dark:bg-amber-950/20 dark:text-amber-400">
-          Remaining payment should be completed by{" "}
-          <strong>{formatDate(invoice.due_payment_last_date)}</strong>.
-        </div>
-      ) : null}
-
-      <div className="grid gap-6 px-6 py-5 md:grid-cols-2">
-        <div>
-          <p className="text-xs uppercase text-muted-foreground">Customer</p>
-
-          <p className="mt-1 font-medium">{customerName}</p>
-        </div>
-
-        <div>
-          <p className="text-xs uppercase text-muted-foreground">Seller</p>
-
-          <p className="mt-1 font-medium">{sellerName}</p>
-        </div>
-
-        <div>
-          <p className="text-xs uppercase text-muted-foreground">Brand</p>
-
-          <p className="mt-1 font-medium">{brandName}</p>
-        </div>
-
-        <div>
-          <p className="text-xs uppercase text-muted-foreground">Service</p>
-
-          <p className="mt-1 font-medium capitalize">{serviceName}</p>
-        </div>
-
-        <div>
-          <p className="text-xs uppercase text-muted-foreground">Issue Date</p>
-
-          <p className="mt-1 font-medium">{formatDate(invoice.issue_date)}</p>
-        </div>
-
-        <div>
-          <p className="text-xs uppercase text-muted-foreground">
-            Due Payment Date
-          </p>
-
-          <p className="mt-1 font-medium">
-            {formatDate(invoice.due_payment_last_date)}
-          </p>
-        </div>
-      </div>
-
-      <div className="border-t border-border px-6 py-5">
-        <h3 className="font-semibold">Financial Summary</h3>
-
-        <div className="mt-5 grid grid-cols-2 gap-6 md:grid-cols-3 lg:grid-cols-6">
-          <FinancialItem label="Service Price" value={invoice.service_price} />
-
-          <FinancialItem label="Discount" value={invoice.discount_price} />
-
-          <FinancialItem
-            label="Subtotal"
-            value={invoice.sub_total ?? invoice.service_price}
-          />
-
-          <FinancialItem label="Total" value={invoice.total} emphasized />
-
-          <FinancialItem label="Advance" value={invoice.advance_payment} />
-
-          <FinancialItem
-            label="Due Payment"
-            value={invoice.due_payment}
-            emphasized
-          />
-        </div>
-      </div>
-
-      {invoice.seller_note ? (
-        <div className="border-t border-border px-6 py-5">
-          <p className="text-xs uppercase text-muted-foreground">
-            Invoice Note
-          </p>
-
-          <p className="mt-2 whitespace-pre-wrap text-sm">
-            {invoice.seller_note}
-          </p>
-        </div>
-      ) : null}
-
-      <div className="flex flex-col gap-3 border-t border-border px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          {invoice.can_edit ? (
-            <p className="text-sm text-muted-foreground">
-              This invoice can still be edited before its due date.
-            </p>
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              This invoice can no longer be edited.
-            </p>
-          )}
-        </div>
-
-        {invoice.can_edit ? (
-          <EditInvoiceDialog invoice={invoice} />
-        ) : (
-          <button
-            type="button"
-            disabled
-            className="min-h-10 cursor-not-allowed border border-border px-5 py-2 text-sm font-semibold text-muted-foreground opacity-60"
-          >
-            Editing Disabled
-          </button>
-        )}
+        <div className="ml-auto mt-10 h-48 max-w-sm rounded bg-gray-100" />
       </div>
     </section>
   );
@@ -291,62 +83,186 @@ const ExistingInvoiceDetails = ({ invoice }) => {
 const SellerHireInvoiceSection = ({ hire }) => {
   const dispatch = useDispatch();
 
+  const invoiceDocumentRef = useRef(null);
+
   const invoices = useSelector(selectInvoices);
   const loading = useSelector(selectInvoiceLoading);
   const error = useSelector(selectInvoiceError);
 
-  useEffect(() => {
-    dispatch(fetchInvoices());
-  }, [dispatch]);
-
   const hireId = hire?.id;
 
-  const existingInvoice =
-    hireId && Array.isArray(invoices)
-      ? (invoices.find(
-          (invoice) => String(getInvoiceHireId(invoice)) === String(hireId),
-        ) ?? null)
-      : null;
+  useEffect(() => {
+    if (hireId) {
+      dispatch(fetchInvoices());
+    }
+  }, [dispatch, hireId]);
+
+  const existingInvoice = useMemo(() => {
+    if (!hireId || !Array.isArray(invoices)) {
+      return null;
+    }
+
+    return (
+      invoices.find((invoice) => {
+        return String(getInvoiceHireId(invoice)) === String(hireId);
+      }) || null
+    );
+  }, [invoices, hireId]);
 
   const canCreateInvoice =
     hire?.status === "accepted" &&
     hire?.is_accept === true &&
     hire?.can_create_invoice === true;
 
-  if (loading && invoices.length === 0) {
+  if (loading && !existingInvoice) {
+    return <InvoiceLoadingState />;
+  }
+
+  if (existingInvoice) {
+    const customerAgreed = existingInvoice.customer_agreed === true;
+
+    const customerDisagreed = existingInvoice.customer_agreed === false;
+
+    const customerDecisionSubmitted =
+      existingInvoice.customer_agreed !== null &&
+      existingInvoice.customer_agreed !== undefined;
+
+    const invoiceActions = (
+      <div>
+        {error ? (
+          <div
+            role="alert"
+            className="mb-5 flex items-start gap-3 border-l-2 border-red-600 bg-red-50 px-4 py-3"
+          >
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-600" />
+
+            <p className="text-sm text-red-700">{getErrorMessage(error)}</p>
+          </div>
+        ) : null}
+
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            {customerAgreed ? (
+              <div className="flex items-start gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-100">
+                  <Check className="h-5 w-5 text-emerald-700" />
+                </div>
+
+                <div>
+                  <p className="font-semibold text-emerald-700">
+                    Customer agreed with this invoice
+                  </p>
+
+                  <p className="mt-1 text-sm leading-6 text-gray-600">
+                    The customer has reviewed and accepted the invoice. The PDF
+                    is now available for download.
+                  </p>
+                </div>
+              </div>
+            ) : null}
+
+            {customerDisagreed ? (
+              <div className="flex items-start gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-100">
+                  <X className="h-5 w-5 text-red-700" />
+                </div>
+
+                <div>
+                  <p className="font-semibold text-red-700">
+                    Customer disagreed with this invoice
+                  </p>
+
+                  <p className="mt-1 text-sm leading-6 text-gray-600">
+                    The customer has rejected the current invoice information.
+                  </p>
+                </div>
+              </div>
+            ) : null}
+
+            {!customerDecisionSubmitted ? (
+              <div className="flex items-start gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-100">
+                  <Clock3 className="h-5 w-5 text-amber-700" />
+                </div>
+
+                <div>
+                  <p className="font-semibold text-gray-950">
+                    Waiting for customer decision
+                  </p>
+
+                  <p className="mt-1 text-sm leading-6 text-gray-600">
+                    The customer can review and agree or disagree with this
+                    invoice.
+                  </p>
+                </div>
+              </div>
+            ) : null}
+          </div>
+
+          <div className="flex shrink-0 flex-col gap-3 sm:flex-row sm:items-center">
+            {customerAgreed ? (
+              <DownloadInvoiceButton
+                targetRef={invoiceDocumentRef}
+                invoiceNumber={existingInvoice.invoice_number}
+              />
+            ) : null}
+
+            {!customerDecisionSubmitted && existingInvoice.can_edit ? (
+              <EditInvoiceDialog invoice={existingInvoice} />
+            ) : null}
+
+            {!customerAgreed &&
+            (!existingInvoice.can_edit || customerDecisionSubmitted) ? (
+              <button
+                type="button"
+                disabled
+                className="inline-flex h-11 cursor-not-allowed items-center justify-center gap-2 rounded-lg border border-gray-300 bg-gray-100 px-6 text-sm font-semibold text-gray-500 opacity-70"
+              >
+                <FileCheck2 className="h-4 w-4" />
+                Editing Disabled
+              </button>
+            ) : null}
+          </div>
+        </div>
+      </div>
+    );
+
     return (
-      <div className="border-t border-border px-6 py-5">
-        <p className="text-sm text-muted-foreground">
-          Loading invoice information...
-        </p>
+      <InvoiceDocument
+        invoice={existingInvoice}
+        hire={hire}
+        actions={invoiceActions}
+        documentRef={invoiceDocumentRef}
+      />
+    );
+  }
+
+  if (error && !canCreateInvoice) {
+    return (
+      <div
+        role="alert"
+        className="rounded-xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700"
+      >
+        {getErrorMessage(error)}
       </div>
     );
   }
 
-  if (existingInvoice) {
-    return <ExistingInvoiceDetails invoice={existingInvoice} />;
+  if (canCreateInvoice) {
+    return <CreateInvoiceSection key={hireId} hire={hire} />;
   }
 
   return (
-    <>
-      {error ? (
-        <div className="border-t border-amber-600 bg-amber-50 px-6 py-4 text-sm text-amber-800 dark:bg-amber-950/20 dark:text-amber-400">
-          Existing invoice information could not be loaded. The backend will
-          still prevent duplicate invoice creation.
-        </div>
-      ) : null}
+    <div className="rounded-xl border border-gray-200 bg-white px-6 py-8 text-center">
+      <FileCheck2 className="mx-auto h-8 w-8 text-gray-300" />
 
-      {canCreateInvoice ? (
-        <CreateInvoiceSection key={hireId} hire={hire} />
-      ) : (
-        <div className="border-t border-border px-6 py-5">
-          <p className="text-sm text-muted-foreground">
-            This hire is not eligible for a new invoice or already has an
-            invoice.
-          </p>
-        </div>
-      )}
-    </>
+      <h3 className="mt-3 font-semibold text-gray-950">Invoice unavailable</h3>
+
+      <p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-gray-600">
+        This hire is not eligible for invoice creation, or an invoice has not
+        been made available yet.
+      </p>
+    </div>
   );
 };
 
