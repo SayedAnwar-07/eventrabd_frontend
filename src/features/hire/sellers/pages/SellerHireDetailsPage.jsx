@@ -5,7 +5,6 @@ import SellerHireInvoiceSection from "@/features/invoice/components/SellerHireIn
 
 import BookingSlots from "../components/sellerHireDetails/BookingSlots";
 import ErrorState from "../components/sellerHireDetails/ErrorState";
-import HireSummary from "../components/sellerHireDetails/HireSummary";
 import HireTimeline from "../components/sellerHireDetails/HireTimeline";
 import LoadingState from "../components/sellerHireDetails/LoadingState";
 import PeopleInformation from "../components/sellerHireDetails/PeopleInformation";
@@ -13,6 +12,8 @@ import useHireDetails from "../hooks/useHireDetails";
 
 const SellerHireDetailsPage = () => {
   const { hire, loading, error, retry } = useHireDetails();
+
+  // console.log(hire);
 
   if (loading && !hire) {
     return <LoadingState />;
@@ -79,14 +80,8 @@ const SellerHireDetailsPage = () => {
           <HireTimeline hire={hire} />
         </section>
 
-        <section className="mt-12 grid gap-5 lg:grid-cols-3">
-          <div className="overflow-hidden lg:col-span-2">
-            <BookingSlots hire={hire} />
-          </div>
-
-          <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-950">
-            <HireSummary hire={hire} />
-          </div>
+        <section className="mt-12">
+          <BookingSlots hire={hire} />
         </section>
 
         <section className="mt-10">
