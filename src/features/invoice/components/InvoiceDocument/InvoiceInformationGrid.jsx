@@ -16,7 +16,7 @@ export default function InvoiceInformationGrid({
   const shortInvoiceNumber = formatInvoiceNumber(invoice?.invoice_number);
 
   return (
-    <div className="invoice-section mt-9 grid grid-cols-[minmax(0,1.35fr)_minmax(220px,0.75fr)] gap-9">
+    <div className="invoice-information invoice-section mt-9 grid min-w-0 grid-cols-[minmax(0,1.35fr)_minmax(220px,0.75fr)] gap-9">
       <div className="min-w-0">
         <InformationSection title="Bill To">
           <InformationRow label="Name" value={customerName} />
@@ -39,28 +39,30 @@ export default function InvoiceInformationGrid({
         </InformationSection>
       </div>
 
-      <InformationSection title="Invoice Information">
-        <InformationRow
-          label="Invoice No"
-          value={shortInvoiceNumber}
-          title={invoice?.invoice_number}
-          compact
-        />
+      <div className="min-w-0">
+        <InformationSection title="Invoice Information">
+          <InformationRow
+            label="Invoice No"
+            value={shortInvoiceNumber}
+            title={invoice?.invoice_number}
+            compact
+          />
 
-        <InformationRow
-          label="Invoice Date"
-          value={formatDate(invoice?.issue_date)}
-          compact
-        />
+          <InformationRow
+            label="Invoice Date"
+            value={formatDate(invoice?.issue_date)}
+            compact
+          />
 
-        <InformationRow label="Event Date" value={eventDate} compact />
+          <InformationRow label="Event Date" value={eventDate} compact />
 
-        <InformationRow
-          label="Due Date"
-          value={formatDate(invoice?.due_payment_last_date)}
-          compact
-        />
-      </InformationSection>
+          <InformationRow
+            label="Due Date"
+            value={formatDate(invoice?.due_payment_last_date)}
+            compact
+          />
+        </InformationSection>
+      </div>
     </div>
   );
 }
