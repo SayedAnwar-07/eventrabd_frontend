@@ -1,21 +1,5 @@
-const PAYMENT_STATUS_CONFIG = {
-  paid: {
-    label: "Paid",
-    className: "border-emerald-200 bg-emerald-50 text-emerald-700",
-  },
-  partially_paid: {
-    label: "Partially Paid",
-    className: "border-amber-200 bg-amber-50 text-amber-700",
-  },
-  unpaid: {
-    label: "Unpaid",
-    className: "border-gray-200 bg-gray-50 text-gray-700",
-  },
-  overdue: {
-    label: "Overdue",
-    className: "border-red-200 bg-red-50 text-red-700",
-  },
-};
+import SummaryRow from "./InvoiceDocument/SummaryRow";
+import InvoiceInformationGrid from "./InvoiceDocument/InvoiceInformationGrid";
 
 const formatMoney = (value) => {
   if (value === null || value === undefined || value === "") {
@@ -88,64 +72,6 @@ const formatShiftDuration = (value) => {
   }
 
   return `${hours} ${hours === 1 ? "Hour" : "Hours"}`;
-};
-
-const InformationRow = ({ label, value, href }) => {
-  const content = value || "Not available";
-
-  return (
-    <div className="grid grid-cols-[88px_12px_1fr] gap-1 text-xs leading-5 text-gray-700">
-      <span className="font-semibold text-gray-950">{label}</span>
-
-      <span>:</span>
-
-      {href && value ? (
-        <a
-          href={href}
-          target={href.startsWith("http") ? "_blank" : undefined}
-          rel={href.startsWith("http") ? "noopener noreferrer" : undefined}
-          className="wrap-break-word transition hover:text-[#b60018] hover:underline"
-        >
-          {content}
-        </a>
-      ) : (
-        <span className="wrap-break-word">{content}</span>
-      )}
-    </div>
-  );
-};
-
-const SummaryRow = ({ label, value, strong = false }) => {
-  return (
-    <div
-      className={`flex items-center justify-between gap-6 py-2 text-sm ${
-        strong
-          ? "border-t border-gray-900 pt-3 font-bold text-gray-950"
-          : "text-gray-700"
-      }`}
-    >
-      <span>{label}</span>
-
-      <span className={strong ? "text-base" : "font-medium text-gray-950"}>
-        {value}
-      </span>
-    </div>
-  );
-};
-
-const PaymentStatusBadge = ({ status }) => {
-  const normalizedStatus = String(status || "unpaid").toLowerCase();
-
-  const config =
-    PAYMENT_STATUS_CONFIG[normalizedStatus] || PAYMENT_STATUS_CONFIG.unpaid;
-
-  return (
-    <span
-      className={`inline-flex border px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] ${config.className}`}
-    >
-      {config.label}
-    </span>
-  );
 };
 
 const InvoiceDocument = ({
@@ -257,14 +183,14 @@ const InvoiceDocument = ({
   const subtotal = invoice?.sub_total ?? calculatedSubtotal;
 
   return (
-    <section className="invoice-document overflow-hidden rounded-md border border-gray-200 bg-white shadow-[0_24px_70px_rgba(15,23,42,0.08)] print:rounded-none print:border-0 print:shadow-none">
+    <section className="invoice-document mx-auto w-full max-w-[210mm] overflow-hidden rounded-md border border-gray-200 bg-white shadow-[0_20px_60px_rgba(15,23,42,0.08)] print:rounded-none print:border-0 print:shadow-none">
       <div
         ref={documentRef}
-        className="invoice-pdf-content bg-white px-5 py-8 text-gray-950 sm:px-8 lg:px-12 lg:py-12"
+        className="invoice-pdf-content mx-auto box-border flex h-[297mm] w-[210mm] max-w-full flex-col overflow-hidden bg-white px-[12mm] py-[8mm] text-gray-950"
       >
         {/* Header contacts */}
 
-        <div className="grid gap-5 sm:grid-cols-3 sm:items-center">
+        <div className="grid grid-cols-3 items-center gap-4">
           <div className="text-center sm:text-left">
             <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-gray-400">
               Seller Email
@@ -283,7 +209,7 @@ const InvoiceDocument = ({
           </div>
 
           <div className="text-center">
-            <h1 className="font-serif text-3xl font-bold text-[#b60018]">
+            <h1 className="font-serif text-2xl font-bold text-[#b60018]">
               Eventra BD
             </h1>
 
@@ -315,95 +241,42 @@ const InvoiceDocument = ({
         </div>
 
         {/* Customer, venue and invoice meta */}
-
-        <div className="mt-10 grid gap-8 border-t border-gray-100 pt-8 md:grid-cols-3">
-          <div>
-            <h2 className="inline-block border-b border-[#b60018] pb-1 font-serif text-sm font-bold uppercase text-[#b60018]">
-              Bill To
-            </h2>
-
-            <div className="mt-4 space-y-2">
-              <InformationRow label="Name" value={customerName} />
-
-              <InformationRow
-                label="Email"
-                value={customerEmail}
-                href={customerEmail ? `mailto:${customerEmail}` : ""}
-              />
-
-              <InformationRow
-                label="WhatsApp"
-                value={customerWhatsApp}
-                href={
-                  normalizedCustomerWhatsApp
-                    ? `https://wa.me/${normalizedCustomerWhatsApp}`
-                    : ""
-                }
-              />
-            </div>
-          </div>
-
-          <div>
-            <h2 className="inline-block border-b border-[#b60018] pb-1 font-serif text-sm font-bold text-[#b60018]">
-              Venue
-            </h2>
-
-            <div className="mt-4 space-y-2">
-              <InformationRow label="Venue Name" value={venueName} />
-
-              <InformationRow label="Address" value={venueAddress} />
-            </div>
-          </div>
-
-          <div>
-            <div className="flex items-center justify-between gap-3">
-              <h2 className="font-serif text-sm font-bold text-[#b60018]">
-                Invoice Information
-              </h2>
-
-              <PaymentStatusBadge status={invoice?.payment_status} />
-            </div>
-
-            <div className="mt-4 space-y-2">
-              <InformationRow
-                label="Invoice No"
-                value={invoice?.invoice_number}
-              />
-
-              <InformationRow
-                label="Invoice Date"
-                value={formatDate(invoice?.issue_date)}
-              />
-
-              <InformationRow label="Event Date" value={eventDate} />
-            </div>
-          </div>
-        </div>
+        <InvoiceInformationGrid
+          invoice={invoice}
+          customerName={customerName}
+          customerEmail={customerEmail}
+          customerWhatsApp={customerWhatsApp}
+          normalizedCustomerWhatsApp={normalizedCustomerWhatsApp}
+          venueName={venueName}
+          venueAddress={venueAddress}
+          eventDate={eventDate}
+          formatDate={formatDate}
+        />
 
         {/* Event details */}
 
-        <div className="mt-12">
+        <div className="mt-4 break-inside-avoid">
           <h2 className="font-serif text-base font-bold text-gray-950">
             Event Details
           </h2>
 
-          <div className="mt-3 overflow-x-auto">
-            <table className="w-full min-w-190 border-collapse">
+          <div className="mt-2">
+            <table className="w-full table-fixed border-collapse">
               <thead>
                 <tr className="bg-[#b60018] text-white">
-                  <th className="border-r border-white/60 px-4 py-3 text-left text-xs font-bold uppercase">
+                  <th className="border-r border-white/60 px-3 py-1.5 text-left text-xs font-bold uppercase">
                     Date
                   </th>
 
-                  <th className="border-r border-white/60 px-4 py-3 text-left text-xs font-bold uppercase">
+                  <th className="border-r border-white/60 px-3 py-1.5 text-left text-xs font-bold uppercase">
                     Shift Duration
                   </th>
 
-                  <th className="border-r border-white/60 px-4 py-3 text-right text-xs font-bold uppercase">
+                  <th className="border-r border-white/60 px-3 py-1.5 text-left text-xs font-bold uppercase">
                     Shift Charge
                   </th>
 
-                  <th className="px-4 py-3 text-left text-xs font-bold uppercase">
+                  <th className="px-3 py-1.5 text-left text-xs font-bold uppercase">
                     Service Type
                   </th>
                 </tr>
@@ -412,19 +285,19 @@ const InvoiceDocument = ({
               <tbody>
                 {eventRows.map((row) => (
                   <tr key={row.id} className="border-b border-gray-200">
-                    <td className="border-r border-gray-200 px-4 py-4 text-sm text-gray-700">
+                    <td className="border-r border-gray-200 px-3 py-2 text-xs text-gray-700">
                       {row.date}
                     </td>
 
-                    <td className="border-r border-gray-200 px-4 py-4 text-sm text-gray-700">
+                    <td className="border-r border-gray-200 px-3 py-2 text-xs text-gray-700">
                       {row.duration}
                     </td>
 
-                    <td className="border-r border-gray-200 px-4 py-4 text-right text-sm font-medium text-gray-950">
+                    <td className="border-r border-gray-200 px-3 py-2 text-left text-sm font-medium text-gray-950">
                       {row.charge}
                     </td>
 
-                    <td className="px-4 py-4 text-sm text-gray-700">
+                    <td className="px-3 py-2 text-xs text-gray-700">
                       {row.service}
                     </td>
                   </tr>
@@ -436,25 +309,26 @@ const InvoiceDocument = ({
 
         {/* Notes and totals */}
 
-        <div className="mt-10 grid gap-10 lg:grid-cols-[1fr_360px]">
-          <div>
-            <h3 className="text-xs font-bold uppercase tracking-[0.14em] text-[#b60018]">
-              Seller Note
-            </h3>
+        <div className="mt-20 grid grid-cols-[1fr_280px] gap-8 break-inside-avoid">
+          <div className="flex flex-col justify-end items-start">
+            <p className="text-sm pb-2 border-b">
+              {invoice.customer_agreed
+                ? `${invoice.customer?.full_name || "Not available"} ( I agree )`
+                : "Pending Confirmation"}
+            </p>
 
-            <p className="mt-3 max-w-xl whitespace-pre-line text-sm leading-6 text-gray-600">
-              {invoice?.seller_note ||
-                "No additional note was provided by the seller."}
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#b60018] pt-2">
+              Customer Agreement
             </p>
           </div>
 
-          <div>
-            <div className="mb-3 flex items-center justify-between gap-5 border-b border-gray-200 pb-3 text-xs">
-              <span className="font-semibold text-gray-600">
+          <div className="">
+            <div className="mb-2 flex items-center justify-between gap-5 border-b border-gray-200 pb-2 text-xs ">
+              <span className="font-semibold text-gray-600 ">
                 Due Payment Date
               </span>
 
-              <span className="font-semibold text-gray-950">
+              <span className="font-bold text-gray-950 ">
                 {formatDate(invoice?.due_payment_last_date)}
               </span>
             </div>
@@ -464,32 +338,35 @@ const InvoiceDocument = ({
               value={formatMoney(servicePrice)}
             />
 
-            <SummaryRow
-              label="Discount"
-              value={`- ${formatMoney(discountPrice)}`}
-            />
-
             <SummaryRow label="Subtotal" value={formatMoney(subtotal)} />
 
             <SummaryRow
-              label="Advance Payment"
-              value={`- ${formatMoney(invoice?.advance_payment)}`}
-            />
-
-            <SummaryRow
-              label="Due Payment"
-              value={formatMoney(invoice?.due_payment)}
+              label="Discount"
+              value={`− ${formatMoney(discountPrice)}`}
+              variant="discount"
             />
 
             <SummaryRow
               label="Total"
               value={formatMoney(invoice?.total)}
-              strong
+              variant="total"
+            />
+
+            <SummaryRow
+              label="Advance Payment"
+              value={`− ${formatMoney(invoice?.advance_payment)}`}
+              variant="paid"
+            />
+
+            <SummaryRow
+              label="Due Payment"
+              value={formatMoney(invoice?.due_payment)}
+              variant="due"
             />
           </div>
         </div>
 
-        <div className="mt-12 border-t border-gray-200 pt-5 text-center">
+        <div className="mt-auto border-t border-gray-200 pt-2 text-center">
           <p className="text-[11px] text-gray-500">
             This invoice was generated electronically by Eventra BD.
           </p>

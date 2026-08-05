@@ -109,11 +109,10 @@ export default function PersonCard({
         </div>
       </div>
 
-      {note && (
+      {note !== undefined && (
         <div className="mt-auto border-t border-gray-100 bg-gray-50/70 p-5 dark:border-gray-800 dark:bg-gray-900/40 sm:p-6">
           <div className="mb-3 flex items-center gap-2">
             <StickyNote className="h-4 w-4 text-gray-400 dark:text-gray-500" />
-
             <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
               {noteLabel}
             </p>
@@ -121,7 +120,7 @@ export default function PersonCard({
 
           <div className="rounded-xl border border-gray-200 bg-white px-4 py-3.5 dark:border-gray-800 dark:bg-gray-950">
             <p className="whitespace-pre-wrap text-sm leading-6 text-gray-700 dark:text-gray-300">
-              {note}
+              {note || "No additional note was provided by the seller."}
             </p>
           </div>
         </div>

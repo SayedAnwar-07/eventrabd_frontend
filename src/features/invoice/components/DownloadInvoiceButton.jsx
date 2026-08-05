@@ -28,7 +28,13 @@ const DownloadInvoiceButton = ({
     const fileName = `${sanitizeFileName(invoiceNumber)}.pdf`;
 
     const options = {
-      margin: [8, 8, 8, 8],
+      // FIX: margin was [8,8,8,8]mm on TOP of an element that already has
+      // its own 296mm fixed height + internal 10mm/12mm padding baked into
+      // the CSS. That pushed total height to 312mm on a 297mm A4 page,
+      // guaranteeing a spillover second page no matter how tight the
+      // internal content was. The component already handles its own
+      // whitespace via padding, so html2pdf should add zero extra margin.
+      margin: [0, 0, 0, 0],
 
       filename: fileName,
 

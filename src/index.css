@@ -159,3 +159,46 @@
   );
   
 }
+
+@page {
+  size: A4 portrait;
+  margin: 0;
+}
+
+.invoice-pdf-content {
+  width: 210mm;
+  height: 296mm;
+  min-height: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+@media print {
+  html,
+  body {
+    width: 210mm;
+    margin: 0;
+    padding: 0;
+    background: white;
+  }
+
+  .invoice-document {
+    width: 210mm;
+    max-width: 210mm;
+    margin: 0;
+  }
+
+  .invoice-pdf-content {
+    width: 210mm;
+    height: 296mm;
+    min-height: 0;
+    overflow: hidden;
+    padding: 10mm 12mm;
+  }
+
+  table,
+  .break-inside-avoid {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+}
