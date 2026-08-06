@@ -25,11 +25,10 @@ const VARIANT_STYLES = {
 
   due: {
     row: `
-      mt-2 rounded-md border border-rose-100
-      bg-rose-50/70 px-3 py-3 sm:px-4 sm:py-3.5
+      mt-1 border-t border-gray-200 pb-2.5 pt-3
     `,
     label: "font-bold text-gray-950",
-    value: "text-base font-extrabold text-rose-600 sm:text-lg",
+    value: "text-base font-bold text-rose-900 sm:text-lg",
   },
 };
 

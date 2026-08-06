@@ -297,7 +297,7 @@ const CustomerInvoiceDetails = ({ hire }) => {
   );
 
   return (
-    <div className="mt-5">
+    <div className="min-w-0">
       <InvoiceDocument
         invoice={invoice}
         hire={hire}

@@ -87,6 +87,8 @@ const InvoiceDocument = ({
 
   const firstSlot = bookingSlots[0] || {};
 
+  // console.log(invoice);
+
   const serviceSummary = invoice?.service_summary || {};
 
   const backendSlotCount = Number(serviceSummary.slot_count || 0);
@@ -182,7 +184,7 @@ const InvoiceDocument = ({
   const subtotal = invoice?.sub_total ?? calculatedSubtotal;
 
   return (
-    <section className="invoice-document mx-auto w-full max-w-[210mm]">
+    <section className="invoice-document w-full min-w-0">
       <div className="overflow-hidden rounded-md border border-gray-200 bg-white shadow-[0_20px_60px_rgba(15,23,42,0.08)] print:rounded-none print:border-0 print:shadow-none">
         <ResponsiveInvoicePreview>
           <div
@@ -212,13 +214,8 @@ const InvoiceDocument = ({
 
               <div className="text-center">
                 <h1 className="font-serif text-2xl font-bold text-[#b60018]">
-                  Eventra BD
-                </h1>
-
-                <p className="mt-1 text-xs font-semibold text-gray-700">
                   {brandName}
-                </p>
-
+                </h1>
                 <p className="mt-0.5 text-[11px] text-gray-500">{sellerName}</p>
               </div>
 
@@ -336,11 +333,6 @@ const InvoiceDocument = ({
                     {formatDate(invoice?.due_payment_last_date)}
                   </span>
                 </div>
-
-                <SummaryRow
-                  label="Service Price"
-                  value={formatMoney(servicePrice)}
-                />
 
                 <SummaryRow label="Subtotal" value={formatMoney(subtotal)} />
 

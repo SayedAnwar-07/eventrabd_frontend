@@ -32,7 +32,7 @@ const SellerHireDetailsPage = () => {
   if (!hire) {
     return (
       <div className="min-h-screen">
-        <main className="mx-auto max-w-3xl px-4 py-16">
+        <main className="mx-auto max-w-3xl py-16">
           <section className="rounded-2xl border border-gray-200 bg-white px-6 py-12 text-center shadow-sm dark:border-gray-800 dark:bg-gray-950">
             <h1 className="text-xl font-semibold text-gray-950 dark:text-white">
               Hire request not found

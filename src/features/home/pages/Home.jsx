@@ -10,7 +10,6 @@ const Home = () => {
   const { brands, list } = useSelector((state) => state.eventPlanner);
 
   useEffect(() => {
-    console.log("Home fetchBrands called");
     dispatch(fetchBrands());
   }, [dispatch]);
 

@@ -26,7 +26,7 @@ export default function CustomerHireRequestDetailsPage() {
   if (!hire) {
     return (
       <div className="min-h-screen">
-        <main className="mx-auto max-w-3xl px-4 py-16">
+        <main className="mx-auto max-w-400 px-4 py-8 lg:px-6 lg:py-10">
           <section className="rounded-2xl border border-gray-200 bg-white px-6 py-12 text-center shadow-sm dark:border-gray-800 dark:bg-gray-950">
             <h1 className="text-xl font-semibold text-gray-950 dark:text-white">
               Hire request not found
@@ -51,7 +51,7 @@ export default function CustomerHireRequestDetailsPage() {
 
   return (
     <div className="min-h-screen">
-      <main className="mx-auto max-w-6xl px-4 py-8 lg:py-10">
+      <main className="mx-auto max-w-340 px-4 py-8 lg:px-6 lg:py-10">
         <Link
           to="/customer/hire-requests"
           className="inline-flex items-center gap-2 text-sm font-medium text-gray-600 transition hover:text-gray-950 dark:text-gray-400 dark:hover:text-white"
@@ -76,12 +76,20 @@ export default function CustomerHireRequestDetailsPage() {
           <BookingSlots hire={hire} />
         </section>
 
-        <section className="mt-10">
+        {/* <section className="mt-10">
           <PeopleInformation hire={hire} />
-        </section>
+        </section> */}
 
-        <section className="mt-10">
-          <CustomerInvoiceDetails key={hire.id} hire={hire} />
+        <section className="mt-10 grid grid-cols-1 items-start gap-5 lg:grid-cols-[320px_minmax(0,1fr)] xl:grid-cols-[400px_210mm]">
+          {/* Left: Seller and Customer information */}
+          <div className="min-w-0">
+            <PeopleInformation hire={hire} />
+          </div>
+
+          {/* Right: A4 invoice */}
+          <div className="min-w-0">
+            <CustomerInvoiceDetails hire={hire} />
+          </div>
         </section>
       </main>
     </div>

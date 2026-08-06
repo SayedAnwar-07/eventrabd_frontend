@@ -72,15 +72,17 @@ export default function CustomerHireRequestDetailsPage() {
           <BookingSlots hire={hire} />
         </section>
 
-        <section className="mt-5 grid gap-5">
-          <div className="space-y-5">
+        <section className="mt-10 grid grid-cols-1 items-start gap-6 xl:grid-cols-[360px_210mm] xl:justify-center">
+          {/* Left side */}
+          <div className="min-w-0">
             <PeopleInformation hire={hire} />
           </div>
-        </section>
 
-        <div className="mt-5">
-          <CustomerInvoiceDetails hire={hire} />
-        </div>
+          {/* Right side */}
+          <div className="min-w-0">
+            <CustomerInvoiceDetails hire={hire} />
+          </div>
+        </section>
       </main>
     </div>
   );
