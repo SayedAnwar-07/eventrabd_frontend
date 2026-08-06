@@ -1,6 +1,7 @@
 import SummaryRow from "./InvoiceDocument/SummaryRow";
 import InvoiceInformationGrid from "./InvoiceDocument/InvoiceInformationGrid";
 import ResponsiveInvoicePreview from "./InvoiceDocument/ResponsiveInvoicePreview";
+import TermsConditions from "./InvoiceDocument/TermsConditions";
 
 const formatMoney = (value) => {
   if (value === null || value === undefined || value === "") {
@@ -193,7 +194,6 @@ const InvoiceDocument = ({
             className="invoice-pdf-content mx-auto box-border flex h-[297mm] w-[210mm] min-w-[210mm] max-w-[210mm] flex-col overflow-hidden bg-white px-[12mm] py-[8mm] text-gray-950"
           >
             {/* Header contacts */}
-
             <div className="grid grid-cols-3 items-center gap-4">
               <div className="text-left">
                 <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-gray-400">
@@ -240,7 +240,6 @@ const InvoiceDocument = ({
             </div>
 
             {/* Information */}
-
             <InvoiceInformationGrid
               invoice={invoice}
               customerName={customerName}
@@ -253,7 +252,6 @@ const InvoiceDocument = ({
             />
 
             {/* Event details */}
-
             <div className="mt-4 break-inside-avoid">
               <h2 className="font-serif text-base font-bold text-gray-950">
                 Event Details
@@ -306,64 +304,70 @@ const InvoiceDocument = ({
               </div>
             </div>
 
-            {/* Agreement and summary */}
+            <div className="mt-20">
+              {/* Agreement and price summary */}
+              <div className="grid grid-cols-[1fr_280px] gap-8 break-inside-avoid">
+                <div className="flex min-w-0 flex-col items-start justify-between">
+                  {/* terms and conditions */}
+                  <TermsConditions
+                    sellerName={invoice?.seller?.full_name}
+                    terms={invoice?.terms_conditions}
+                  />
 
-            <div className="mt-20 grid grid-cols-[1fr_280px] gap-8 break-inside-avoid">
-              <div className="flex min-w-0 flex-col items-start justify-end">
-                <p className="max-w-full border-b pb-2 text-sm">
-                  {invoice?.customer_agreed
-                    ? `${
-                        invoice?.customer?.full_name || "Not available"
-                      } ( I agree )`
-                    : "Pending Confirmation"}
-                </p>
+                  <div>
+                    <p className="max-w-full border-b pb-2 text-sm">
+                      {invoice?.customer_agreed
+                        ? `${invoice?.customer?.full_name || "Not available"} ( I agree )`
+                        : "Pending Confirmation"}
+                    </p>
 
-                <p className="pt-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#b60018]">
-                  Customer Agreement
-                </p>
-              </div>
-
-              <div className="invoice-summary min-w-0">
-                <div className="mb-2 flex items-center justify-between gap-5 border-b border-gray-200 pb-2 text-xs">
-                  <span className="font-semibold text-gray-600">
-                    Due Payment Date
-                  </span>
-
-                  <span className="whitespace-nowrap font-bold text-gray-950">
-                    {formatDate(invoice?.due_payment_last_date)}
-                  </span>
+                    <p className="pt-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#b60018]">
+                      Customer Agreement
+                    </p>
+                  </div>
                 </div>
 
-                <SummaryRow label="Subtotal" value={formatMoney(subtotal)} />
+                <div className="invoice-summary min-w-0">
+                  <div className="mb-2 flex items-center justify-between gap-5 border-b border-gray-200 pb-2 text-xs">
+                    <span className="font-semibold text-gray-600">
+                      Due Payment Date
+                    </span>
 
-                <SummaryRow
-                  label="Discount"
-                  value={`− ${formatMoney(discountPrice)}`}
-                  variant="discount"
-                />
+                    <span className="whitespace-nowrap font-bold text-gray-950">
+                      {formatDate(invoice?.due_payment_last_date)}
+                    </span>
+                  </div>
 
-                <SummaryRow
-                  label="Total"
-                  value={formatMoney(invoice?.total)}
-                  variant="total"
-                />
+                  <SummaryRow label="Subtotal" value={formatMoney(subtotal)} />
 
-                <SummaryRow
-                  label="Advance Payment"
-                  value={`− ${formatMoney(invoice?.advance_payment)}`}
-                  variant="paid"
-                />
+                  <SummaryRow
+                    label="Discount"
+                    value={`− ${formatMoney(discountPrice)}`}
+                    variant="discount"
+                  />
 
-                <SummaryRow
-                  label="Due Payment"
-                  value={formatMoney(invoice?.due_payment)}
-                  variant="due"
-                />
+                  <SummaryRow
+                    label="Total"
+                    value={formatMoney(invoice?.total)}
+                    variant="total"
+                  />
+
+                  <SummaryRow
+                    label="Advance Payment"
+                    value={`− ${formatMoney(invoice?.advance_payment)}`}
+                    variant="paid"
+                  />
+
+                  <SummaryRow
+                    label="Due Payment"
+                    value={formatMoney(invoice?.due_payment)}
+                    variant="due"
+                  />
+                </div>
               </div>
             </div>
 
             {/* Footer */}
-
             <div className="mt-auto border-t border-gray-200 pt-2 text-center">
               <p className="text-[11px] text-gray-500">
                 This invoice was generated electronically by Eventra BD.

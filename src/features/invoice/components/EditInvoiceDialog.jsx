@@ -4,7 +4,10 @@ import {
   CalendarDays,
   CircleDollarSign,
   FilePenLine,
+  ListChecks,
+  Plus,
   Save,
+  Trash2,
 } from "lucide-react";
 
 import {
@@ -23,6 +26,17 @@ import {
   selectInvoiceUpdateLoading,
   updateInvoice,
 } from "@/store/features/invoice/invoiceSlice";
+
+const MAX_TERMS_CONDITIONS = 3;
+const MAX_TERM_LENGTH = 300;
+
+const normalizeTermsConditions = (value) => {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.slice(0, MAX_TERMS_CONDITIONS).map((term) => String(term ?? ""));
+};
 
 const getLocalToday = () => {
   const today = new Date();
@@ -46,6 +60,8 @@ const getInitialFormData = (invoice) => ({
   advance_payment: invoice?.advance_payment || "0.00",
 
   seller_note: invoice?.seller_note || "",
+
+  terms_conditions: normalizeTermsConditions(invoice?.terms_conditions),
 });
 
 const parseMoney = (value) => {
@@ -205,6 +221,91 @@ const EditInvoiceDialog = ({ invoice }) => {
     }
   };
 
+  const handleAddTerm = () => {
+    if (
+      updateLoading ||
+      formData.terms_conditions.length >= MAX_TERMS_CONDITIONS
+    ) {
+      return;
+    }
+
+    setFormData((currentData) => ({
+      ...currentData,
+      terms_conditions: [...currentData.terms_conditions, ""],
+    }));
+
+    setValidationErrors((currentErrors) => ({
+      ...currentErrors,
+      terms_conditions: null,
+    }));
+
+    setLocalMessage("");
+
+    if (apiError) {
+      dispatch(clearInvoiceError());
+    }
+  };
+
+  const handleTermChange = (index, value) => {
+    setFormData((currentData) => ({
+      ...currentData,
+      terms_conditions: currentData.terms_conditions.map((term, termIndex) =>
+        termIndex === index ? value : term,
+      ),
+    }));
+
+    setValidationErrors((currentErrors) => {
+      const currentTermErrors = Array.isArray(currentErrors.terms_conditions)
+        ? [...currentErrors.terms_conditions]
+        : [];
+
+      currentTermErrors[index] = null;
+
+      return {
+        ...currentErrors,
+        terms_conditions: currentTermErrors,
+      };
+    });
+
+    setLocalMessage("");
+
+    if (apiError) {
+      dispatch(clearInvoiceError());
+    }
+  };
+
+  const handleRemoveTerm = (index) => {
+    if (updateLoading) {
+      return;
+    }
+
+    setFormData((currentData) => ({
+      ...currentData,
+      terms_conditions: currentData.terms_conditions.filter(
+        (_, termIndex) => termIndex !== index,
+      ),
+    }));
+
+    setValidationErrors((currentErrors) => {
+      const currentTermErrors = Array.isArray(currentErrors.terms_conditions)
+        ? currentErrors.terms_conditions.filter(
+            (_, termIndex) => termIndex !== index,
+          )
+        : null;
+
+      return {
+        ...currentErrors,
+        terms_conditions: currentTermErrors,
+      };
+    });
+
+    setLocalMessage("");
+
+    if (apiError) {
+      dispatch(clearInvoiceError());
+    }
+  };
+
   const validateForm = () => {
     const errors = {};
 
@@ -215,6 +316,30 @@ const EditInvoiceDialog = ({ invoice }) => {
     const currentAdvancePayment = Number(formData.advance_payment);
 
     const calculatedTotal = currentServicePrice - currentDiscountPrice;
+
+    const termsConditions = normalizeTermsConditions(formData.terms_conditions);
+
+    const termErrors = termsConditions.map((term) => {
+      const cleanedTerm = term.trim();
+
+      if (!cleanedTerm) {
+        return "Term cannot be empty.";
+      }
+
+      if (cleanedTerm.length > MAX_TERM_LENGTH) {
+        return `Term cannot contain more than ${MAX_TERM_LENGTH} characters.`;
+      }
+
+      return null;
+    });
+
+    if (formData.terms_conditions.length > MAX_TERMS_CONDITIONS) {
+      errors.terms_conditions = [
+        `A maximum of ${MAX_TERMS_CONDITIONS} terms is allowed.`,
+      ];
+    } else if (termErrors.some(Boolean)) {
+      errors.terms_conditions = termErrors;
+    }
 
     if (!formData.due_payment_last_date) {
       errors.due_payment_last_date = "Due payment date is required.";
@@ -299,6 +424,21 @@ const EditInvoiceDialog = ({ invoice }) => {
 
     if (nextSellerNote !== currentSellerNote) {
       changedFields.seller_note = nextSellerNote;
+    }
+
+    const nextTermsConditions = normalizeTermsConditions(
+      formData.terms_conditions,
+    ).map((term) => term.trim());
+
+    const currentTermsConditions = normalizeTermsConditions(
+      invoice?.terms_conditions,
+    ).map((term) => term.trim());
+
+    if (
+      JSON.stringify(nextTermsConditions) !==
+      JSON.stringify(currentTermsConditions)
+    ) {
+      changedFields.terms_conditions = nextTermsConditions;
     }
 
     return changedFields;
@@ -506,6 +646,134 @@ const EditInvoiceDialog = ({ invoice }) => {
               placeholder="Add payment instructions or invoice information."
               className="mt-2 w-full resize-y rounded-lg border border-gray-300 bg-white px-3 py-3 text-sm text-gray-950 outline-none transition focus:border-[#b60018] focus:ring-2 focus:ring-red-100 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:opacity-60"
             />
+          </div>
+
+          <div className="mt-5">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <div className="flex items-center gap-2">
+                  <ListChecks className="h-4 w-4 text-[#b60018]" />
+
+                  <h3 className="text-sm font-semibold text-gray-800">
+                    Terms & Conditions
+                  </h3>
+
+                  <span className="text-xs font-normal text-gray-500">
+                    Optional
+                  </span>
+                </div>
+
+                <p className="mt-1 text-xs leading-5 text-gray-500">
+                  Add up to {MAX_TERMS_CONDITIONS} invoice terms.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleAddTerm}
+                disabled={
+                  updateLoading ||
+                  formData.terms_conditions.length >= MAX_TERMS_CONDITIONS
+                }
+                className="inline-flex h-9 shrink-0 items-center justify-center gap-2 rounded-lg border border-[#b60018] bg-white px-4 text-xs font-semibold text-[#b60018] transition hover:bg-red-50 disabled:cursor-not-allowed disabled:border-gray-300 disabled:text-gray-400 disabled:hover:bg-white"
+              >
+                <Plus className="h-4 w-4" />
+                Add Term
+              </button>
+            </div>
+
+            {formData.terms_conditions.length > 0 ? (
+              <div className="mt-4 space-y-3">
+                {formData.terms_conditions.map((term, index) => {
+                  const termError = Array.isArray(
+                    validationErrors.terms_conditions,
+                  )
+                    ? validationErrors.terms_conditions[index]
+                    : null;
+
+                  return (
+                    <div
+                      key={`invoice-term-${invoice?.id}-${index}`}
+                      className="rounded-xl border border-gray-200 bg-gray-50 p-3"
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-red-50 text-xs font-bold text-[#b60018]">
+                          {index + 1}
+                        </div>
+
+                        <div className="min-w-0 flex-1">
+                          <label
+                            htmlFor={`invoice-term-${invoice?.id}-${index}`}
+                            className="sr-only"
+                          >
+                            Term {index + 1}
+                          </label>
+
+                          <textarea
+                            id={`invoice-term-${invoice?.id}-${index}`}
+                            rows={2}
+                            maxLength={MAX_TERM_LENGTH}
+                            value={term}
+                            onChange={(event) =>
+                              handleTermChange(index, event.target.value)
+                            }
+                            disabled={updateLoading}
+                            aria-invalid={Boolean(termError)}
+                            placeholder={`Enter term ${index + 1}`}
+                            className={`w-full resize-y rounded-lg border bg-white px-3 py-2.5 text-sm text-gray-950 outline-none transition disabled:cursor-not-allowed disabled:bg-gray-100 disabled:opacity-60 ${
+                              termError
+                                ? "border-red-400 focus:border-red-600 focus:ring-2 focus:ring-red-100"
+                                : "border-gray-300 focus:border-[#b60018] focus:ring-2 focus:ring-red-100"
+                            }`}
+                          />
+
+                          <div className="mt-1 flex items-start justify-between gap-3">
+                            <div>
+                              {termError ? (
+                                <p className="text-xs text-red-600">
+                                  {termError}
+                                </p>
+                              ) : null}
+                            </div>
+
+                            <p className="shrink-0 text-[11px] text-gray-400">
+                              {term.length}/{MAX_TERM_LENGTH}
+                            </p>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveTerm(index)}
+                          disabled={updateLoading}
+                          aria-label={`Remove term ${index + 1}`}
+                          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 transition hover:border-red-200 hover:bg-red-50 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="mt-4 rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-5 text-center">
+                <p className="text-sm text-gray-500">
+                  No terms and conditions added.
+                </p>
+
+                <p className="mt-1 text-xs text-gray-400">
+                  This field is optional.
+                </p>
+              </div>
+            )}
+
+            <div className="mt-2 flex justify-end">
+              <p className="text-xs text-gray-500">
+                {formData.terms_conditions.length}/{MAX_TERMS_CONDITIONS} terms
+                added
+              </p>
+            </div>
           </div>
 
           <div className="mt-6 rounded-2xl border border-gray-200 bg-gray-50 p-4 sm:p-5">
