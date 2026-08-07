@@ -37,7 +37,19 @@ const getLocalToday = () => {
   return `${year}-${month}-${day}`;
 };
 
-const getInitialFormData = () => ({
+// One row per booked date: { [booking_slot_id]: "shift count string" }
+const buildInitialSlotShifts = (bookingSlots = []) => {
+  const slotShifts = {};
+
+  bookingSlots.forEach((slot) => {
+    slotShifts[slot.id] = "1";
+  });
+
+  return slotShifts;
+};
+
+const getInitialFormData = (bookingSlots = []) => ({
+  slot_shifts: buildInitialSlotShifts(bookingSlots),
   due_payment_last_date: "",
   discount_price: "0.00",
   advance_payment: "0.00",
@@ -68,6 +80,26 @@ const formatMoney = (value) => {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })}`;
+};
+
+const formatSlotDate = (slot) => {
+  const rawDate = slot?.starts_at || slot?.date || slot?.booking_date;
+
+  if (!rawDate) {
+    return "Booked date";
+  }
+
+  const parsedDate = new Date(rawDate);
+
+  if (Number.isNaN(parsedDate.getTime())) {
+    return String(rawDate);
+  }
+
+  return parsedDate.toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
 };
 
 const getErrorMessage = (error) => {
@@ -148,7 +180,14 @@ const CreateInvoiceSection = ({ hire }) => {
 
   const [createdInvoice, setCreatedInvoice] = useState(null);
 
-  const [formData, setFormData] = useState(getInitialFormData);
+  const bookingSlots = useMemo(
+    () => hire?.booking_slots || [],
+    [hire?.booking_slots],
+  );
+
+  const [formData, setFormData] = useState(() =>
+    getInitialFormData(bookingSlots),
+  );
 
   const [validationErrors, setValidationErrors] = useState({});
 
@@ -157,24 +196,34 @@ const CreateInvoiceSection = ({ hire }) => {
   const serviceSummary = hire?.service_summary || {};
 
   const slotCount = Number(
-    serviceSummary?.slot_count || hire?.booking_slots?.length || 0,
+    serviceSummary?.slot_count || bookingSlots.length || 0,
   );
 
   const shiftHourPerSlot = Number(
     serviceSummary?.shift_hour_per_slot || hire?.service?.shift_hour || 0,
   );
 
-  const totalShiftHours = Number(
-    serviceSummary?.total_shift_hours || shiftHourPerSlot * slotCount,
-  );
-
   const shiftChargePerSlot = parseMoney(
     serviceSummary?.shift_charge_per_slot || hire?.service?.shift_charge,
   );
 
-  const servicePrice = parseMoney(
-    serviceSummary?.total_amount || shiftChargePerSlot * slotCount,
-  );
+  // Sum of shift counts entered across every booked date.
+  const totalShiftCount = useMemo(() => {
+    return bookingSlots.reduce((sum, slot) => {
+      const value = Number(formData.slot_shifts[slot.id]);
+
+      return sum + (Number.isFinite(value) ? value : 0);
+    }, 0);
+  }, [bookingSlots, formData.slot_shifts]);
+
+  const effectiveShiftCount =
+    isOpen || createdInvoice ? totalShiftCount : Math.max(slotCount, 1);
+
+  const bookedTotalShiftHours = shiftHourPerSlot * slotCount;
+
+  const totalShiftHours = shiftHourPerSlot * effectiveShiftCount;
+
+  const servicePrice = shiftChargePerSlot * effectiveShiftCount;
 
   const isEligible =
     hire?.status === "accepted" &&
@@ -212,9 +261,7 @@ const CreateInvoiceSection = ({ hire }) => {
 
   const handleOpen = () => {
     clearFormState();
-
-    setFormData(getInitialFormData());
-
+    setFormData(getInitialFormData(bookingSlots));
     setIsOpen(true);
   };
 
@@ -239,6 +286,35 @@ const CreateInvoiceSection = ({ hire }) => {
       ...currentErrors,
       [name]: null,
     }));
+
+    if (apiError) {
+      dispatch(clearInvoiceError());
+    }
+  };
+
+  const handleSlotShiftChange = (slotId, value) => {
+    setFormData((currentData) => ({
+      ...currentData,
+      slot_shifts: {
+        ...currentData.slot_shifts,
+        [slotId]: value,
+      },
+    }));
+
+    setValidationErrors((currentErrors) => {
+      if (!currentErrors.slot_shifts) {
+        return currentErrors;
+      }
+
+      const currentSlotErrors = { ...currentErrors.slot_shifts };
+
+      delete currentSlotErrors[slotId];
+
+      return {
+        ...currentErrors,
+        slot_shifts: currentSlotErrors,
+      };
+    });
 
     if (apiError) {
       dispatch(clearInvoiceError());
@@ -333,6 +409,32 @@ const CreateInvoiceSection = ({ hire }) => {
 
     const calculatedTotal = servicePrice - discountPrice;
 
+    if (bookingSlots.length === 0) {
+      errors.slot_shifts_general =
+        "This hire has no booking slots. At least one booking slot is required before creating an invoice.";
+    } else {
+      const slotErrors = {};
+
+      bookingSlots.forEach((slot) => {
+        const rawValue = formData.slot_shifts[slot.id];
+
+        const shiftValue = Number(rawValue);
+
+        if (
+          rawValue === "" ||
+          rawValue === undefined ||
+          !Number.isInteger(shiftValue) ||
+          shiftValue < 1
+        ) {
+          slotErrors[slot.id] = "Enter at least 1 shift for this date.";
+        }
+      });
+
+      if (Object.keys(slotErrors).length > 0) {
+        errors.slot_shifts = slotErrors;
+      }
+    }
+
     const termsConditions = Array.isArray(formData.terms_conditions)
       ? formData.terms_conditions
       : [];
@@ -409,6 +511,11 @@ const CreateInvoiceSection = ({ hire }) => {
     const invoiceData = {
       hire: hire.id,
 
+      slot_shifts: bookingSlots.map((slot) => ({
+        booking_slot: slot.id,
+        shift_count: Number(formData.slot_shifts[slot.id]),
+      })),
+
       due_payment_last_date: formData.due_payment_last_date,
 
       discount_price: toDecimalString(formData.discount_price),
@@ -480,7 +587,8 @@ const CreateInvoiceSection = ({ hire }) => {
 
                 <p className="mt-2 max-w-xl text-sm leading-6 text-gray-600">
                   This accepted hire is ready for invoice creation. Service
-                  price will be calculated from the booked slots.
+                  price will be calculated from the shift count you set for each
+                  booked date.
                 </p>
               </div>
             </div>
@@ -513,7 +621,7 @@ const CreateInvoiceSection = ({ hire }) => {
             </p>
 
             <p className="mt-1 text-lg font-semibold text-gray-950">
-              {totalShiftHours} Hours
+              {bookedTotalShiftHours} Hours
             </p>
           </div>
 
@@ -523,7 +631,7 @@ const CreateInvoiceSection = ({ hire }) => {
             </p>
 
             <p className="mt-1 text-lg font-semibold text-[#b60018]">
-              {formatMoney(servicePrice)}
+              {formatMoney(shiftChargePerSlot * Math.max(slotCount, 1))}
             </p>
           </div>
         </div>
@@ -591,7 +699,93 @@ const CreateInvoiceSection = ({ hire }) => {
           </div>
         ) : null}
 
-        <div className="grid gap-5 md:grid-cols-2">
+        {validationErrors.slot_shifts_general ? (
+          <div
+            role="alert"
+            className="mb-6 border-l-2 border-red-600 bg-red-50 px-4 py-3 text-sm text-red-700"
+          >
+            {validationErrors.slot_shifts_general}
+          </div>
+        ) : null}
+
+        {/* Per-date shift counts */}
+        <div>
+          <div className="flex items-center gap-2">
+            <CalendarDays className="h-4 w-4 text-[#b60018]" />
+
+            <h3 className="text-sm font-semibold text-gray-800">
+              Shift Count per Booked Date
+            </h3>
+          </div>
+
+          <p className="mt-1 text-xs leading-5 text-gray-500">
+            Set how many shifts apply to each booked date. The service price is
+            calculated from the total across all dates.
+          </p>
+
+          <div className="mt-4 space-y-3">
+            {bookingSlots.map((slot) => {
+              const slotError = validationErrors.slot_shifts?.[slot.id];
+
+              return (
+                <div
+                  key={slot.id}
+                  className="flex flex-col gap-3 rounded-xl border border-gray-200 bg-gray-50 p-3 sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-red-50">
+                      <CalendarDays className="h-4 w-4 text-[#b60018]" />
+                    </div>
+
+                    <p className="text-sm font-semibold text-gray-900">
+                      {formatSlotDate(slot)}
+                    </p>
+                  </div>
+
+                  <div className="sm:w-40">
+                    <label
+                      htmlFor={`slot-shift-${slot.id}`}
+                      className="sr-only"
+                    >
+                      Shift count for {formatSlotDate(slot)}
+                    </label>
+
+                    <input
+                      id={`slot-shift-${slot.id}`}
+                      type="number"
+                      min="1"
+                      step="1"
+                      inputMode="numeric"
+                      value={formData.slot_shifts[slot.id] ?? ""}
+                      onChange={(event) =>
+                        handleSlotShiftChange(slot.id, event.target.value)
+                      }
+                      disabled={createLoading}
+                      aria-invalid={Boolean(slotError)}
+                      className={`h-10 w-full rounded-lg border bg-white px-3 text-sm text-gray-950 outline-none transition disabled:cursor-not-allowed disabled:bg-gray-100 disabled:opacity-60 ${
+                        slotError
+                          ? "border-red-400 focus:border-red-600 focus:ring-2 focus:ring-red-100"
+                          : "border-gray-300 focus:border-[#b60018] focus:ring-2 focus:ring-red-100"
+                      }`}
+                    />
+
+                    {slotError ? (
+                      <p className="mt-1 text-xs text-red-600">{slotError}</p>
+                    ) : null}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <p className="mt-3 text-xs text-gray-500">
+            {totalShiftCount} Total Shift{totalShiftCount === 1 ? "" : "s"} ·{" "}
+            {shiftHourPerSlot} Hours × {totalShiftCount} Shifts ={" "}
+            {totalShiftHours} Hours
+          </p>
+        </div>
+
+        <div className="mt-5 grid gap-5 md:grid-cols-2">
           <FormField
             id="invoice-due-payment-date"
             label="Due Payment Date"
@@ -608,21 +802,6 @@ const CreateInvoiceSection = ({ hire }) => {
               disabled={createLoading}
               aria-invalid={Boolean(validationErrors.due_payment_last_date)}
               className="mt-2 h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none transition focus:border-[#b60018] focus:ring-2 focus:ring-red-100 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:opacity-60"
-            />
-          </FormField>
-
-          <FormField
-            id="invoice-shift-duration"
-            label="Booked Shift Duration"
-            icon={CalendarDays}
-          >
-            <input
-              id="invoice-shift-duration"
-              type="text"
-              value={`${shiftHourPerSlot} Hours × ${slotCount} Slots = ${totalShiftHours} Hours`}
-              readOnly
-              aria-readonly="true"
-              className="mt-2 h-11 w-full cursor-not-allowed rounded-lg border border-gray-200 bg-gray-100 px-3 text-sm text-gray-600 outline-none"
             />
           </FormField>
 
@@ -823,8 +1002,8 @@ const CreateInvoiceSection = ({ hire }) => {
             <h3 className="font-semibold text-gray-950">Financial Preview</h3>
 
             <p className="mt-1 text-xs leading-5 text-gray-500">
-              Service price is calculated from the booked slots. Final values
-              will come from the backend.
+              Service price is calculated from the shift counts set above. Final
+              values will come from the backend.
             </p>
           </div>
 

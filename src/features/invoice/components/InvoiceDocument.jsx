@@ -88,9 +88,11 @@ const InvoiceDocument = ({
 
   const firstSlot = bookingSlots[0] || {};
 
-  // console.log(invoice);
-
   const serviceSummary = invoice?.service_summary || {};
+
+  const breakdown = Array.isArray(serviceSummary?.breakdown)
+    ? serviceSummary.breakdown
+    : [];
 
   const backendSlotCount = Number(serviceSummary.slot_count || 0);
 
@@ -105,10 +107,11 @@ const InvoiceDocument = ({
       ? Number(invoice?.service_price || 0) / slotCount
       : Number(invoice?.service_price || 0);
 
-  const shiftChargePerSlot =
+  const shiftChargePerSlot = Number(
     serviceSummary.shift_charge_per_slot ||
-    hire?.service?.shift_charge ||
-    fallbackShiftCharge;
+      hire?.service?.shift_charge ||
+      fallbackShiftCharge,
+  );
 
   const serviceName =
     invoice?.service?.service_name ||
@@ -156,25 +159,52 @@ const InvoiceDocument = ({
     : "Not available";
 
   const eventRows =
-    bookingSlots.length > 0
-      ? bookingSlots.map((slot, index) => ({
-          id: slot?.id || `${invoice?.id}-slot-${index}`,
-          date: formatDate(slot?.starts_at),
-          duration: formatShiftDuration(shiftHourPerSlot),
-          charge: formatMoney(shiftChargePerSlot),
-          service: formatLabel(serviceName),
-        }))
-      : [
-          {
-            id: `${invoice?.id}-fallback-slot`,
-            date: "Not available",
+    breakdown.length > 0
+      ? breakdown.map((entry, index) => {
+          const shiftCount = Number(entry?.shift_count || 1);
+
+          const totalShiftHours = shiftHourPerSlot * shiftCount;
+          const totalShiftCharge = shiftChargePerSlot * shiftCount;
+
+          const bookingSlot = bookingSlots.find(
+            (slot) => Number(slot?.id) === Number(entry?.booking_slot_id),
+          );
+
+          return {
+            id:
+              entry?.booking_slot_id ||
+              bookingSlot?.id ||
+              `${invoice?.id}-slot-${index}`,
+
+            date: entry?.date || formatDate(bookingSlot?.starts_at),
+
+            duration: formatShiftDuration(totalShiftHours),
+
+            charge: formatMoney(totalShiftCharge),
+
+            service: formatLabel(serviceName),
+          };
+        })
+      : bookingSlots.length > 0
+        ? bookingSlots.map((slot, index) => ({
+            id: slot?.id || `${invoice?.id}-slot-${index}`,
+            date: formatDate(slot?.starts_at),
             duration: formatShiftDuration(shiftHourPerSlot),
             charge: formatMoney(shiftChargePerSlot),
             service: formatLabel(serviceName),
-          },
-        ];
+          }))
+        : [
+            {
+              id: `${invoice?.id}-fallback-slot`,
+              date: "Not available",
+              duration: "Not available",
+              charge: formatMoney(invoice?.service_price),
+              service: formatLabel(serviceName),
+            },
+          ];
 
   const servicePrice = invoice?.service_price || "0.00";
+
   const discountPrice = invoice?.discount_price || "0.00";
 
   const calculatedSubtotal = Math.max(
@@ -216,6 +246,7 @@ const InvoiceDocument = ({
                 <h1 className="font-serif text-2xl font-bold text-[#b60018]">
                   {brandName}
                 </h1>
+
                 <p className="mt-0.5 text-[11px] text-gray-500">{sellerName}</p>
               </div>
 
@@ -262,7 +293,7 @@ const InvoiceDocument = ({
                   <thead>
                     <tr className="bg-[#b60018] text-white">
                       <th className="border-r border-white/60 px-3 py-1.5 text-left text-xs font-bold uppercase">
-                        Date
+                        Event Date
                       </th>
 
                       <th className="border-r border-white/60 px-3 py-1.5 text-left text-xs font-bold uppercase">
@@ -286,7 +317,7 @@ const InvoiceDocument = ({
                           {row.date}
                         </td>
 
-                        <td className="border-r border-gray-200 px-3 py-2 text-xs text-gray-700">
+                        <td className="border-r border-gray-200 px-3 py-2 text-xs font-medium text-gray-700">
                           {row.duration}
                         </td>
 
@@ -308,7 +339,7 @@ const InvoiceDocument = ({
               {/* Agreement and price summary */}
               <div className="grid grid-cols-[1fr_280px] gap-8 break-inside-avoid">
                 <div className="flex min-w-0 flex-col items-start justify-between">
-                  {/* terms and conditions */}
+                  {/* Terms and conditions */}
                   <TermsConditions
                     sellerName={invoice?.seller?.full_name}
                     terms={invoice?.terms_conditions}
@@ -317,7 +348,9 @@ const InvoiceDocument = ({
                   <div>
                     <p className="max-w-full border-b pb-2 text-sm">
                       {invoice?.customer_agreed
-                        ? `${invoice?.customer?.full_name || "Not available"} ( I agree )`
+                        ? `${
+                            invoice?.customer?.full_name || "Not available"
+                          } ( I agree )`
                         : "Pending Confirmation"}
                     </p>
 

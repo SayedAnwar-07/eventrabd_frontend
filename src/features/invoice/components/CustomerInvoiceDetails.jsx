@@ -208,31 +208,27 @@ const CustomerInvoiceDetails = ({ hire }) => {
             </p>
           </div>
 
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <button
-              type="button"
-              onClick={() => handleDecision(true)}
-              disabled={decisionLoading}
-              className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[#b60018] px-6 text-sm font-semibold text-white transition hover:bg-[#960014] disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <Check className="h-4 w-4" />
-
-              {decisionLoading && submittingDecision === true
-                ? "Submitting..."
-                : "I Agree"}
-            </button>
-
+          <div className="flex shrink-0 gap-3">
             <button
               type="button"
               onClick={() => handleDecision(false)}
               disabled={decisionLoading}
-              className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-6 text-sm font-semibold text-gray-800 transition hover:border-red-600 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+              className="h-11 min-w-27.5 rounded-lg border border-gray-300 px-5 text-sm font-medium text-gray-700 transition hover:border-gray-400 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              <X className="h-4 w-4" />
-
               {decisionLoading && submittingDecision === false
-                ? "Submitting..."
-                : "I Disagree"}
+                ? "Submitting…"
+                : "Disagree"}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleDecision(true)}
+              disabled={decisionLoading}
+              className="h-11 min-w-27.5 rounded-lg bg-[#b60018] px-5 text-sm font-medium text-white transition hover:bg-[#960014] disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {decisionLoading && submittingDecision === true
+                ? "Submitting…"
+                : "Agree"}
             </button>
           </div>
         </div>

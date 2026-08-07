@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   CalendarDays,
@@ -50,10 +50,23 @@ const getLocalToday = () => {
   return `${year}-${month}-${day}`;
 };
 
+// One row per booked date: { [booking_slot_id]: "shift count string" }
+const buildInitialSlotShifts = (breakdown = []) => {
+  const slotShifts = {};
+
+  breakdown.forEach((entry) => {
+    slotShifts[entry.booking_slot_id] = String(entry.shift_count ?? 1);
+  });
+
+  return slotShifts;
+};
+
 const getInitialFormData = (invoice) => ({
   due_payment_last_date: invoice?.due_payment_last_date || "",
 
-  service_price: invoice?.service_price || "",
+  slot_shifts: buildInitialSlotShifts(
+    invoice?.service_summary?.breakdown || [],
+  ),
 
   discount_price: invoice?.discount_price || "0.00",
 
@@ -173,7 +186,33 @@ const EditInvoiceDialog = ({ invoice }) => {
 
   const today = getLocalToday();
 
-  const servicePrice = parseMoney(formData.service_price);
+  // Booked dates for this invoice's hire, taken from the backend's
+  // per-slot breakdown (booking_slot_id, date label, shift_count, ...).
+  const breakdown = useMemo(
+    () => invoice?.service_summary?.breakdown || [],
+    [invoice?.service_summary?.breakdown],
+  );
+
+  const shiftHourPerSlot = Number(
+    invoice?.service_summary?.shift_hour_per_slot || 0,
+  );
+
+  const shiftChargePerSlot = parseMoney(
+    invoice?.service_summary?.shift_charge_per_slot,
+  );
+
+  // Sum of shift counts entered across every booked date.
+  const totalShiftCount = useMemo(() => {
+    return breakdown.reduce((sum, entry) => {
+      const value = Number(formData.slot_shifts[entry.booking_slot_id]);
+
+      return sum + (Number.isFinite(value) ? value : 0);
+    }, 0);
+  }, [breakdown, formData.slot_shifts]);
+
+  const servicePrice = shiftChargePerSlot * totalShiftCount;
+
+  const totalShiftHours = shiftHourPerSlot * totalShiftCount;
 
   const discountPrice = parseMoney(formData.discount_price);
 
@@ -213,6 +252,37 @@ const EditInvoiceDialog = ({ invoice }) => {
       ...currentErrors,
       [name]: null,
     }));
+
+    setLocalMessage("");
+
+    if (apiError) {
+      dispatch(clearInvoiceError());
+    }
+  };
+
+  const handleSlotShiftChange = (slotId, value) => {
+    setFormData((currentData) => ({
+      ...currentData,
+      slot_shifts: {
+        ...currentData.slot_shifts,
+        [slotId]: value,
+      },
+    }));
+
+    setValidationErrors((currentErrors) => {
+      if (!currentErrors.slot_shifts) {
+        return currentErrors;
+      }
+
+      const currentSlotErrors = { ...currentErrors.slot_shifts };
+
+      delete currentSlotErrors[slotId];
+
+      return {
+        ...currentErrors,
+        slot_shifts: currentSlotErrors,
+      };
+    });
 
     setLocalMessage("");
 
@@ -309,13 +379,11 @@ const EditInvoiceDialog = ({ invoice }) => {
   const validateForm = () => {
     const errors = {};
 
-    const currentServicePrice = Number(formData.service_price);
-
     const currentDiscountPrice = Number(formData.discount_price);
 
     const currentAdvancePayment = Number(formData.advance_payment);
 
-    const calculatedTotal = currentServicePrice - currentDiscountPrice;
+    const calculatedTotal = servicePrice - currentDiscountPrice;
 
     const termsConditions = normalizeTermsConditions(formData.terms_conditions);
 
@@ -353,12 +421,36 @@ const EditInvoiceDialog = ({ invoice }) => {
         "Due payment date cannot be before the issue date.";
     }
 
-    if (
-      formData.service_price === "" ||
-      !Number.isFinite(currentServicePrice) ||
-      currentServicePrice <= 0
-    ) {
-      errors.service_price = "Service price must be greater than zero.";
+    if (breakdown.length === 0) {
+      errors.slot_shifts_general =
+        "This invoice's hire has no booking slots to edit.";
+    } else {
+      const slotErrors = {};
+
+      breakdown.forEach((entry) => {
+        const rawValue = formData.slot_shifts[entry.booking_slot_id];
+
+        const shiftValue = Number(rawValue);
+
+        if (
+          rawValue === "" ||
+          rawValue === undefined ||
+          !Number.isInteger(shiftValue) ||
+          shiftValue < 1
+        ) {
+          slotErrors[entry.booking_slot_id] =
+            "Enter at least 1 shift for this date.";
+        }
+      });
+
+      if (Object.keys(slotErrors).length > 0) {
+        errors.slot_shifts = slotErrors;
+      }
+    }
+
+    if (!Number.isFinite(servicePrice) || servicePrice <= 0) {
+      errors.service_price =
+        "The calculated service price must be greater than zero.";
     }
 
     if (
@@ -367,7 +459,7 @@ const EditInvoiceDialog = ({ invoice }) => {
       currentDiscountPrice < 0
     ) {
       errors.discount_price = "Discount price cannot be negative.";
-    } else if (currentDiscountPrice > currentServicePrice) {
+    } else if (currentDiscountPrice > servicePrice) {
       errors.discount_price = "Discount price cannot exceed service price.";
     }
 
@@ -387,23 +479,41 @@ const EditInvoiceDialog = ({ invoice }) => {
     return Object.keys(errors).length === 0;
   };
 
+  // Builds the slot_shifts array in the shape the backend expects:
+  // [{ booking_slot, shift_count }]. Returns null if nothing changed
+  // from the invoice's saved breakdown.
+  const getChangedSlotShifts = () => {
+    const nextSlotShifts = breakdown.map((entry) => ({
+      booking_slot: entry.booking_slot_id,
+      shift_count: Number(formData.slot_shifts[entry.booking_slot_id]),
+    }));
+
+    const currentSlotShifts = breakdown.map((entry) => ({
+      booking_slot: entry.booking_slot_id,
+      shift_count: Number(entry.shift_count),
+    }));
+
+    const hasChanged =
+      JSON.stringify(nextSlotShifts) !== JSON.stringify(currentSlotShifts);
+
+    return hasChanged ? nextSlotShifts : null;
+  };
+
   const getChangedFields = () => {
     const changedFields = {};
-
-    const nextServicePrice = toDecimalString(formData.service_price);
 
     const nextDiscountPrice = toDecimalString(formData.discount_price);
 
     const nextAdvancePayment = toDecimalString(formData.advance_payment);
 
-    const currentServicePrice = toDecimalString(invoice?.service_price);
-
     const currentDiscountPrice = toDecimalString(invoice?.discount_price);
 
     const currentAdvancePayment = toDecimalString(invoice?.advance_payment);
 
-    if (nextServicePrice !== currentServicePrice) {
-      changedFields.service_price = nextServicePrice;
+    const changedSlotShifts = getChangedSlotShifts();
+
+    if (changedSlotShifts) {
+      changedFields.slot_shifts = changedSlotShifts;
     }
 
     if (nextDiscountPrice !== currentDiscountPrice) {
@@ -543,7 +653,108 @@ const EditInvoiceDialog = ({ invoice }) => {
             </div>
           ) : null}
 
-          <div className="grid gap-5 md:grid-cols-2">
+          {validationErrors.service_price ? (
+            <div
+              role="alert"
+              className="mb-5 border-l-2 border-red-600 bg-red-50 px-4 py-3 text-sm text-red-700"
+            >
+              {validationErrors.service_price}
+            </div>
+          ) : null}
+
+          {validationErrors.slot_shifts_general ? (
+            <div
+              role="alert"
+              className="mb-5 border-l-2 border-red-600 bg-red-50 px-4 py-3 text-sm text-red-700"
+            >
+              {validationErrors.slot_shifts_general}
+            </div>
+          ) : null}
+
+          {/* Per-date shift counts */}
+          <div>
+            <div className="flex items-center gap-2">
+              <CalendarDays className="h-4 w-4 text-[#b60018]" />
+
+              <h3 className="text-sm font-semibold text-gray-800">
+                Shift Count per Booked Date
+              </h3>
+            </div>
+
+            <p className="mt-1 text-xs leading-5 text-gray-500">
+              Update how many shifts apply to each booked date. The service
+              price is recalculated from the total across all dates.
+            </p>
+
+            <div className="mt-4 space-y-3">
+              {breakdown.map((entry) => {
+                const slotError =
+                  validationErrors.slot_shifts?.[entry.booking_slot_id];
+
+                return (
+                  <div
+                    key={entry.booking_slot_id}
+                    className="flex flex-col gap-3 rounded-xl border border-gray-200 bg-gray-50 p-3 sm:flex-row sm:items-center sm:justify-between"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-red-50">
+                        <CalendarDays className="h-4 w-4 text-[#b60018]" />
+                      </div>
+
+                      <p className="text-sm font-semibold text-gray-900">
+                        {entry.date || "Booked date"}
+                      </p>
+                    </div>
+
+                    <div className="sm:w-40">
+                      <label
+                        htmlFor={`invoice-slot-shift-${invoice?.id}-${entry.booking_slot_id}`}
+                        className="sr-only"
+                      >
+                        Shift count for {entry.date}
+                      </label>
+
+                      <input
+                        id={`invoice-slot-shift-${invoice?.id}-${entry.booking_slot_id}`}
+                        type="number"
+                        min="1"
+                        step="1"
+                        inputMode="numeric"
+                        value={
+                          formData.slot_shifts[entry.booking_slot_id] ?? ""
+                        }
+                        onChange={(event) =>
+                          handleSlotShiftChange(
+                            entry.booking_slot_id,
+                            event.target.value,
+                          )
+                        }
+                        disabled={updateLoading}
+                        aria-invalid={Boolean(slotError)}
+                        className={`h-10 w-full rounded-lg border bg-white px-3 text-sm text-gray-950 outline-none transition disabled:cursor-not-allowed disabled:bg-gray-100 disabled:opacity-60 ${
+                          slotError
+                            ? "border-red-400 focus:border-red-600 focus:ring-2 focus:ring-red-100"
+                            : "border-gray-300 focus:border-[#b60018] focus:ring-2 focus:ring-red-100"
+                        }`}
+                      />
+
+                      {slotError ? (
+                        <p className="mt-1 text-xs text-red-600">{slotError}</p>
+                      ) : null}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <p className="mt-3 text-xs text-gray-500">
+              {totalShiftCount} Total Shift{totalShiftCount === 1 ? "" : "s"} ·{" "}
+              {shiftHourPerSlot} Hours × {totalShiftCount} Shifts ={" "}
+              {totalShiftHours} Hours
+            </p>
+          </div>
+
+          <div className="mt-5 grid gap-5 md:grid-cols-2">
             <FormField
               id={`invoice-due-date-${invoice?.id}`}
               label="Due Payment Date"
@@ -559,27 +770,6 @@ const EditInvoiceDialog = ({ invoice }) => {
                 onChange={handleChange}
                 disabled={updateLoading}
                 aria-invalid={Boolean(validationErrors.due_payment_last_date)}
-                className="mt-2 h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none transition focus:border-[#b60018] focus:ring-2 focus:ring-red-100 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:opacity-60"
-              />
-            </FormField>
-
-            <FormField
-              id={`invoice-service-price-${invoice?.id}`}
-              label="Service Price"
-              icon={CircleDollarSign}
-              error={validationErrors.service_price}
-            >
-              <input
-                id={`invoice-service-price-${invoice?.id}`}
-                name="service_price"
-                type="number"
-                min="0.01"
-                step="0.01"
-                inputMode="decimal"
-                value={formData.service_price}
-                onChange={handleChange}
-                disabled={updateLoading}
-                aria-invalid={Boolean(validationErrors.service_price)}
                 className="mt-2 h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none transition focus:border-[#b60018] focus:ring-2 focus:ring-red-100 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:opacity-60"
               />
             </FormField>
@@ -780,12 +970,13 @@ const EditInvoiceDialog = ({ invoice }) => {
             <div>
               <h3 className="font-semibold text-gray-950">Financial Preview</h3>
 
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs leading-5 text-gray-500">
+                Service price is calculated from the shift counts set above.
                 Final totals will be calculated and returned by the backend.
               </p>
             </div>
 
-            <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
+            <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
               <PreviewItem label="Service Price" value={servicePrice} />
 
               <PreviewItem label="Discount" value={discountPrice} />

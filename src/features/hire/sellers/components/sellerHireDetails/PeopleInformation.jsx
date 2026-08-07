@@ -2,8 +2,9 @@ import PersonCard from "./PersonCard";
 
 export default function PeopleInformation({ hire, customerRole = "Customer" }) {
   return (
-    <section>
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+    <section className="min-w-0">
+      <div className="flex flex-col gap-5">
+        {/* Seller Information */}
         <div className="flex min-w-0 flex-col">
           <div className="mb-3 flex items-center gap-3">
             <span className="h-px flex-1 bg-gray-200 dark:bg-gray-800" />
@@ -28,6 +29,7 @@ export default function PeopleInformation({ hire, customerRole = "Customer" }) {
           />
         </div>
 
+        {/* Customer Information */}
         <div className="flex min-w-0 flex-col">
           <div className="mb-3 flex items-center gap-3">
             <span className="h-px flex-1 bg-gray-200 dark:bg-gray-800" />

@@ -59,12 +59,6 @@ export default function PersonCard({
               {getInitials(personName)}
             </div>
           )}
-
-          <span
-            className={`absolute -bottom-1 -right-1 h-4 w-4 rounded-full border-2 border-white dark:border-gray-950 ${
-              whatsapp ? "bg-emerald-500" : "bg-gray-300 dark:bg-gray-700"
-            }`}
-          />
         </div>
 
         <div className="min-w-0 flex-1">

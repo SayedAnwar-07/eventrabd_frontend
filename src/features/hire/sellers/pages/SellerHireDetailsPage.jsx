@@ -84,12 +84,16 @@ const SellerHireDetailsPage = () => {
           <BookingSlots hire={hire} />
         </section>
 
-        <section className="mt-10">
-          <PeopleInformation hire={hire} customerRole="Customer" />
-        </section>
+        <section className="mt-10 grid grid-cols-1 items-start gap-6 xl:grid-cols-[360px_210mm] xl:justify-center">
+          {/* Left side */}
+          <div className="min-w-0">
+            <PeopleInformation hire={hire} />
+          </div>
 
-        <section className="mt-5 overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-950">
-          <SellerHireInvoiceSection key={hire.id} hire={hire} />
+          {/* Right side */}
+          <div className="min-w-0">
+            <SellerHireInvoiceSection key={hire.id} hire={hire} />
+          </div>
         </section>
       </main>
     </div>
