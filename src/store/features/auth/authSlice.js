@@ -1,23 +1,8 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-
 import api from "@/store/constant/api";
-
-// ── Error handler ─────────────────────────────────────────────────────────────
-
-const getErrorPayload = (error) => {
-  const data = error.response?.data;
-
-  if (!data) {
-    return {
-      detail: "Something went wrong. Please try again.",
-    };
-  }
-
-  return data;
-};
+import getApiErrorPayload from "@/store/constant/getApiErrorPayload";
 
 // ── Local storage helpers ─────────────────────────────────────────────────────
-
 const fromStorage = (key) => {
   try {
     return localStorage.getItem(key) ?? null;
@@ -84,7 +69,7 @@ export const registerUser = createAsyncThunk(
 
       return data;
     } catch (error) {
-      return rejectWithValue(getErrorPayload(error));
+      return rejectWithValue(getApiErrorPayload(error));
     }
   },
 );
@@ -97,7 +82,7 @@ export const verifyOtp = createAsyncThunk(
 
       return data;
     } catch (error) {
-      return rejectWithValue(getErrorPayload(error));
+      return rejectWithValue(getApiErrorPayload(error));
     }
   },
 );
@@ -110,7 +95,7 @@ export const loginUser = createAsyncThunk(
 
       return data;
     } catch (error) {
-      return rejectWithValue(getErrorPayload(error));
+      return rejectWithValue(getApiErrorPayload(error));
     }
   },
 );
@@ -124,7 +109,7 @@ export const getMyProfile = createAsyncThunk(
 
       return data;
     } catch (error) {
-      return rejectWithValue(getErrorPayload(error));
+      return rejectWithValue(getApiErrorPayload(error));
     }
   },
 );
@@ -137,7 +122,7 @@ export const updateProfile = createAsyncThunk(
 
       return data;
     } catch (error) {
-      return rejectWithValue(getErrorPayload(error));
+      return rejectWithValue(getApiErrorPayload(error));
     }
   },
 );
@@ -150,7 +135,7 @@ export const forgotPassword = createAsyncThunk(
 
       return data;
     } catch (error) {
-      return rejectWithValue(getErrorPayload(error));
+      return rejectWithValue(getApiErrorPayload(error));
     }
   },
 );
@@ -163,7 +148,7 @@ export const resetPassword = createAsyncThunk(
 
       return data;
     } catch (error) {
-      return rejectWithValue(getErrorPayload(error));
+      return rejectWithValue(getApiErrorPayload(error));
     }
   },
 );
@@ -222,7 +207,7 @@ const setRejected = (state, action) => {
   state.loading = false;
 
   state.error = action.payload ?? {
-    detail: "An unexpected error occurred.",
+    message: "An unexpected error occurred.",
   };
 };
 
@@ -348,21 +333,7 @@ const authSlice = createSlice({
 
       // ── Update profile
       .addCase(updateProfile.pending, setPending)
-      .addCase(updateProfile.rejected, (state, action) => {
-        state.loading = false;
-
-        const payload = action.payload;
-
-        if (payload && typeof payload === "object" && !payload.detail) {
-          state.error = {
-            detail: Object.values(payload).flat().join(" "),
-          };
-        } else {
-          state.error = payload ?? {
-            detail: "Failed to update profile.",
-          };
-        }
-      })
+      .addCase(updateProfile.rejected, setRejected)
       .addCase(updateProfile.fulfilled, (state, action) => {
         const updatedUser = action.payload.user ?? action.payload;
 
@@ -376,8 +347,16 @@ const authSlice = createSlice({
       // ── Forgot password
       .addCase(forgotPassword.pending, setPending)
       .addCase(forgotPassword.rejected, setRejected)
-      .addCase(forgotPassword.fulfilled, (state) => {
+      .addCase(forgotPassword.fulfilled, (state, action) => {
         state.loading = false;
+
+        if (action.payload?.success === false) {
+          state.success = false;
+          state.forgotSuccess = false;
+          state.error = action.payload;
+          return;
+        }
+
         state.success = true;
         state.forgotSuccess = true;
       })

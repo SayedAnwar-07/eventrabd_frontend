@@ -7,10 +7,10 @@ import {
   clearPublicBrandDetails,
 } from "@/store/features/eventPlanner/eventPlannerSlice";
 
-import BrandHeader from "../components/brandDetails/BrandHeader";
-import BrandSidebarPanel from "../components/brandDetails/BrandSidebarPanel";
-import BrandServicesSection from "../components/brandDetails/BrandServicesSection";
-import BrandPageState from "../components/brandDetails/BrandPageState";
+import BrandHeader from "../components/BrandHeader";
+import BrandSidebarPanel from "../components/BrandSidebarPanel";
+import BrandServicesSection from "../components/BrandServicesSection";
+import BrandPageState from "../components/BrandPageState";
 
 const BrandDetailsPage = () => {
   const { slug } = useParams();
@@ -55,7 +55,7 @@ const BrandDetailsPage = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <main className="mx-auto max-w-6xl px-4 pb-10 sm:px-6 lg:px-8">
+      <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
         <BrandHeader
           brand={publicBrandDetails}
           onEdit={() =>
@@ -63,12 +63,16 @@ const BrandDetailsPage = () => {
           }
         />
 
-        <div className="">
-          <div className="">
+        <div className="grid grid-cols-1 gap-10 py-10 lg:grid-cols-3">
+          <div className="lg:col-span-2">
             <BrandServicesSection
               brand={publicBrandDetails}
               onServiceCreated={handleServiceCreated}
             />
+          </div>
+
+          <div className="lg:sticky lg:top-8 lg:h-fit">
+            <BrandSidebarPanel brand={publicBrandDetails} />
           </div>
         </div>
       </main>

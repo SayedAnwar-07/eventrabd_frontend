@@ -32,23 +32,26 @@ const BrandCard = ({ brand }) => {
   const visibleServices = services.slice(0, 3);
 
   return (
-    <article className="border border-border bg-background p-5 transition hover:border-primary">
+    <article className="flex h-full flex-col border border-border bg-background p-5 transition hover:border-primary">
       <div className="flex items-start gap-4">
         {logoUrl ? (
           <img
             src={logoUrl}
             alt={brand?.brand_name || "Brand logo"}
-            className="h-16 w-16 border border-border object-cover"
+            className="h-16 w-16 shrink-0 border border-border object-cover"
             loading="lazy"
           />
         ) : (
-          <div className="flex h-16 w-16 items-center justify-center border border-border bg-muted text-lg font-semibold text-foreground">
+          <div className="flex h-16 w-16 shrink-0 items-center justify-center border border-border bg-muted text-lg font-semibold text-foreground">
             {getInitials(brand?.brand_name)}
           </div>
         )}
 
         <div className="min-w-0 flex-1">
-          <h2 className="truncate text-xl font-semibold text-foreground">
+          <h2
+            className="truncate text-xl font-semibold text-foreground"
+            title={brand?.brand_name}
+          >
             {brand?.brand_name || "Unnamed Brand"}
           </h2>
 
@@ -64,11 +67,11 @@ const BrandCard = ({ brand }) => {
           <img
             src={sellerImage}
             alt={brand?.seller_name || "Seller"}
-            className="h-10 w-10 border border-border object-top"
+            className="h-10 w-10 shrink-0 border border-border object-cover object-top"
             loading="lazy"
           />
         ) : (
-          <div className="flex h-10 w-10 items-center justify-center border border-border bg-muted text-xs font-semibold text-foreground">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center border border-border bg-muted text-xs font-semibold text-foreground">
             {getInitials(brand?.seller_name || brand?.brand_name)}
           </div>
         )}
@@ -84,7 +87,7 @@ const BrandCard = ({ brand }) => {
         </div>
       </div>
 
-      <div className="mt-5">
+      <div className="my-5 flex-1">
         <div className="grid grid-cols-2 gap-2">
           {visibleServices.length > 0 ? (
             visibleServices.map((service) => {
@@ -136,7 +139,7 @@ const BrandCard = ({ brand }) => {
 
       <Link
         to={`/event-planner/brands/${brand?.slug}`}
-        className="mt-6 flex w-full items-center justify-center bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
+        className="mt-auto flex w-full items-center justify-center bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
       >
         View Details
       </Link>

@@ -8,8 +8,9 @@ export default function StatusAlert({ type = "info", title, message }) {
 
   return (
     <div className={`rounded-2xl border px-4 py-3 ${styles[type]}`}>
-      {title ? <p className="font-medium">{title}</p> : null}
-      {message ? <p className="mt-1 text-sm">{message}</p> : null}
+      {title && <h4 className="font-semibold">{title}</h4>}
+
+      {message && <p>{message}</p>}
     </div>
   );
 }

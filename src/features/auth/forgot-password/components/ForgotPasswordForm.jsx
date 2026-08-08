@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import GlobalErrorMessage from "@/components/common/GlobalErrorMessage";
 
 const forgotPasswordSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -50,21 +51,25 @@ const ForgotPasswordForm = () => {
   }, [dispatch]);
 
   useEffect(() => {
-    if (success && emailSent) {
-      const timer = setTimeout(() => {
-        setShowSuccess(true);
-        navigate(`/reset-password?email=${encodeURIComponent(emailSent)}`);
-      }, 2000);
-
-      return () => clearTimeout(timer);
+    if (!success || !emailSent) {
+      return;
     }
+
+    const timer = setTimeout(() => {
+      setShowSuccess(true);
+
+      navigate(`/reset-password?email=${encodeURIComponent(emailSent)}`);
+    }, 2000);
+
+    return () => clearTimeout(timer);
   }, [success, emailSent, navigate]);
 
   const backendErrors = useMemo(() => {
     if (!error) return {};
-    if (error.email) return { email: error.email };
-    if (error.detail) return { root: error.detail };
-    return {};
+
+    return {
+      email: error?.errors?.email,
+    };
   }, [error]);
 
   const displayErrors = { ...manualErrors, ...backendErrors };
@@ -72,14 +77,18 @@ const ForgotPasswordForm = () => {
   const onSubmit = async (data) => {
     setManualErrors({});
     dispatch(clearError());
+    dispatch(clearSuccess());
 
     const email = user?.email ?? data.email;
-    const result = forgotPasswordSchema.safeParse({ email });
 
-    if (!result.success) {
+    const validationResult = forgotPasswordSchema.safeParse({
+      email,
+    });
+
+    if (!validationResult.success) {
       const formattedErrors = {};
 
-      result.error.issues.forEach((issue) => {
+      validationResult.error.issues.forEach((issue) => {
         formattedErrors[issue.path[0]] = issue.message;
       });
 
@@ -88,7 +97,12 @@ const ForgotPasswordForm = () => {
     }
 
     setEmailSent(email);
-    await dispatch(forgotPassword({ email }));
+
+    const response = await dispatch(forgotPassword({ email }));
+
+    if (forgotPassword.rejected.match(response)) {
+      return;
+    }
   };
 
   const handleResendOTP = () => {
@@ -164,13 +178,7 @@ const ForgotPasswordForm = () => {
             </div>
           )}
 
-          {displayErrors.root && (
-            <Alert className="mb-6 border-red-200 bg-red-50 dark:border-red-900/60 dark:bg-red-950/30">
-              <AlertDescription className="text-sm font-medium text-red-700 dark:text-red-400">
-                {displayErrors.root}
-              </AlertDescription>
-            </Alert>
-          )}
+          {error && <GlobalErrorMessage error={error} className="mb-6" />}
 
           {!showSuccess && (
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">

@@ -403,7 +403,7 @@ export default function EditBrandPage() {
 
   return (
     <section className="min-h-screen bg-background px-4 py-8">
-      <div className="mx-auto max-w-3xl">
+      <div className="">
         <header className="mb-6">
           <p className="text-sm font-medium text-muted-foreground">
             Update your event planner brand

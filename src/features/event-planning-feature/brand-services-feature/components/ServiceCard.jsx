@@ -101,7 +101,7 @@ const ServiceCard = ({ service, brandSlug }) => {
   };
 
   return (
-    <article className="group overflow-hidden border-b border-border bg-background pb-6">
+    <article className="group overflow-hidden border-b border-border bg-background pb-6 shadow-lg">
       <div className="relative h-64 w-full overflow-hidden bg-muted">
         {activeImage ? (
           <img
@@ -163,7 +163,7 @@ const ServiceCard = ({ service, brandSlug }) => {
         )}
       </div>
 
-      <div className="py-5">
+      <div className="p-5">
         <h3 className="text-xl font-semibold text-foreground">
           {formatServiceName(serviceName)}
         </h3>

@@ -1,5 +1,7 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import api from "@/store/constant/api";
+import getApiErrorMessage from "@/store/constant/getApiErrorMessage";
+import getApiErrorPayload from "@/store/constant/getApiErrorPayload";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -13,92 +15,6 @@ const initialAsyncState = {
   errorMessage: "",
 };
 
-const extractFirstErrorMessage = (errors = {}) => {
-  if (!errors || typeof errors !== "object") return "";
-
-  for (const value of Object.values(errors)) {
-    if (Array.isArray(value) && value.length > 0) {
-      return String(value[0]);
-    }
-    if (typeof value === "string") {
-      return value;
-    }
-  }
-
-  return "";
-};
-
-const normalizeApiError = (error) => {
-  const fallback = {
-    status: null,
-    message: "Something went wrong. Please try again.",
-    errors: {},
-    redirectInfo: null,
-  };
-
-  if (!error?.response) {
-    return {
-      ...fallback,
-      message: "Network error. Please check your internet connection.",
-    };
-  }
-
-  const { status, data } = error.response;
-
-  // Handle string response
-  if (typeof data === "string") {
-    return {
-      status,
-      message: data,
-      errors: {},
-      redirectInfo: null,
-    };
-  }
-
-  // Handle redirect-style API response
-  if (status === 301 && data?.new_slug) {
-    return {
-      status,
-      message: data?.detail || "This brand URL has changed.",
-      errors: {},
-      redirectInfo: {
-        oldSlug: data?.old_slug || null,
-        newSlug: data?.new_slug || null,
-        redirectUrl: data?.redirect_url || null,
-      },
-    };
-  }
-
-  const errors = {};
-  let message = data?.detail || data?.message || fallback.message;
-
-  if (data && typeof data === "object") {
-    Object.entries(data).forEach(([key, value]) => {
-      if (key === "detail" || key === "message") return;
-
-      if (Array.isArray(value)) {
-        errors[key] = value.map(String);
-      } else if (typeof value === "string") {
-        errors[key] = [value];
-      } else if (value && typeof value === "object") {
-        errors[key] = [JSON.stringify(value)];
-      }
-    });
-  }
-
-  const firstFieldError = extractFirstErrorMessage(errors);
-  if (!message || message === fallback.message) {
-    message = firstFieldError || fallback.message;
-  }
-
-  return {
-    status,
-    message,
-    errors,
-    redirectInfo: null,
-  };
-};
-
 // ─────────────────────────────────────────────────────────────────────────────
 // Thunks
 // ─────────────────────────────────────────────────────────────────────────────
@@ -110,7 +26,10 @@ export const fetchBrands = createAsyncThunk(
       const response = await api.get("/event-planner/brands/");
       return response.data;
     } catch (error) {
-      return thunkAPI.rejectWithValue(normalizeApiError(error));
+      return thunkAPI.rejectWithValue({
+        message: getApiErrorMessage(error),
+        ...getApiErrorPayload(error),
+      });
     }
   },
 );
@@ -122,7 +41,10 @@ export const fetchMyBrand = createAsyncThunk(
       const response = await api.get("/event-planner/my-brand/");
       return response.data;
     } catch (error) {
-      return thunkAPI.rejectWithValue(normalizeApiError(error));
+      return thunkAPI.rejectWithValue({
+        message: getApiErrorMessage(error),
+        ...getApiErrorPayload(error),
+      });
     }
   },
 );
@@ -134,7 +56,10 @@ export const fetchBrandBySlug = createAsyncThunk(
       const response = await api.get(`/event-planner/brands/${slug}/`);
       return response.data;
     } catch (error) {
-      return thunkAPI.rejectWithValue(normalizeApiError(error));
+      return thunkAPI.rejectWithValue({
+        message: getApiErrorMessage(error),
+        ...getApiErrorPayload(error),
+      });
     }
   },
 );
@@ -146,7 +71,10 @@ export const createBrand = createAsyncThunk(
       const response = await api.post("/event-planner/brands/create/", payload);
       return response.data;
     } catch (error) {
-      return thunkAPI.rejectWithValue(normalizeApiError(error));
+      return thunkAPI.rejectWithValue({
+        message: getApiErrorMessage(error),
+        ...getApiErrorPayload(error),
+      });
     }
   },
 );
@@ -161,7 +89,10 @@ export const updateBrand = createAsyncThunk(
       );
       return response.data;
     } catch (error) {
-      return thunkAPI.rejectWithValue(normalizeApiError(error));
+      return thunkAPI.rejectWithValue({
+        message: getApiErrorMessage(error),
+        ...getApiErrorPayload(error),
+      });
     }
   },
 );
@@ -179,7 +110,10 @@ export const deleteBrand = createAsyncThunk(
         message: response.data?.message || "Brand deleted successfully.",
       };
     } catch (error) {
-      return thunkAPI.rejectWithValue(normalizeApiError(error));
+      return thunkAPI.rejectWithValue({
+        message: getApiErrorMessage(error),
+        ...getApiErrorPayload(error),
+      });
     }
   },
 );

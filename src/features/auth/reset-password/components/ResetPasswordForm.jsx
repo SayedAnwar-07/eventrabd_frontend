@@ -27,6 +27,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import GlobalErrorMessage from "@/components/common/GlobalErrorMessage";
 
 const resetPasswordSchema = z
   .object({
@@ -93,15 +94,19 @@ const ResetPasswordForm = () => {
 
   const backendErrors = useMemo(() => {
     if (!error) return {};
-    if (typeof error === "string") return { root: error };
 
     return {
-      ...(error.otp && { otp: error.otp }),
-      ...(error.email && { email: error.email }),
-      ...(error.confirm_password && {
-        confirm_password: error.confirm_password,
+      ...(error?.errors?.otp && {
+        otp: error.errors.otp,
       }),
-      ...(error.detail && { root: error.detail }),
+
+      ...(error?.errors?.email && {
+        email: error.errors.email,
+      }),
+
+      ...(error?.errors?.confirm_password && {
+        confirm_password: error.errors.confirm_password,
+      }),
     };
   }, [error]);
 
@@ -220,13 +225,7 @@ const ResetPasswordForm = () => {
             </Alert>
           )}
 
-          {displayErrors.root && (
-            <Alert className="mb-6 border-red-200 bg-red-50 dark:border-red-900/60 dark:bg-red-950/30">
-              <AlertDescription className="text-sm font-medium text-red-700 dark:text-red-400">
-                {displayErrors.root}
-              </AlertDescription>
-            </Alert>
-          )}
+          {error && <GlobalErrorMessage error={error} className="mb-6" />}
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             {/* Email Field */}

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, Eye, EyeOff } from "lucide-react";
+import GlobalErrorMessage from "@/components/common/GlobalErrorMessage";
 
 const LoginForm = () => {
   const [email, setEmail] = useState("");
@@ -49,17 +50,7 @@ const LoginForm = () => {
             </p>
           </div>
 
-          {error && (
-            <div className="mb-5 border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-400">
-              {typeof error === "string"
-                ? error
-                : error?.detail
-                  ? error.detail
-                  : Array.isArray(error?.non_field_errors)
-                    ? error.non_field_errors[0]
-                    : "Something went wrong"}
-            </div>
-          )}
+          <GlobalErrorMessage error={error} className="mb-5" />
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">

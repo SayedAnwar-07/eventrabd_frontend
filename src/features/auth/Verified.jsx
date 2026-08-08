@@ -18,6 +18,7 @@ import {
   InputOTPGroup,
   InputOTPSlot,
 } from "@/components/ui/input-otp";
+import GlobalErrorMessage from "@/components/common/GlobalErrorMessage";
 
 const VerifyOtp = () => {
   const dispatch = useDispatch();
@@ -40,30 +41,6 @@ const VerifyOtp = () => {
       navigate("/", { replace: true });
     }
   }, [success, navigate]);
-
-  useEffect(() => {
-    if (!error) return;
-
-    const timer = setTimeout(() => {
-      dispatch(clearError());
-    }, 5000);
-
-    return () => clearTimeout(timer);
-  }, [error, dispatch]);
-
-  const getErrorMessage = () => {
-    if (!error) return "";
-
-    if (typeof error === "string") return error;
-
-    return (
-      error.detail ||
-      error.non_field_errors?.[0] ||
-      error.message ||
-      Object.values(error).flat()?.[0] ||
-      "OTP verification failed."
-    );
-  };
 
   const handleVerify = (event) => {
     event.preventDefault();
@@ -125,11 +102,7 @@ const VerifyOtp = () => {
             </p>
           </div>
 
-          {error && (
-            <div className="mb-5 border border-red-200 bg-red-50 px-4 py-3 text-center text-sm font-medium text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-400">
-              {getErrorMessage()}
-            </div>
-          )}
+          {error && <GlobalErrorMessage error={error} className="mb-5" />}
 
           <form onSubmit={handleVerify} className="space-y-6">
             <div className="space-y-3">

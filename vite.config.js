@@ -5,13 +5,25 @@ import path from "path";
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
       html2canvas: "html2canvas-pro",
     },
   },
-  rules: {
-    "react/jsx-uses-vars": "error",
+
+  server: {
+    host: "localhost",
+
+    watch: {
+      usePolling: true,
+      interval: 500,
+      ignored: ["**/node_modules/**", "**/.git/**"],
+    },
+
+    hmr: {
+      host: "localhost",
+    },
   },
 });

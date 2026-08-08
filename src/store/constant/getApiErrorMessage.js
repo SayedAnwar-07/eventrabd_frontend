@@ -1,29 +1,19 @@
-const PRIORITY_ERROR_KEYS = [
-  "message",
-  "detail",
-  "non_field_errors",
-  "error",
-  "errors",
-];
+const ERROR_KEYS = ["message", "detail", "non_field_errors", "error", "errors"];
 
-const findFirstErrorMessage = (value, visited = new WeakSet()) => {
-  if (value === null || value === undefined) {
-    return null;
-  }
+const extractMessage = (value, visited = new WeakSet()) => {
+  if (!value) return null;
 
   if (typeof value === "string") {
-    const trimmedValue = value.trim();
+    const message = value.trim();
 
-    return trimmedValue || null;
+    return message || null;
   }
 
   if (Array.isArray(value)) {
     for (const item of value) {
-      const message = findFirstErrorMessage(item, visited);
+      const message = extractMessage(item, visited);
 
-      if (message) {
-        return message;
-      }
+      if (message) return message;
     }
 
     return null;
@@ -36,57 +26,32 @@ const findFirstErrorMessage = (value, visited = new WeakSet()) => {
 
     visited.add(value);
 
-    for (const key of PRIORITY_ERROR_KEYS) {
-      if (!(key in value)) {
-        continue;
-      }
+    for (const key of ERROR_KEYS) {
+      if (value[key]) {
+        const message = extractMessage(value[key], visited);
 
-      const message = findFirstErrorMessage(value[key], visited);
-
-      if (message) {
-        return message;
+        if (message) return message;
       }
     }
 
-    for (const [key, item] of Object.entries(value)) {
-      if (PRIORITY_ERROR_KEYS.includes(key)) {
-        continue;
-      }
+    for (const item of Object.values(value)) {
+      const message = extractMessage(item, visited);
 
-      const message = findFirstErrorMessage(item, visited);
-
-      if (message) {
-        return message;
-      }
+      if (message) return message;
     }
   }
 
   return null;
 };
 
-export const getApiErrorMessage = (
-  errorOrData,
-  fallbackMessage = "Something went wrong. Please try again.",
+const getApiErrorMessage = (
+  error,
+  fallback = "Something went wrong. Please try again.",
 ) => {
-  const responseData = errorOrData?.response?.data;
+  const responseData = error?.response?.data;
 
-  const messageFromResponse = findFirstErrorMessage(responseData);
-
-  if (messageFromResponse) {
-    return messageFromResponse;
-  }
-
-  const messageFromValue = findFirstErrorMessage(errorOrData);
-
-  if (messageFromValue) {
-    return messageFromValue;
-  }
-
-  if (typeof errorOrData?.message === "string") {
-    return errorOrData.message;
-  }
-
-  return fallbackMessage;
+  return extractMessage(responseData) || extractMessage(error) || fallback;
 };
 
 export default getApiErrorMessage;
+export { getApiErrorMessage };

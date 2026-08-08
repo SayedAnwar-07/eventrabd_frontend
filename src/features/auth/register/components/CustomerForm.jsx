@@ -16,6 +16,7 @@ import {
 } from "@/store/features/auth/authSlice";
 import { useForm } from "react-hook-form";
 import { customerRegisterSchema } from "@/validation/registerSchema";
+import GlobalErrorMessage from "@/components/common/GlobalErrorMessage";
 
 const CustomerForm = () => {
   const dispatch = useDispatch();
@@ -101,24 +102,16 @@ const CustomerForm = () => {
           </div>
 
           {errorVisible && (
-            <div className="mb-5 flex items-start justify-between border border-red-200 bg-red-50 px-4 py-3 text-red-700 shadow-sm dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-400">
-              <div className="flex-1 text-sm font-medium">
-                {error.detail || error.email || JSON.stringify(error)}
-              </div>
+            <div className="relative mb-5">
+              <GlobalErrorMessage error={error} />
 
               <button
                 type="button"
                 onClick={handleDismissError}
-                className="ml-3 text-red-600 transition hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+                className="absolute right-3 top-3 text-red-600 transition hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
               >
                 <X className="h-4 w-4" />
               </button>
-            </div>
-          )}
-
-          {success && (
-            <div className="mb-5 border border-green-200 bg-green-50 px-4 py-3 text-sm font-medium text-green-700 dark:border-green-900/60 dark:bg-green-950/30 dark:text-green-400">
-              Registration successful! Redirecting…
             </div>
           )}
 

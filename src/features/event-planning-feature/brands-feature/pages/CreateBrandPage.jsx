@@ -129,10 +129,14 @@ export default function CreateBrandPage() {
 
   return (
     <PageShell className="space-y-8">
-      <SectionHeader
-        title="Create Your Brand"
-        description="Build a strong public identity for your event business with a clean, professional profile."
-      />
+      <header className="mb-6">
+        <p className="text-sm font-medium text-muted-foreground">
+          Build a strong public identity for your event business with a clean,
+          professional profile.
+        </p>
+
+        <h1 className="mt-2 text-3xl font-bold tracking-tight">Create Your Event Brand</h1>
+      </header>
 
       <BrandForm
         values={values}

@@ -1,7 +1,6 @@
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchBrands } from "@/store/features/eventPlanner/eventPlannerSlice";
-import { Link } from "react-router-dom";
 import BrandCard from "@/features/event-planning-feature/brands-feature/components/BrandCard";
 
 const Home = () => {
@@ -16,9 +15,7 @@ const Home = () => {
   return (
     <section className="min-h-screen">
       <div className="mx-auto max-w-7xl">
-        <h1 className="mb-8 text-3xl font-bold text-gray-900">
-          All Event Brands
-        </h1>
+        <h1 className="mb-8 text-3xl font-bold">All Event Brands</h1>
 
         {list.loading && <p>Loading brands...</p>}
 
