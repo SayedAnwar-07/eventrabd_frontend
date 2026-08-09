@@ -118,7 +118,15 @@ export const updateProfile = createAsyncThunk(
   "auth/updateProfile",
   async ({ slug, updateData }, { rejectWithValue }) => {
     try {
-      const { data } = await api.patch(`/users/${slug}/settings/`, updateData);
+      const isFormData = updateData instanceof FormData;
+
+      const { data } = await api.patch(`/users/${slug}/settings/`, updateData, {
+        headers: isFormData
+          ? {
+              "Content-Type": "multipart/form-data",
+            }
+          : {},
+      });
 
       return data;
     } catch (error) {
