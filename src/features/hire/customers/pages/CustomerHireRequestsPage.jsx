@@ -10,6 +10,7 @@ import {
   selectHireListError,
   selectHireListLoading,
 } from "@/store/features/hire/hireSlice";
+import GlobalErrorMessage from "@/components/common/GlobalErrorMessage";
 
 const EMPTY_HIRES = [];
 
@@ -47,9 +48,7 @@ const CustomerHireRequestsPage = () => {
   const loading = useSelector(selectHireListLoading);
   const error = useSelector(selectHireListError);
 
-  const hires = Array.isArray(selectedHires)
-    ? selectedHires
-    : EMPTY_HIRES;
+  const hires = Array.isArray(selectedHires) ? selectedHires : EMPTY_HIRES;
 
   const [activeStatus, setActiveStatus] = useState("all");
 
@@ -161,23 +160,7 @@ const CustomerHireRequestsPage = () => {
         </div>
 
         {/* Error */}
-        {error?.message ? (
-          <div
-            role="alert"
-            className="mb-6 flex flex-col gap-3 border-l-2 border-destructive px-5 py-4 sm:flex-row sm:items-center sm:justify-between"
-          >
-            <p className="text-sm text-destructive">{error.message}</p>
-
-            <button
-              type="button"
-              onClick={handleRefresh}
-              disabled={loading}
-              className="self-start text-sm font-semibold text-destructive underline underline-offset-4 disabled:cursor-not-allowed disabled:opacity-50 sm:self-auto"
-            >
-              Try Again
-            </button>
-          </div>
-        ) : null}
+        {error ? <GlobalErrorMessage error={error} /> : null}
 
         {/* Initial loading */}
         {loading && hires.length === 0 ? (

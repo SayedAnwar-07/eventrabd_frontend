@@ -1,4 +1,4 @@
-const TermsConditions = ({ sellerName, terms }) => {
+const TermsConditions = ({  terms, brandName }) => {
   const validTerms = Array.isArray(terms)
     ? terms
         .filter((term) => typeof term === "string" && term.trim().length > 0)
@@ -13,7 +13,7 @@ const TermsConditions = ({ sellerName, terms }) => {
   return (
     <section className="mb-5 w-full min-w-0 break-inside-avoid">
       <h3 className="font-serif text-sm font-bold text-gray-950">
-        {sellerName || "Seller"} Terms &amp; Conditions
+        {brandName} Terms &amp; Conditions
       </h3>
 
       <ul className="mt-2 space-y-1.5">

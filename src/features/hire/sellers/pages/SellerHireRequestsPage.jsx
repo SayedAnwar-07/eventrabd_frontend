@@ -10,6 +10,7 @@ import {
 } from "@/store/features/hire/hireSlice";
 
 import SellerHireRequestCard from "../components/SellerHireRequestCard";
+import GlobalErrorMessage from "@/components/common/GlobalErrorMessage";
 
 const HIRE_TABS = [
   {
@@ -186,23 +187,8 @@ const SellerHireRequestsPage = () => {
           })}
         </section>
 
-        {error?.message ? (
-          <div
-            role="alert"
-            className="mb-6 flex flex-col gap-4 border-l-2 border-red-600 bg-red-50 px-5 py-4 sm:flex-row sm:items-center sm:justify-between"
-          >
-            <p className="text-sm text-red-700">{error.message}</p>
-
-            <button
-              type="button"
-              onClick={handleRefresh}
-              disabled={loading}
-              className="self-start text-sm font-semibold text-red-700 underline underline-offset-4 disabled:cursor-not-allowed disabled:opacity-50 sm:self-auto"
-            >
-              Try Again
-            </button>
-          </div>
-        ) : null}
+        {/* Error message */}
+        {error ? <GlobalErrorMessage error={error} /> : null}
 
         {hires.length > 0 ? (
           <div className="mb-5 flex items-center justify-between border-b border-gray-200 pb-3">

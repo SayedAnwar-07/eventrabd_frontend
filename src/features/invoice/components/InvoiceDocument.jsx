@@ -341,8 +341,8 @@ const InvoiceDocument = ({
                 <div className="flex min-w-0 flex-col items-start justify-between">
                   {/* Terms and conditions */}
                   <TermsConditions
-                    sellerName={invoice?.seller?.full_name}
                     terms={invoice?.terms_conditions}
+                    brandName={brandName}
                   />
 
                   <div>

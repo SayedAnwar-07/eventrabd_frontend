@@ -1,131 +1,9 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
 import api from "@/store/constant/api";
+import { getApiErrorMessage } from "@/store/constant/getApiErrorMessage";
 
 const HIRE_REQUESTS_URL = "/hire/requests";
-
-const findFirstErrorMessage = (value) => {
-  if (!value) {
-    return null;
-  }
-
-  if (typeof value === "string") {
-    return value;
-  }
-
-  if (Array.isArray(value)) {
-    for (const item of value) {
-      const message = findFirstErrorMessage(item);
-
-      if (message) {
-        return message;
-      }
-    }
-
-    return null;
-  }
-
-  if (typeof value === "object") {
-    const priorityKeys = ["message", "detail", "non_field_errors"];
-
-    for (const key of priorityKeys) {
-      if (value[key]) {
-        const message = findFirstErrorMessage(value[key]);
-
-        if (message) {
-          return message;
-        }
-      }
-    }
-
-    for (const item of Object.values(value)) {
-      const message = findFirstErrorMessage(item);
-
-      if (message) {
-        return message;
-      }
-    }
-  }
-
-  return null;
-};
-
-/**
- * Convert every Axios/DRF error into:
- *
- * {
- *   message,
- *   status,
- *   code,
- *   errors,
- *   isNetworkError
- * }
- */
-export const normalizeApiError = (
-  error,
-  fallbackMessage = "Something went wrong.",
-) => {
-  if (!error?.response) {
-    return {
-      message:
-        "Unable to connect to the server. " +
-        "Check your internet connection and try again.",
-      status: null,
-      code: "NETWORK_ERROR",
-      errors: {},
-      isNetworkError: true,
-    };
-  }
-
-  const status = error.response.status;
-  const responseData = error.response.data;
-
-  if (typeof responseData === "string") {
-    return {
-      message: responseData || fallbackMessage,
-      status,
-      code: null,
-      errors: {},
-      isNetworkError: false,
-    };
-  }
-
-  const errors = responseData?.errors ?? responseData ?? {};
-
-  const message =
-    responseData?.message ?? findFirstErrorMessage(errors) ?? fallbackMessage;
-
-  return {
-    message,
-    status,
-    code: responseData?.code ?? null,
-    errors,
-    isNetworkError: false,
-  };
-};
-
-/**
- * Read a nested backend field error.
- *
- * Examples:
- * getHireFieldError(error, "service")
- * getHireFieldError(error, "booking_slots.0.starts_at")
- */
-export const getHireFieldError = (apiError, fieldPath) => {
-  if (!apiError?.errors || !fieldPath) {
-    return null;
-  }
-
-  const value = fieldPath.split(".").reduce((currentValue, key) => {
-    if (currentValue === null || currentValue === undefined) {
-      return undefined;
-    }
-
-    return currentValue[key];
-  }, apiError.errors);
-
-  return findFirstErrorMessage(value);
-};
 
 const replaceHireInState = (state, updatedHire) => {
   const hireIndex = state.hires.findIndex((hire) => hire.id === updatedHire.id);
@@ -162,9 +40,7 @@ export const fetchHires = createAsyncThunk(
 
       return response.data;
     } catch (error) {
-      return rejectWithValue(
-        normalizeApiError(error, "Unable to load hire requests."),
-      );
+      return rejectWithValue(getApiErrorMessage(error));
     }
   },
 );
@@ -180,9 +56,7 @@ export const fetchHireDetails = createAsyncThunk(
 
       return response.data;
     } catch (error) {
-      return rejectWithValue(
-        normalizeApiError(error, "Unable to load this hire request."),
-      );
+      return rejectWithValue(getApiErrorMessage(error));
     }
   },
 );
@@ -205,9 +79,7 @@ export const createHire = createAsyncThunk(
 
       return response.data;
     } catch (error) {
-      return rejectWithValue(
-        normalizeApiError(error, "Unable to submit the hire request."),
-      );
+      return rejectWithValue(getApiErrorMessage(error));
     }
   },
 );
@@ -234,9 +106,7 @@ export const acceptHire = createAsyncThunk(
 
       return response.data;
     } catch (error) {
-      return rejectWithValue(
-        normalizeApiError(error, "Unable to accept the hire request."),
-      );
+      return rejectWithValue(getApiErrorMessage(error));
     }
   },
 );
@@ -263,9 +133,7 @@ export const rejectHire = createAsyncThunk(
 
       return response.data;
     } catch (error) {
-      return rejectWithValue(
-        normalizeApiError(error, "Unable to reject the hire request."),
-      );
+      return rejectWithValue(getApiErrorMessage(error));
     }
   },
 );
@@ -281,9 +149,7 @@ export const deleteHire = createAsyncThunk(
 
       return hireId;
     } catch (error) {
-      return rejectWithValue(
-        normalizeApiError(error, "Unable to delete the hire request."),
-      );
+      return rejectWithValue(getApiErrorMessage(error));
     }
   },
 );
@@ -316,11 +182,11 @@ const getInitialState = () => ({
    * overwriting unrelated UI errors.
    */
   errors: {
-    list: null,
-    details: null,
-    create: null,
-    decision: null,
-    delete: null,
+    list: "",
+    details: "",
+    create: "",
+    decision: "",
+    delete: "",
   },
 });
 
@@ -409,13 +275,7 @@ const hireSlice = createSlice({
         setOperationError(
           state,
           "list",
-          action.payload ?? {
-            message: "Unable to load hire requests.",
-            status: null,
-            code: null,
-            errors: {},
-            isNetworkError: false,
-          },
+          action.payload || "Unable to load hire requests.",
         );
       })
 
@@ -438,13 +298,7 @@ const hireSlice = createSlice({
         setOperationError(
           state,
           "details",
-          action.payload ?? {
-            message: "Unable to load this hire request.",
-            status: null,
-            code: null,
-            errors: {},
-            isNetworkError: false,
-          },
+          action.payload || "Unable to load hire requests.",
         );
       })
 
@@ -472,13 +326,7 @@ const hireSlice = createSlice({
         setOperationError(
           state,
           "create",
-          action.payload ?? {
-            message: "Unable to submit the hire request.",
-            status: null,
-            code: null,
-            errors: {},
-            isNetworkError: false,
-          },
+          action.payload || "Unable to load hire requests.",
         );
       })
 
@@ -512,13 +360,7 @@ const hireSlice = createSlice({
         setOperationError(
           state,
           "decision",
-          action.payload ?? {
-            message: "Unable to accept the hire request.",
-            status: null,
-            code: null,
-            errors: {},
-            isNetworkError: false,
-          },
+          action.payload || "Unable to load hire requests.",
         );
       })
 
@@ -552,13 +394,7 @@ const hireSlice = createSlice({
         setOperationError(
           state,
           "decision",
-          action.payload ?? {
-            message: "Unable to reject the hire request.",
-            status: null,
-            code: null,
-            errors: {},
-            isNetworkError: false,
-          },
+          action.payload || "Unable to load hire requests.",
         );
       })
 
@@ -595,13 +431,7 @@ const hireSlice = createSlice({
         setOperationError(
           state,
           "delete",
-          action.payload ?? {
-            message: "Unable to delete the hire request.",
-            status: null,
-            code: null,
-            errors: {},
-            isNetworkError: false,
-          },
+          action.payload || "Unable to load hire requests.",
         );
       });
   },

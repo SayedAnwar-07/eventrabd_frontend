@@ -16,6 +16,7 @@ import {
   selectInvoices,
   submitInvoiceDecision,
 } from "@/store/features/invoice/invoiceSlice";
+import getApiErrorMessage from "@/store/constant/getApiErrorMessage";
 
 const getInvoiceHireId = (invoice) => {
   if (!invoice) {
@@ -27,26 +28,6 @@ const getInvoiceHireId = (invoice) => {
   }
 
   return invoice.hire ?? invoice.hire_id ?? null;
-};
-
-const getErrorMessage = (error) => {
-  if (!error) {
-    return "";
-  }
-
-  if (typeof error === "string") {
-    return error;
-  }
-
-  if (typeof error?.detail === "string") {
-    return error.detail;
-  }
-
-  if (typeof error?.message === "string") {
-    return error.message;
-  }
-
-  return "Unable to process the invoice request.";
 };
 
 const InvoiceLoadingState = () => {
@@ -161,7 +142,7 @@ const CustomerInvoiceDetails = ({ hire }) => {
           role="alert"
           className="mt-5 rounded-xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700"
         >
-          {getErrorMessage(error)}
+          {getApiErrorMessage(error)}
         </div>
       );
     }
@@ -182,7 +163,7 @@ const CustomerInvoiceDetails = ({ hire }) => {
           role="alert"
           className="mb-5 border-l-2 border-red-600 bg-red-50 px-4 py-3 text-sm text-red-700"
         >
-          {getErrorMessage(error)}
+          {getApiErrorMessage(error)}
         </div>
       ) : null}
 

@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchBrands } from "@/store/features/eventPlanner/eventPlannerSlice";
 import BrandCard from "@/features/event-planning-feature/brands-feature/components/BrandCard";
+import GlobalErrorMessage from "@/components/common/GlobalErrorMessage";
 
 const Home = () => {
   const dispatch = useDispatch();
@@ -19,9 +20,7 @@ const Home = () => {
 
         {list.loading && <p>Loading brands...</p>}
 
-        {list.errorMessage && (
-          <p className="text-red-600">{list.errorMessage}</p>
-        )}
+        {list.errorMessage && <GlobalErrorMessage error={list.errorMessage} />}
 
         {!list.loading && brands.length === 0 && (
           <p className="text-gray-500">No brands found.</p>

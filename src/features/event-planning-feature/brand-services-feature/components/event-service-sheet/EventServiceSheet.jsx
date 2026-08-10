@@ -11,7 +11,8 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 
-import BackendErrorMessage from "@/components/common/BackendErrorMessage";
+import GlobalErrorMessage from "@/components/common/GlobalErrorMessage";
+
 import { getGalleryImageUrl, SERVICE_TYPES } from "./eventServiceFormConfig";
 import useEventServiceSheet from "./useEventServiceSheet";
 
@@ -442,7 +443,7 @@ const EventServiceSheet = ({
             </div>
           )}
 
-          <BackendErrorMessage error={visibleError} />
+          <GlobalErrorMessage error={visibleError} />
 
           <SheetFooter className="gap-3 sm:gap-2">
             <SheetClose asChild>

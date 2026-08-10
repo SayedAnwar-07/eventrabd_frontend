@@ -14,56 +14,16 @@ import {
   selectOperationError,
 } from "@/store/features/eventService/eventServiceSelector";
 
+import { getApiErrorMessage } from "@/store/constant/getApiErrorMessage";
+
 import {
   AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
-  AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-
-const getErrorMessage = (error) => {
-  if (!error) return "";
-
-  if (typeof error === "string") {
-    if (error.includes("<!DOCTYPE") || error.includes("<html")) {
-      return "Server error. Check backend console.";
-    }
-
-    return error
-      .replace(/<[^>]*>/g, " ")
-      .replace(/\s+/g, " ")
-      .trim();
-  }
-
-  if (Array.isArray(error)) {
-    return error.join(" ");
-  }
-
-  if (typeof error === "object") {
-    if (error.detail) return getErrorMessage(error.detail);
-    if (error.message) return getErrorMessage(error.message);
-    if (error.error) return getErrorMessage(error.error);
-
-    const firstError = Object.values(error)[0];
-
-    if (Array.isArray(firstError)) {
-      return firstError.join(" ");
-    }
-
-    if (typeof firstError === "string") {
-      return firstError;
-    }
-
-    return "Something went wrong.";
-  }
-
-  return "Something went wrong.";
-};
 
 const ServiceDelete = ({
   brandSlug,
@@ -81,7 +41,7 @@ const ServiceDelete = ({
   const [open, setOpen] = useState(false);
   const [localError, setLocalError] = useState("");
 
-  const visibleError = localError || getErrorMessage(reduxError);
+  const visibleError = localError || reduxError;
 
   const handleOpenChange = (value) => {
     setOpen(value);
@@ -116,7 +76,7 @@ const ServiceDelete = ({
       setOpen(false);
       onSuccess?.(result);
     } catch (error) {
-      setLocalError(getErrorMessage(error));
+      setLocalError(getApiErrorMessage(error));
     }
   };
 

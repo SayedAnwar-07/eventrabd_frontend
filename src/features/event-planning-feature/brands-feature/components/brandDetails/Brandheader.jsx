@@ -45,9 +45,6 @@ const BrandHeader = ({ brand, onEdit }) => {
 
       <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <div className="mb-3 flex items-center gap-2 text-xs font-medium uppercase tracking-[0.2em] text-primary">
-            Event Planner Brand
-          </div>
 
           <div className="flex items-center gap-4">
             <img

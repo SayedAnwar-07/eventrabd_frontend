@@ -21,6 +21,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import GlobalErrorMessage from "@/components/common/GlobalErrorMessage";
 
 const HireDecisionDialog = ({ hire, decision, trigger, onSuccess }) => {
   const dispatch = useDispatch();
@@ -33,16 +34,12 @@ const HireDecisionDialog = ({ hire, decision, trigger, onSuccess }) => {
 
   const [open, setOpen] = useState(false);
   const [sellerNote, setSellerNote] = useState("");
-  const [localError, setLocalError] = useState(null);
 
   const isAccepting = decision === "accept";
 
   const isCurrentHireLoading = decisionLoading && decisionHireId === hire?.id;
 
-  const displayedError = localError || reduxError;
-
   const clearDecisionError = () => {
-    setLocalError(null);
     dispatch(clearHireOperationError("decision"));
   };
 
@@ -79,28 +76,17 @@ const HireDecisionDialog = ({ hire, decision, trigger, onSuccess }) => {
 
       setOpen(false);
       setSellerNote("");
-      setLocalError(null);
 
       onSuccess?.(updatedHire);
-    } catch (error) {
-      /*
-       * Redux already contains the error, but keeping it locally
-       * ensures this exact dialog displays the rejected request.
-       */
-      setLocalError(
-        error || {
-          message: isAccepting
-            ? "Unable to accept the hire request."
-            : "Unable to reject the hire request.",
-        },
-      );
+    } catch {
+      // Redux already stores the error
     }
   };
 
   const handleNoteChange = (event) => {
     setSellerNote(event.target.value);
 
-    if (displayedError) {
+    if (reduxError) {
       clearDecisionError();
     }
   };
@@ -163,14 +149,7 @@ const HireDecisionDialog = ({ hire, decision, trigger, onSuccess }) => {
           </p>
         </div>
 
-        {displayedError?.message ? (
-          <div
-            role="alert"
-            className="border-l-2 border-red-600 bg-red-50 px-4 py-3"
-          >
-            <p className="text-sm text-red-700">{displayedError.message}</p>
-          </div>
-        ) : null}
+        <GlobalErrorMessage error={reduxError} />
 
         <AlertDialogFooter>
           <AlertDialogCancel disabled={isCurrentHireLoading}>

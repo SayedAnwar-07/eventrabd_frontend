@@ -4,19 +4,14 @@ const extractMessage = (value, visited = new WeakSet()) => {
   if (!value) return null;
 
   if (typeof value === "string") {
-    const message = value.trim();
-
-    return message || null;
+    return value.trim() || null;
   }
 
   if (Array.isArray(value)) {
-    for (const item of value) {
-      const message = extractMessage(item, visited);
-
-      if (message) return message;
-    }
-
-    return null;
+    return value
+      .map((item) => extractMessage(item, visited))
+      .filter(Boolean)
+      .join(" ");
   }
 
   if (typeof value === "object") {
@@ -30,28 +25,39 @@ const extractMessage = (value, visited = new WeakSet()) => {
       if (value[key]) {
         const message = extractMessage(value[key], visited);
 
-        if (message) return message;
+        if (message) {
+          return message;
+        }
       }
     }
 
     for (const item of Object.values(value)) {
       const message = extractMessage(item, visited);
 
-      if (message) return message;
+      if (message) {
+        return message;
+      }
     }
   }
 
   return null;
 };
 
-const getApiErrorMessage = (
+export const getApiErrorMessage = (
   error,
   fallback = "Something went wrong. Please try again.",
 ) => {
-  const responseData = error?.response?.data;
+  if (!error) {
+    return fallback;
+  }
 
-  return extractMessage(responseData) || extractMessage(error) || fallback;
+  const data = error?.response?.data;
+
+  if (!error.response) {
+    return "Network error. Please try again.";
+  }
+
+  return extractMessage(data) || fallback;
 };
 
 export default getApiErrorMessage;
-export { getApiErrorMessage };

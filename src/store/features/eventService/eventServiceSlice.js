@@ -1,41 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import api from "@/store/constant/api";
-
-// ── Helpers ───────────────────────────────────────────────────────────────
-
-const getErrorMessage = (error) => {
-  const data = error.response?.data;
-
-  if (!data) return error.message || "Something went wrong";
-
-  if (typeof data === "string") {
-    const titleMatch = data.match(/<title>(.*?)<\/title>/i);
-    if (titleMatch?.[1]) return titleMatch[1];
-
-    return data.replace(/<[^>]*>/g, "").trim() || "Server error";
-  }
-
-  if (data.detail) return data.detail;
-  if (data.message) return data.message;
-  if (data.error) return data.error;
-
-  if (data.non_field_errors) {
-    return Array.isArray(data.non_field_errors)
-      ? data.non_field_errors.join(" ")
-      : data.non_field_errors;
-  }
-
-  if (typeof data === "object") {
-    const firstError = Object.values(data)[0];
-
-    if (Array.isArray(firstError)) return firstError.join(" ");
-    if (typeof firstError === "string") return firstError;
-
-    return "Validation error";
-  }
-
-  return "Server error";
-};
+import { getApiErrorMessage } from "@/store/constant/getApiErrorMessage";
 
 const serviceUrl = ({ brandSlug, serviceId, serviceName }) =>
   `/event-services/brands/${brandSlug}/services/${serviceId}/${serviceName}/`;
@@ -77,7 +42,7 @@ export const fetchBrandServices = createAsyncThunk(
 
       return response.data;
     } catch (error) {
-      return rejectWithValue(getErrorMessage(error));
+      return rejectWithValue(getApiErrorMessage(error));
     }
   },
 );
@@ -92,7 +57,7 @@ export const fetchEventServiceDetail = createAsyncThunk(
 
       return response.data;
     } catch (error) {
-      return rejectWithValue(getErrorMessage(error));
+      return rejectWithValue(getApiErrorMessage(error));
     }
   },
 );
@@ -109,7 +74,7 @@ export const createEventService = createAsyncThunk(
 
       return response.data;
     } catch (error) {
-      return rejectWithValue(getErrorMessage(error));
+      return rejectWithValue(getApiErrorMessage(error));
     }
   },
 );
@@ -126,7 +91,7 @@ export const updateEventService = createAsyncThunk(
 
       return response.data;
     } catch (error) {
-      return rejectWithValue(getErrorMessage(error));
+      return rejectWithValue(getApiErrorMessage(error));
     }
   },
 );
@@ -141,7 +106,7 @@ export const deleteEventService = createAsyncThunk(
 
       return { brandSlug, serviceId, serviceName };
     } catch (error) {
-      return rejectWithValue(getErrorMessage(error));
+      return rejectWithValue(getApiErrorMessage(error));
     }
   },
 );
@@ -163,7 +128,7 @@ export const deleteGalleryImage = createAsyncThunk(
 
       return { brandSlug, serviceId, serviceName, imageId };
     } catch (error) {
-      return rejectWithValue(getErrorMessage(error));
+      return rejectWithValue(getApiErrorMessage(error));
     }
   },
 );
