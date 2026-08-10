@@ -16,11 +16,10 @@ import {
   COVER_PHOTO_ONLY_SERVICE_TYPES,
   createInitialForm,
   createPreviewId,
-  DRIVE_LINK_REQUIRED_TYPES,
+  DRIVE_LINK_TYPES,
   GALLERY_ONLY_SERVICE_TYPES,
   getServiceNameForUrl,
   isBlobUrl,
-  PAYMENT_REQUIRED_TYPES,
   SERVICE_IMAGE_LIMITS,
   SHIFT_HOUR_REQUIRED_TYPES,
   validateEventServiceForm,
@@ -59,8 +58,9 @@ const useEventServiceSheet = ({ brandSlug, service = null, onSuccess }) => {
       COVER_PHOTO_ONLY_SERVICE_TYPES.has(serviceType);
 
     const showShiftHour = SHIFT_HOUR_REQUIRED_TYPES.has(serviceType);
-    const showDriveLink = DRIVE_LINK_REQUIRED_TYPES.has(serviceType);
-    const showPaymentFields = PAYMENT_REQUIRED_TYPES.has(serviceType);
+
+    const showDriveLink = true;
+    const showPaymentFields = false;
 
     const removedImageCount = form.remove_gallery_image_ids.length;
     const newGalleryImageCount = form.add_gallery_images.length;
@@ -191,17 +191,12 @@ const useEventServiceSheet = ({ brandSlug, service = null, onSuccess }) => {
           remove_gallery_image_ids: [],
         };
 
-        if (!DRIVE_LINK_REQUIRED_TYPES.has(value)) {
+        if (!DRIVE_LINK_TYPES.has(value)) {
           nextForm.drive_link = "";
         }
 
         if (!SHIFT_HOUR_REQUIRED_TYPES.has(value)) {
           nextForm.shift_hour = "";
-        }
-
-        if (!PAYMENT_REQUIRED_TYPES.has(value)) {
-          nextForm.sound_system_payment = "";
-          nextForm.lighting_payment = "";
         }
 
         return nextForm;

@@ -18,6 +18,7 @@ const EMPTY_FORM_VALUES = {
   division: "",
   district: "",
   short_description: "",
+  portfolio_link: "",
   logo: null,
 };
 
@@ -28,6 +29,7 @@ const getBrandFormValues = (brand) => ({
   division: brand?.division ?? "",
   district: brand?.district ?? "",
   short_description: brand?.short_description ?? "",
+  portfolio_link: brand?.portfolio_link ?? "",
 });
 
 /**
@@ -249,16 +251,11 @@ function EditBrandFormContent({
     const formData = new FormData();
 
     formData.append("brand_name", values.brand_name.trim());
-    formData.append(
-      "whatsapp_number",
-      values.whatsapp_number.trim(),
-    );
+    formData.append("whatsapp_number", values.whatsapp_number.trim());
     formData.append("division", values.division);
     formData.append("district", values.district);
-    formData.append(
-      "short_description",
-      values.short_description.trim(),
-    );
+    formData.append("short_description", values.short_description.trim());
+    formData.append("portfolio_link", values.portfolio_link.trim());
 
     if (values.logo instanceof File) {
       formData.append("logo", values.logo);
@@ -280,9 +277,7 @@ function EditBrandFormContent({
       loading={updateState.loading}
       errors={updateState.errors || {}}
       errorMessage={updateState.errorMessage || ""}
-      successMessage={
-        updateState.success ? updateState.message : ""
-      }
+      successMessage={updateState.success ? updateState.message : ""}
       logoPreview={logoPreview}
       existingLogo={removeLogo ? null : existingLogo}
       onLogoChange={handleLogoChange}

@@ -11,6 +11,7 @@ const capitalize = (str) =>
 const BrandHeader = ({ brand, onEdit }) => {
   const { publicBrandDetails } = useSelector((state) => state.eventPlanner);
   const servicesCount = brand.services?.length || 0;
+  const portfolioLink = brand.portfolio_link?.trim();
   const location = [capitalize(brand.district), capitalize(brand.division)]
     .filter(Boolean)
     .join(", ");
@@ -45,7 +46,6 @@ const BrandHeader = ({ brand, onEdit }) => {
 
       <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
         <div>
-
           <div className="flex items-center gap-4">
             <img
               src={brand?.logo_url}
@@ -78,6 +78,17 @@ const BrandHeader = ({ brand, onEdit }) => {
           <p className="mt-3 max-w-2xl text-base leading-7 text-muted-foreground">
             {brand.short_description || "No description available yet."}
           </p>
+
+          {portfolioLink && (
+            <a
+              href={portfolioLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-3 inline-flex text-sm font-medium text-foreground underline underline-offset-4 hover:opacity-80"
+            >
+              View Portfolio
+            </a>
+          )}
         </div>
 
         <div>

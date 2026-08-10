@@ -235,6 +235,27 @@ export default function BrandFormFields({
         </div>
       </div>
 
+      {/* Portfolio */}
+      <div className="grid gap-6">
+        <div className="grid gap-2">
+          <FieldLabel htmlFor="portfolio_link">Portfolio Link</FieldLabel>
+
+          <Input
+            id="portfolio_link"
+            name="portfolio_link"
+            type="url"
+            value={values.portfolio_link || ""}
+            onChange={onChange}
+            placeholder="Google Drive or YouTube portfolio link"
+            disabled={loading}
+            aria-invalid={Boolean(errors.portfolio_link)}
+            className={`peer ${fieldClass}`}
+          />
+
+          {renderErrors("portfolio_link")}
+        </div>
+      </div>
+
       {/* About */}
       <div className="grid gap-6">
         <div className="grid gap-2">

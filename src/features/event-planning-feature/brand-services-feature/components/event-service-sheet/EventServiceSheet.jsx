@@ -54,7 +54,6 @@ const EventServiceSheet = ({
     selectedImageLimit,
     showShiftHour,
     showDriveLink,
-    showPaymentFields,
     currentExistingImageCount,
     newGalleryImageCount,
     availableGallerySlots,
@@ -167,44 +166,7 @@ const EventServiceSheet = ({
                 onChange={handleChange}
                 placeholder="https://drive.google.com/..."
                 className={inputClass}
-                required
               />
-            </div>
-          )}
-
-          {showPaymentFields && (
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-              <div>
-                <label className={labelClass}>Sound System Payment</label>
-
-                <input
-                  type="number"
-                  name="sound_system_payment"
-                  value={form.sound_system_payment}
-                  onChange={handleChange}
-                  placeholder="5000"
-                  className={inputClass}
-                  min="0"
-                  step="0.01"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className={labelClass}>Lighting Payment</label>
-
-                <input
-                  type="number"
-                  name="lighting_payment"
-                  value={form.lighting_payment}
-                  onChange={handleChange}
-                  placeholder="5000"
-                  className={inputClass}
-                  min="0"
-                  step="0.01"
-                  required
-                />
-              </div>
             </div>
           )}
 

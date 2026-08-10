@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 
 import PageShell from "@/components/shared/page-shell";
-import SectionHeader from "@/components/shared/section-header";
 
 import BrandForm from "@/features/event-planning-feature/brands-feature/components/BrandForm";
 import { useBrandActions } from "@/features/event-planning-feature/brands-feature/hooks/use-brand-actions";
@@ -16,6 +15,7 @@ const initialValues = {
   division: "",
   district: "",
   short_description: "",
+  portfolio_link: "",
   logo: null,
 };
 
@@ -109,6 +109,7 @@ export default function CreateBrandPage() {
     formData.append("division", values.division);
     formData.append("district", values.district);
     formData.append("short_description", values.short_description.trim());
+    formData.append("portfolio_link", values.portfolio_link.trim());
 
     if (values.logo instanceof File) {
       formData.append("logo", values.logo);
@@ -135,7 +136,9 @@ export default function CreateBrandPage() {
           professional profile.
         </p>
 
-        <h1 className="mt-2 text-3xl font-bold tracking-tight">Create Your Event Brand</h1>
+        <h1 className="mt-2 text-3xl font-bold tracking-tight">
+          Create Your Event Brand
+        </h1>
       </header>
 
       <BrandForm

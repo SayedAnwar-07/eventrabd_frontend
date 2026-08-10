@@ -9,10 +9,10 @@ export default function BrandPreviewCard({
   const description = values.short_description?.trim();
   const whatsapp = values.whatsapp_number?.trim();
   const district = values.district;
+  const portfolioLink = values.portfolio_link?.trim();
   const divisionLabel = DIVISION_OPTIONS.find(
     (d) => d.value === values.division,
   )?.label;
-
   const locationLine = [district, divisionLabel].filter(Boolean).join(", ");
   const initial = brandName ? brandName.charAt(0).toUpperCase() : "?";
   const logoSrc = logoPreview || existingLogo;
@@ -95,6 +95,25 @@ export default function BrandPreviewCard({
               </span>
             </div>
           </div>
+
+          {portfolioLink && (
+            <div className="flex items-baseline gap-2">
+              <span className="shrink-0 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                Portfolio
+              </span>
+
+              <span className="h-0 flex-1 border-b border-dotted border-muted-foreground/50" />
+
+              <a
+                href={portfolioLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="max-w-45 truncate text-sm text-foreground underline"
+              >
+                View Portfolio
+              </a>
+            </div>
+          )}
 
           {/* Description as a stamped note */}
           <div className="relative mt-5 border-t pt-4">

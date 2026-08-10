@@ -32,9 +32,13 @@ export const SHIFT_HOUR_REQUIRED_TYPES = new Set([
   "event_hall",
 ]);
 
-export const DRIVE_LINK_REQUIRED_TYPES = new Set(["videography"]);
-
-export const PAYMENT_REQUIRED_TYPES = new Set(["sound_lighting"]);
+export const DRIVE_LINK_TYPES = new Set([
+  "photography",
+  "videography",
+  "stage_designer",
+  "sound_lighting",
+  "event_hall",
+]);
 
 export const createInitialForm = (service = null) => ({
   service_name: service?.service_name || "",
@@ -42,8 +46,6 @@ export const createInitialForm = (service = null) => ({
   shift_charge: service?.shift_charge ?? "",
   description: service?.description || "",
   shift_hour: service?.shift_hour ?? "",
-  sound_system_payment: service?.sound_system_payment ?? "",
-  lighting_payment: service?.lighting_payment ?? "",
   cover_photo: null,
   add_gallery_images: [],
   remove_gallery_image_ids: [],
@@ -79,8 +81,6 @@ export const validateEventServiceForm = ({
   brandSlug,
   form,
   showShiftHour,
-  showDriveLink,
-  showPaymentFields,
   isGalleryOnlyType,
   isCoverPhotoOnlyType,
   currentExistingImageCount,
@@ -110,26 +110,6 @@ export const validateEventServiceForm = ({
     return "Shift hour must be greater than 0.";
   }
 
-  if (showDriveLink && isEmptyValue(form.drive_link)) {
-    return "Drive or YouTube link is required for Videography.";
-  }
-
-  if (showPaymentFields && isEmptyValue(form.sound_system_payment)) {
-    return "Sound system payment is required.";
-  }
-
-  if (showPaymentFields && isEmptyValue(form.lighting_payment)) {
-    return "Lighting payment is required.";
-  }
-
-  if (showPaymentFields && Number(form.sound_system_payment) < 0) {
-    return "Sound system payment cannot be negative.";
-  }
-
-  if (showPaymentFields && Number(form.lighting_payment) < 0) {
-    return "Lighting payment cannot be negative.";
-  }
-
   if (isGalleryOnlyType && form.cover_photo) {
     return "This service type does not support cover photo.";
   }
@@ -153,8 +133,6 @@ export const validateEventServiceForm = ({
 export const buildEventServiceFormData = ({
   form,
   showShiftHour,
-  showDriveLink,
-  showPaymentFields,
   canUploadCoverPhoto,
   canUploadGalleryImages,
 }) => {
@@ -168,13 +146,8 @@ export const buildEventServiceFormData = ({
     formData.append("shift_hour", form.shift_hour);
   }
 
-  if (showDriveLink) {
+  if (form.drive_link) {
     formData.append("drive_link", form.drive_link);
-  }
-
-  if (showPaymentFields) {
-    formData.append("sound_system_payment", form.sound_system_payment);
-    formData.append("lighting_payment", form.lighting_payment);
   }
 
   if (canUploadCoverPhoto && form.cover_photo) {

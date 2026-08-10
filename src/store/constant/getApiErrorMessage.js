@@ -4,6 +4,16 @@ const extractMessage = (value, visited = new WeakSet()) => {
   if (!value) return null;
 
   if (typeof value === "string") {
+    const isHtml =
+      value.includes("<html") ||
+      value.includes("<!DOCTYPE") ||
+      value.includes("Traceback") ||
+      value.includes("Exception Type:");
+
+    if (isHtml) {
+      return "Something went wrong on the server. Please try again.";
+    }
+
     return value.trim() || null;
   }
 

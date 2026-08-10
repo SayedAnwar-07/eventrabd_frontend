@@ -3,9 +3,17 @@ const sanitizeHtmlError = (value) => {
     return value;
   }
 
-  if (value.includes("<html") || value.includes("<!DOCTYPE")) {
+  const isHtmlError =
+    value.includes("<html") ||
+    value.includes("<!DOCTYPE") ||
+    value.includes("Traceback (most recent call last)") ||
+    value.includes("ImproperlyConfigured") ||
+    value.includes("Django") ||
+    value.includes("Exception Type:");
+
+  if (isHtmlError) {
     return {
-      detail: "Server returned an invalid response.",
+      detail: "Something went wrong on the server. Please try again.",
     };
   }
 

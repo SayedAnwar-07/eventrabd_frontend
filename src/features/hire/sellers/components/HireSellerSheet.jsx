@@ -90,7 +90,7 @@ const HireSellerSheet = ({ service }) => {
         <SheetTrigger asChild>
           <button
             type="button"
-            className="w-full border border-white bg-white px-5 py-3 text-sm font-semibold text-gray-950 transition hover:bg-gray-200"
+            className="w-full border bg-[#a2101b] px-5 py-3 text-sm font-semibold text-white transition rounded-md hover:bg-gray-200"
           >
             Hire Seller
           </button>
