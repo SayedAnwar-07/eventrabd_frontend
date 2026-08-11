@@ -43,21 +43,21 @@ const BrandCard = ({ brand }) => {
           />
         ) : (
           <div className="flex h-16 w-16 shrink-0 items-center justify-center border border-border bg-muted text-lg font-semibold text-foreground">
-            {getInitials(brand?.brand_name)}
+            {getInitials(brand?.display_name)}
           </div>
         )}
 
         <div className="min-w-0 flex-1">
           <h2
             className="truncate text-xl font-semibold text-foreground"
-            title={brand?.brand_name}
+            title={brand?.display_name}
           >
-            {brand?.brand_name || "Unnamed Brand"}
+            {brand?.display_name || "Unnamed Brand"}
           </h2>
 
-          <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted-foreground">
-            <strong>Division : </strong>
-            {brand.division}
+          <p className="mt-2 line-clamp-2 text-sm leading-6 font-semibold text-muted-foreground">
+            <span className="capitalize">{brand.division}</span>,{" "}
+            {brand.district}
           </p>
         </div>
       </div>

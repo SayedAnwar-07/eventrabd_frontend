@@ -10,6 +10,7 @@ import { useBrandActions } from "@/features/event-planning-feature/brands-featur
 import { clearCreateBrandState } from "@/store/features/eventPlanner/eventPlannerSlice";
 
 const initialValues = {
+  display_name: "",
   brand_name: "",
   whatsapp_number: "",
   division: "",
@@ -104,6 +105,7 @@ export default function CreateBrandPage() {
      * Build the payload explicitly instead of sending every
      * property from the React state.
      */
+    formData.append("display_name", values.display_name.trim());
     formData.append("brand_name", values.brand_name.trim());
     formData.append("whatsapp_number", values.whatsapp_number.trim());
     formData.append("division", values.division);

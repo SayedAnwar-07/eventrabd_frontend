@@ -105,7 +105,31 @@ export default function BrandFormFields({
       {/* Identity */}
       <div className="grid gap-6">
         <div className="grid gap-2">
-          <FieldLabel htmlFor="brand_name">Brand name</FieldLabel>
+          <FieldLabel htmlFor="display_name">
+            Display Name (Bangla or English)
+          </FieldLabel>
+
+          <Input
+            id="display_name"
+            name="display_name"
+            type="text"
+            value={values.display_name || ""}
+            onChange={onChange}
+            placeholder="Enter you brand name here"
+            maxLength={255}
+            required
+            disabled={loading}
+            aria-invalid={Boolean(errors.display_name)}
+            className={`peer ${fieldClass} text-lg font-medium`}
+          />
+
+          {renderErrors("display_name")}
+        </div>
+
+        <div className="grid gap-2">
+          <FieldLabel htmlFor="brand_name">
+            Brand Username (English Only)
+          </FieldLabel>
 
           <Input
             id="brand_name"
@@ -113,7 +137,7 @@ export default function BrandFormFields({
             type="text"
             value={values.brand_name || ""}
             onChange={onChange}
-            placeholder="Enter your brand name here"
+            placeholder="Enter your brand's username here"
             maxLength={255}
             required
             disabled={loading}

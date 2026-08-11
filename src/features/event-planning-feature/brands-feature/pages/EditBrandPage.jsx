@@ -13,6 +13,7 @@ import {
 } from "@/store/features/eventPlanner/eventPlannerSlice";
 
 const EMPTY_FORM_VALUES = {
+  display_name: "",
   brand_name: "",
   whatsapp_number: "",
   division: "",
@@ -24,6 +25,7 @@ const EMPTY_FORM_VALUES = {
 
 const getBrandFormValues = (brand) => ({
   ...EMPTY_FORM_VALUES,
+  display_name: brand?.display_name ?? "",
   brand_name: brand?.brand_name ?? "",
   whatsapp_number: brand?.whatsapp_number ?? "",
   division: brand?.division ?? "",
@@ -249,7 +251,8 @@ function EditBrandFormContent({
     }
 
     const formData = new FormData();
-
+    
+    formData.append("display_name", values.display_name.trim());
     formData.append("brand_name", values.brand_name.trim());
     formData.append("whatsapp_number", values.whatsapp_number.trim());
     formData.append("division", values.division);

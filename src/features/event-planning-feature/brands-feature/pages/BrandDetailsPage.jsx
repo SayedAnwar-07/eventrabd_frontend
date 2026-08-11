@@ -8,7 +8,6 @@ import {
 } from "@/store/features/eventPlanner/eventPlannerSlice";
 
 import BrandHeader from "../components/brandDetails/BrandHeader";
-import BrandSidebarPanel from "../components/brandDetails/BrandSidebarPanel";
 import BrandServicesSection from "../components/brandDetails/BrandServicesSection";
 import BrandPageState from "../components/brandDetails/BrandPageState";
 

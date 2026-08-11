@@ -330,31 +330,51 @@ const HireRequestForm = ({ serviceId, onSuccess }) => {
                     WhatsApp Number
                   </label>
 
-                  <input
-                    id={`whatsapp-number-${index}`}
-                    type="tel"
-                    value={slot.whatsapp_number}
-                    disabled={loading}
-                    placeholder="Enter your WhatsApp number"
-                    onChange={(event) => {
-                      const digitsOnly = event.target.value
-                        .replace(/\D/g, "")
-                        .slice(0, 11);
-
-                      updateBookingSlot(index, "whatsapp_number", digitsOnly);
-                    }}
-                    className={`h-11 w-full rounded-none px-3 text-sm outline-none ${
+                  <div
+                    className={`flex h-11 w-full overflow-hidden ${
                       whatsappNumberError
                         ? "border border-red-600"
                         : "border border-gray-300"
                     }`}
-                  />
+                  >
+                    <span className="flex shrink-0 items-center pl-3 text-sm font-medium text-gray-700">
+                      +88
+                    </span>
+
+                    <input
+                      id={`whatsapp-number-${index}`}
+                      type="tel"
+                      inputMode="numeric"
+                      autoComplete="tel"
+                      value={slot.whatsapp_number}
+                      disabled={loading}
+                      placeholder="01XXXXXXXXX"
+                      maxLength={11}
+                      onChange={(event) => {
+                        let digitsOnly = event.target.value.replace(/\D/g, "");
+
+                        // If user pastes +88017... / 88017..., normalize to 017...
+                        if (digitsOnly.startsWith("880")) {
+                          digitsOnly = digitsOnly.slice(2);
+                        }
+
+                        digitsOnly = digitsOnly.slice(0, 11);
+
+                        updateBookingSlot(index, "whatsapp_number", digitsOnly);
+                      }}
+                      className="min-w-0 flex-1 pl-1 pr-3 text-sm outline-none disabled:bg-gray-100"
+                    />
+                  </div>
 
                   {whatsappNumberError && (
                     <p className="mt-2 text-xs text-red-600">
                       {whatsappNumberError}
                     </p>
                   )}
+
+                  <p className="mt-1 text-xs text-gray-500">
+                    Example: +88 01712345678
+                  </p>
                 </div>
 
                 {/* Google Map */}

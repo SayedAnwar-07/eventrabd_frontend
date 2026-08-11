@@ -120,7 +120,9 @@ const InvoiceDocument = ({
     "Event service";
 
   const brandName =
-    invoice?.brand?.brand_name || hire?.brand?.brand_name || "Service Provider";
+    invoice?.brand?.display_name ||
+    hire?.brand?.display_name ||
+    "Service Provider";
 
   const sellerName =
     invoice?.seller?.full_name || hire?.seller?.full_name || "Not available";

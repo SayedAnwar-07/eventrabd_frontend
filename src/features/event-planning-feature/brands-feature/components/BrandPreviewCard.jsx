@@ -5,6 +5,7 @@ export default function BrandPreviewCard({
   logoPreview,
   existingLogo,
 }) {
+  const displaName = values.display_name?.trim();
   const brandName = values.brand_name?.trim();
   const description = values.short_description?.trim();
   const whatsapp = values.whatsapp_number?.trim();
@@ -67,10 +68,10 @@ export default function BrandPreviewCard({
           {/* Name */}
           <h3
             className={`mt-5 font-serif text-[28px] italic leading-[1.1] tracking-tight ${
-              brandName ? "text-foreground" : "text-muted-foreground"
+              displaName ? "text-foreground" : "text-muted-foreground"
             }`}
           >
-            {brandName || "Your brand name"}
+            {displaName || "Your brand name"}
           </h3>
 
           {/* Data rows with leader dots, passport-style */}

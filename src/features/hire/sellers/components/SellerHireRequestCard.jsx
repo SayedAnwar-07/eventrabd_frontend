@@ -114,7 +114,7 @@ const SellerHireRequestCard = ({ hire }) => {
 
         <InformationItem
           label="Brand"
-          value={hire?.brand?.brand_name || "Not available"}
+          value={hire?.brand?.display_name || "Not available"}
         />
       </div>
 

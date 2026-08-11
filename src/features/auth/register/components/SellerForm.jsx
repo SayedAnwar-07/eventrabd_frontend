@@ -43,25 +43,35 @@ const SellerForm = () => {
   });
 
   const onSubmit = (data) => {
-    // 1. Clear previous errors
     setValidationErrors({});
 
-    // 2. Manually validate using Zod
-    const result = sellerRegisterSchema.safeParse(data);
+    const normalizedData = {
+      ...data,
+      contact_number: data.contact_number ? `+88${data.contact_number}` : "",
+      whatsapp_number: data.whatsapp_number ? `+88${data.whatsapp_number}` : "",
+    };
+
+    const result = sellerRegisterSchema.safeParse(normalizedData);
 
     if (!result.success) {
-      // 3. Map Zod errors to a flat object
       const formattedErrors = {};
+
       result.error.issues.forEach((issue) => {
         formattedErrors[issue.path[0]] = issue.message;
       });
+
       setValidationErrors(formattedErrors);
       return;
     }
 
-    // 4. Proceed if valid
-    setRegisteredEmail(data.email);
-    dispatch(registerUser({ ...data, role: "seller" }));
+    setRegisteredEmail(result.data.email);
+
+    dispatch(
+      registerUser({
+        ...result.data,
+        role: "seller",
+      }),
+    );
   };
 
   useEffect(() => {
@@ -160,24 +170,74 @@ const SellerForm = () => {
               </div>
 
               <div className="space-y-2">
-                <Label>Contact Number</Label>
-                <Input
-                  placeholder="+8801XXXXXXXX"
-                  {...register("contact_number")}
-                  className="h-11"
-                />
+                <Label htmlFor="contact-number">Contact Number</Label>
+
+                <div
+                  className={`flex h-11 overflow-hidden rounded-md border ${
+                    validationErrors.contact_number
+                      ? "border-red-500"
+                      : "border-input"
+                  } bg-background`}
+                >
+                  <div className="flex shrink-0 items-center pl-3 pr-1 text-sm font-medium text-foreground">
+                    +88
+                  </div>
+
+                  <input
+                    id="contact-number"
+                    type="tel"
+                    inputMode="numeric"
+                    autoComplete="tel"
+                    placeholder="01XXXXXXXXX"
+                    maxLength={11}
+                    {...register("contact_number", {
+                      onChange: (event) => {
+                        event.target.value = event.target.value
+                          .replace(/\D/g, "")
+                          .slice(0, 11);
+                      },
+                    })}
+                    className="min-w-0 flex-1 bg-transparent pr-3 text-sm outline-none"
+                  />
+                </div>
+
                 <p className="min-h-4 text-xs font-medium text-red-500">
                   {validationErrors.contact_number}
                 </p>
               </div>
 
               <div className="space-y-2">
-                <Label>WhatsApp Number</Label>
-                <Input
-                  placeholder="+8801XXXXXXXX"
-                  {...register("whatsapp_number")}
-                  className="h-11"
-                />
+                <Label htmlFor="whatsapp-number">WhatsApp Number</Label>
+
+                <div
+                  className={`flex h-11 overflow-hidden rounded-md border ${
+                    validationErrors.whatsapp_number
+                      ? "border-red-500"
+                      : "border-input"
+                  } bg-background`}
+                >
+                  <span className="flex shrink-0 items-center pl-3 pr-1 text-sm font-medium text-foreground">
+                    +88
+                  </span>
+
+                  <input
+                    id="whatsapp-number"
+                    type="tel"
+                    inputMode="numeric"
+                    autoComplete="tel"
+                    placeholder="01XXXXXXXXX"
+                    maxLength={11}
+                    {...register("whatsapp_number", {
+                      onChange: (event) => {
+                        event.target.value = event.target.value
+                          .replace(/\D/g, "")
+                          .slice(0, 11);
+                      },
+                    })}
+                    className="min-w-0 flex-1 bg-transparent pr-3 text-sm outline-none"
+                  />
+                </div>
+
                 <p className="min-h-4 text-xs font-medium text-red-500">
                   {validationErrors.whatsapp_number}
                 </p>

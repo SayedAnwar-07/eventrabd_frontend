@@ -9,7 +9,7 @@ export default function BookingSlotCard({ slot, brand }) {
     {
       type: "image",
       label: "Brand",
-      value: brand?.brand_name || "Service provider",
+      value: brand?.display_name || "Service provider",
       image: brand?.logo,
     },
     {

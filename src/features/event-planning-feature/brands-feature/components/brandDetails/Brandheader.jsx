@@ -25,7 +25,7 @@ const BrandHeader = ({ brand, onEdit }) => {
             Home
           </Link>
           <span className="text-muted-foreground/50">/</span>
-          <span className="text-foreground">{brand.brand_name}</span>
+          <span className="text-foreground">{brand.display_name}</span>
         </nav>
 
         {brand.is_owner && (
@@ -47,18 +47,24 @@ const BrandHeader = ({ brand, onEdit }) => {
       <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <div className="flex items-center gap-4">
-            <img
-              src={brand?.logo_url}
-              alt={brand?.brand_name || "Brand logo"}
-              className="h-18 w-18 rounded-full shrink-0 border border-border object-cover"
-              loading="lazy"
-            />
+            {brand?.logo_url ? (
+              <img
+                src={brand.logo_url}
+                alt={brand.brand_name || "Brand logo"}
+                className="h-18 w-18 shrink-0 rounded-full border border-border object-cover"
+                loading="lazy"
+              />
+            ) : (
+              <div className="flex h-18 w-18 shrink-0 items-center justify-center rounded-full border border-border bg-muted text-2xl font-semibold text-foreground">
+                {brand?.display_name?.trim()?.charAt(0) || "B"}
+              </div>
+            )}
 
             <div>
               <h1 className="max-w-2xl text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
-                {brand.brand_name}
+                {brand.display_name}
               </h1>
-              <dl className="mt-2 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
+              <dl className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
                 <div className="flex items-center gap-1.5">
                   <MapPin className="h-4 w-4" />
                   <span>{location || "Location not set"}</span>

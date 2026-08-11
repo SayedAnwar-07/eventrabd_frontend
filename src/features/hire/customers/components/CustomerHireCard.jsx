@@ -147,8 +147,8 @@ const CustomerHireCard = ({ hire }) => {
   });
 
   const brandName =
-    hire?.brand?.brand_name ||
-    hire?.service?.brand?.brand_name ||
+    hire?.brand?.display_name ||
+    hire?.service?.brand?.display_name ||
     "Service provider";
 
   const sellerName = hire?.seller?.full_name || "Not available";

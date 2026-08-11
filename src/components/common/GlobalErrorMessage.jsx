@@ -5,7 +5,7 @@ export default function GlobalErrorMessage({ error, className = "" }) {
     return null;
   }
 
-  const message = getApiErrorMessage(error);
+  const message = typeof error === "string" ? error : getApiErrorMessage(error);
 
   return (
     <div

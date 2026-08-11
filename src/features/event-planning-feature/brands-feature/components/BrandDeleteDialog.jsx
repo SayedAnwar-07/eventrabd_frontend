@@ -73,7 +73,7 @@ export default function BrandDeleteDialog({ brand }) {
           <DialogDescription>
             Are you sure you want to delete{" "}
             <span className="font-semibold text-foreground">
-              {brand?.brand_name || "this brand"}
+              {brand?.display_name || "this brand"}
             </span>
             ? This action cannot be undone.
           </DialogDescription>

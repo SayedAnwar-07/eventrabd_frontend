@@ -122,7 +122,7 @@ const HireSellerSheet = ({ service }) => {
               </p>
 
               <p className="mt-1 text-sm text-gray-600">
-                {service?.brand?.brand_name || "Unknown brand"}
+                {service?.brand?.display_name || "Unknown brand"}
               </p>
 
               <p className="mt-2 text-sm font-medium text-gray-950">

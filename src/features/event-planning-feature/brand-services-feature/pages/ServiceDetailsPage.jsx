@@ -81,7 +81,7 @@ const ServiceDetailsPage = () => {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <ServiceBreadcrumb
           brandSlug={brandSlug}
-          brandName={service.brand?.brand_name}
+          brandName={service.brand?.display_name}
           serviceName={formatServiceName(service.service_name)}
         />
 

@@ -9,7 +9,7 @@ const ServiceHero = ({ service, formatServiceName }) => {
             rel="noreferrer"
             className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-primary underline-offset-4 hover:underline"
           >
-            Check out {service.brand.brand_name} portfolio →
+            Check out {service.brand.display_name} portfolio →
           </a>
         )}
       </div>
