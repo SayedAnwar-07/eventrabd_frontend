@@ -11,25 +11,18 @@ export default function ResponsiveInvoicePreview({ children }) {
 
   useEffect(() => {
     const container = containerRef.current;
-
-    if (!container) {
-      return undefined;
-    }
+    if (!container) return undefined;
 
     const updateScale = () => {
       const availableWidth = Math.max(container.clientWidth - 2, 0);
-
       const nextScale = Math.min(1, availableWidth / A4_WIDTH_PX);
-
       setScale(nextScale);
     };
 
     updateScale();
 
     const resizeObserver = new ResizeObserver(updateScale);
-
     resizeObserver.observe(container);
-
     window.addEventListener("resize", updateScale);
 
     return () => {
@@ -39,8 +32,13 @@ export default function ResponsiveInvoicePreview({ children }) {
   }, []);
 
   return (
-    <div ref={containerRef} className="w-full overflow-hidden bg-white">
+    <div
+      ref={containerRef}
+      data-invoice-preview-container="true"
+      className="w-full overflow-hidden bg-white"
+    >
       <div
+        data-invoice-preview-frame="true"
         className="relative mx-auto"
         style={{
           width: `${A4_WIDTH_PX * scale}px`,
@@ -48,6 +46,7 @@ export default function ResponsiveInvoicePreview({ children }) {
         }}
       >
         <div
+          data-invoice-preview-scaler="true"
           style={{
             width: `${A4_WIDTH_PX}px`,
             height: `${A4_HEIGHT_PX}px`,

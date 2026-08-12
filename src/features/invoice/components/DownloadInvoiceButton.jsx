@@ -88,6 +88,32 @@ const DownloadInvoiceButton = ({
               return;
             }
 
+            const clonedContainer = clonedDocument.querySelector(
+              '[data-invoice-preview-container="true"]',
+            );
+            const clonedFrame = clonedDocument.querySelector(
+              '[data-invoice-preview-frame="true"]',
+            );
+            const clonedScaler = clonedDocument.querySelector(
+              '[data-invoice-preview-scaler="true"]',
+            );
+
+            if (clonedContainer) {
+              clonedContainer.style.overflow = "visible";
+              clonedContainer.style.width = "210mm";
+            }
+
+            if (clonedFrame) {
+              clonedFrame.style.width = "210mm";
+              clonedFrame.style.height = "297mm";
+            }
+
+            if (clonedScaler) {
+              clonedScaler.style.width = "210mm";
+              clonedScaler.style.height = "297mm";
+              clonedScaler.style.transform = "none";
+            }
+
             /*
              * Force exact A4 dimensions only inside
              * the cloned document used for PDF export.
