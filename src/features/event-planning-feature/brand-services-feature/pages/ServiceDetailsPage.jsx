@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
 import { fetchEventServiceDetail } from "@/store/features/eventService/eventServiceSlice";
 
@@ -21,6 +21,8 @@ import ServiceHero from "../components/ServiceDetails/ServiceHero";
 
 import HireSellerSheet from "@/features/hire/sellers/components/HireSellerSheet";
 
+import ServiceReviews from "@/features/review/components/ServiceReviews";
+
 const formatServiceName = (name = "") =>
   name.replaceAll("_", " ").replace(/\b\w/g, (char) => char.toUpperCase());
 
@@ -31,9 +33,11 @@ const ServiceDetailsPage = () => {
   const navigate = useNavigate();
 
   const service = useSelector(selectCurrentService);
+
   const galleryImages = useSelector(selectCurrentServiceGallery);
 
   const loading = useSelector(selectCurrentServiceLoading);
+
   const error = useSelector(selectCurrentServiceError);
 
   const isOwner = service?.brand?.is_owner === true;
@@ -42,7 +46,9 @@ const ServiceDetailsPage = () => {
     dispatch(
       fetchEventServiceDetail({
         brandSlug,
+
         serviceId: service?.id || serviceId,
+
         serviceName: service?.slug || service?.service_name || serviceName,
       }),
     );
@@ -62,7 +68,7 @@ const ServiceDetailsPage = () => {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-background text-sm text-muted-foreground">
         Loading...
       </div>
     );
@@ -70,7 +76,7 @@ const ServiceDetailsPage = () => {
 
   if (error || !service) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-background text-sm text-muted-foreground">
         Service not found.
       </div>
     );
@@ -90,6 +96,8 @@ const ServiceDetailsPage = () => {
           galleryImages={galleryImages}
         />
 
+        {/* Service Details */}
+
         <section className="mt-10 grid grid-cols-1 gap-8 lg:grid-cols-3">
           <div className="lg:col-span-2">
             <ServiceHero
@@ -98,7 +106,7 @@ const ServiceDetailsPage = () => {
             />
           </div>
 
-          <aside className="lg:sticky lg:top-24 h-fit">
+          <aside className="h-fit lg:sticky lg:top-24">
             <ServiceSummary
               service={service}
               formatServiceName={formatServiceName}
@@ -119,7 +127,10 @@ const ServiceDetailsPage = () => {
                   serviceName={service.slug || service.service_name}
                   onSuccess={refreshServiceDetail}
                   trigger={
-                    <button className="flex-1 border rounded-md py-3 text-sm font-semibold">
+                    <button
+                      type="button"
+                      className="flex-1 rounded-md border border-border bg-background py-3 text-sm font-semibold text-foreground transition-colors hover:bg-muted"
+                    >
                       Edit
                     </button>
                   }
@@ -134,7 +145,10 @@ const ServiceDetailsPage = () => {
                     navigate(`/event-planner/brands/${brandSlug}`)
                   }
                   trigger={
-                    <button className="flex-1 bg-destructive text-white rounded-md py-3 text-sm font-semibold">
+                    <button
+                      type="button"
+                      className="flex-1 rounded-md bg-destructive py-3 text-sm font-semibold text-destructive-foreground transition-opacity hover:opacity-90"
+                    >
                       Delete
                     </button>
                   }
@@ -143,6 +157,12 @@ const ServiceDetailsPage = () => {
             )}
           </aside>
         </section>
+
+        {/* Reviews */}
+
+        <div className="mt-12">
+          <ServiceReviews service={service} />
+        </div>
       </div>
     </main>
   );

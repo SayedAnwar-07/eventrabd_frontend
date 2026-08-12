@@ -34,11 +34,29 @@ const ServiceGalleryCarousel = ({ service, galleryImages = [] }) => {
 
   return (
     <section className="overflow-hidden rounded-md flex gap-3 flex-col md:flex-row">
-      <div className="relative w-full h-160 aspect-4/3 overflow-hidden">
+      {/* <div className="relative w-full h-140 aspect-4/3 overflow-hidden">
         <img
           src={images[activeIndex]}
           alt={service?.service_name || "Service image"}
           className="h-full w-full object-cover transition-all duration-500 rounded-md"
+        /> */}
+
+      <div
+        className="relative w-full rounded-md overflow-hidden bg-gray-100"
+        style={{ height: "clamp(200px, 40vw, 450px)" }}
+      >
+        {/* Blurred fill background */}
+        <img
+          src={images[activeIndex]}
+          aria-hidden="true"
+          className="absolute inset-0 h-full w-full object-cover scale-110 blur-2xl opacity-60"
+        />
+
+        {/* Sharp, fully-visible image on top */}
+        <img
+          src={images[activeIndex]}
+          alt={service?.service_name || "Service image"}
+          className="relative h-full w-full object-contain transition-all duration-500 rounded-md"
         />
 
         {images.length > 1 && (

@@ -5,6 +5,7 @@ import eventPlannerReducer from "./features/eventPlanner/eventPlannerSlice";
 import eventServiceReducer from "./features/eventService/eventServiceSlice";
 import hireReducer from "./features/hire/hireSlice";
 import invoiceReducer from "./features/invoice/invoiceSlice";
+import reviewReducer from "./features/review/reviewSlice";
 
 export const store = configureStore({
   reducer: {
@@ -13,6 +14,7 @@ export const store = configureStore({
     eventServices: eventServiceReducer,
     hire: hireReducer,
     invoice: invoiceReducer,
+    review: reviewReducer,
   },
 });
 
