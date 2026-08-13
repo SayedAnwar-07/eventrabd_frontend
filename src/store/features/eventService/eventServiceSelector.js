@@ -34,6 +34,16 @@ export const selectServicesWithPagination = createSelector(
   }),
 );
 
+// ── Public Services ───────────────────────────────────
+
+export const selectPublicServices = selectAllServices;
+
+export const selectPublicServicesLoading = selectServicesLoading;
+
+export const selectPublicServicesError = selectServicesError;
+
+export const selectPublicServicesPagination = selectServicesPagination;
+
 // ── Brand Services ───────────────────────────────────
 
 export const selectBrandServices = (state) =>

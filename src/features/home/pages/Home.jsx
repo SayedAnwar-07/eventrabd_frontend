@@ -1,38 +1,105 @@
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
+
 import { fetchBrands } from "@/store/features/eventPlanner/eventPlannerSlice";
+
+import { fetchPublicServices } from "@/store/features/eventService/eventServiceSlice";
+
+import {
+  selectPublicServices,
+  selectPublicServicesLoading,
+  selectPublicServicesError,
+} from "@/store/features/eventService/eventServiceSelector";
+
 import BrandCard from "@/features/event-planning-feature/brands-feature/components/BrandCard";
+
 import GlobalErrorMessage from "@/components/common/GlobalErrorMessage";
+import PublicServiceCard from "@/features/event-planning-feature/brand-services-feature/components/PublicServiceCard";
 
 const Home = () => {
   const dispatch = useDispatch();
 
   const { brands, list } = useSelector((state) => state.eventPlanner);
 
+  const services = useSelector(selectPublicServices);
+
+  const servicesLoading = useSelector(selectPublicServicesLoading);
+
+  const servicesError = useSelector(selectPublicServicesError);
+
   useEffect(() => {
     dispatch(fetchBrands());
+
+    dispatch(
+      fetchPublicServices({
+        page: 1,
+        pageSize: 12,
+      }),
+    );
   }, [dispatch]);
 
   return (
-    <section className="min-h-screen">
-      <div className="mx-auto max-w-7xl">
-        <h1 className="mb-8 text-3xl font-bold">All Event Brands</h1>
+    <main className="min-h-screen">
+      <div className="mx-auto max-w-7xl space-y-16">
+        {/* Services */}
+        <section>
+          <div className="mb-8">
+            <h2 className="text-3xl font-bold text-foreground">
+              Explore Event Services
+            </h2>
 
-        {list.loading && <p>Loading brands...</p>}
+            <p className="mt-2 text-muted-foreground">
+              Find event services from trusted brands.
+            </p>
+          </div>
 
-        {list.errorMessage && <GlobalErrorMessage error={list.errorMessage} />}
+          {servicesLoading && (
+            <p className="text-sm text-muted-foreground">Loading services...</p>
+          )}
 
-        {!list.loading && brands.length === 0 && (
-          <p className="text-gray-500">No brands found.</p>
-        )}
+          {servicesError && <GlobalErrorMessage error={servicesError} />}
 
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {brands.map((brand) => (
-            <BrandCard key={brand.id} brand={brand} />
-          ))}
-        </div>
+          {!servicesLoading && !servicesError && services.length === 0 && (
+            <p className="text-sm text-muted-foreground">No services found.</p>
+          )}
+
+          {!servicesLoading && services.length > 0 && (
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {services.map((service) => (
+                <PublicServiceCard key={service.id} service={service} />
+              ))}
+            </div>
+          )}
+        </section>
+
+        {/* Brands */}
+        <section>
+          <div className="mb-8">
+            <h2 className="text-3xl font-bold text-foreground">
+              All Event Brands
+            </h2>
+          </div>
+
+          {list.loading && (
+            <p className="text-sm text-muted-foreground">Loading brands...</p>
+          )}
+
+          {list.errorMessage && (
+            <GlobalErrorMessage error={list.errorMessage} />
+          )}
+
+          {!list.loading && brands.length === 0 && (
+            <p className="text-sm text-muted-foreground">No brands found.</p>
+          )}
+
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {brands.map((brand) => (
+              <BrandCard key={brand.id} brand={brand} />
+            ))}
+          </div>
+        </section>
       </div>
-    </section>
+    </main>
   );
 };
 

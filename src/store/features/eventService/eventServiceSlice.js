@@ -32,6 +32,52 @@ const upsertService = (list, service) => {
 
 // ── Async Thunks ──────────────────────────────────────────────────────────
 
+export const fetchPublicServices = createAsyncThunk(
+  "eventServices/fetchPublicServices",
+  async (
+    {
+      page = 1,
+      pageSize = 12,
+      serviceType = null,
+      search = null,
+      division = null,
+      district = null,
+    } = {},
+    { rejectWithValue },
+  ) => {
+    try {
+      const params = {
+        page,
+        page_size: pageSize,
+      };
+
+      if (serviceType) {
+        params.service_type = serviceType;
+      }
+
+      if (search) {
+        params.search = search;
+      }
+
+      if (division) {
+        params.division = division;
+      }
+
+      if (district) {
+        params.district = district;
+      }
+
+      const response = await api.get("/event-services/services/", {
+        params,
+      });
+
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(getApiErrorMessage(error));
+    }
+  },
+);
+
 export const fetchBrandServices = createAsyncThunk(
   "eventServices/fetchBrandServices",
   async (brandSlug, { rejectWithValue }) => {
@@ -254,6 +300,25 @@ const eventServiceSlice = createSlice({
 
   extraReducers: (builder) => {
     builder
+      // ── Fetch Public Services ───────────────────────────────────────────
+      .addCase(fetchPublicServices.pending, (state) => {
+        state.services.loading = true;
+        state.services.error = null;
+      })
+      .addCase(fetchPublicServices.fulfilled, (state, action) => {
+        const payload = normalizeList(action.payload);
+
+        state.services.loading = false;
+        state.services.data = payload.data;
+        state.services.count = payload.count;
+        state.services.next = payload.next;
+        state.services.previous = payload.previous;
+      })
+      .addCase(fetchPublicServices.rejected, (state, action) => {
+        state.services.loading = false;
+        state.services.error = action.payload;
+      })
+
       // ── Fetch Brand Services ────────────────────────────────────────────
       .addCase(fetchBrandServices.pending, (state) => {
         state.brandServices.loading = true;
