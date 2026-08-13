@@ -177,13 +177,21 @@ export default function ReviewForms({
                 type="button"
                 disabled={loading}
                 onClick={() => setRating(option.value)}
-                className={`rounded-md border px-3 py-2 text-sm font-semibold transition-colors ${
+                className={`flex items-center justify-center gap-1.5 rounded-md border px-3 py-2 text-sm font-semibold transition-colors ${
                   active
                     ? "border-primary bg-primary text-primary-foreground"
                     : "border-border bg-background text-foreground hover:bg-muted"
                 }`}
               >
-                {option.label}
+                <span>{option.label}</span>
+
+                <Star
+                  className={`h-4 w-4 ${
+                    active
+                      ? "fill-amber-400 text-amber-400"
+                      : "fill-gray-400 text-gray-400"
+                  }`}
+                />
               </button>
             );
           })}

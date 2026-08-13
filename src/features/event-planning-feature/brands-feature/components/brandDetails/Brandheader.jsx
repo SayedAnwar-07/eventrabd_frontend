@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import BrandDeleteDialog from "../BrandDeleteDialog";
 import BrandSidebarPanel from "./Brandsidebarpanel";
 import { useSelector } from "react-redux";
+import BrandBreadcrumb from "./BrandBreadcrumb";
 
 const capitalize = (str) =>
   str ? str.charAt(0).toUpperCase() + str.slice(1) : "";
@@ -20,13 +21,7 @@ const BrandHeader = ({ brand, onEdit }) => {
     <header className="pb-8">
       {/* Breadcrumb + actions row */}
       <div className="mb-6 flex items-center justify-between">
-        <nav className="flex items-center gap-1.5 text-sm text-muted-foreground">
-          <Link to="/" className="transition hover:text-foreground">
-            Home
-          </Link>
-          <span className="text-muted-foreground/50">/</span>
-          <span className="text-foreground">{brand.display_name}</span>
-        </nav>
+        <BrandBreadcrumb brandName={brand.display_name} />
 
         {brand.is_owner && (
           <div className="flex shrink-0 items-center gap-3">

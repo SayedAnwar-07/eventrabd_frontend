@@ -138,11 +138,22 @@ export default function ServiceReviews({ service }) {
 
           <div className="mt-6 rounded-md border border-border bg-card p-5">
             <div className="flex items-end gap-2">
-              <span className="text-4xl font-bold tracking-tight text-foreground">
+              <span
+                className="
+                  text-4xl
+                  font-bold
+                  tracking-tight
+                  tabular-nums
+                  text-[#E99A00]
+                  dark:text-[#FFB52E]
+                "
+              >
                 {averageRating > 0 ? averageRating.toFixed(1) : "0.0"}
               </span>
 
-              <span className="pb-1 text-sm text-muted-foreground">/ 5</span>
+              <span className="pb-1 text-sm font-medium text-muted-foreground">
+                / 5
+              </span>
             </div>
 
             <div className="mt-3">

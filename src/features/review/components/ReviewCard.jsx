@@ -1,4 +1,5 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 
 import RatingStars from "./RatingStars";
 
@@ -89,14 +90,31 @@ export default function ReviewCard({ review }) {
           )}
 
           {review?.image_url && (
-            <div className="mt-5 max-w-xl overflow-hidden rounded-md border border-border bg-muted/30">
-              <img
-                src={review.image_url}
-                alt={`Review by ${customerName}`}
-                loading="lazy"
-                className="max-h-105 w-full object-cover"
-              />
-            </div>
+            <Dialog>
+              <DialogTrigger asChild>
+                <button
+                  type="button"
+                  className="mt-5 block max-w-xl overflow-hidden rounded-md border border-border bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  aria-label={`Open review image by ${customerName}`}
+                >
+                  <img
+                    src={review.image_url}
+                    alt={`Review by ${customerName}`}
+                    loading="lazy"
+                    className="max-h-105 w-full cursor-zoom-in object-cover transition-transform duration-300 hover:scale-[1.02]"
+                  />
+                </button>
+              </DialogTrigger>
+
+              <DialogContent className="flex max-h-[95dvh] w-[calc(100%-16px)] max-w-6xl items-center justify-center overflow-hidden rounded-md border-0 bg-black/95 p-2 sm:w-[calc(100%-48px)] sm:p-4">
+                <img
+                  src={review.image_url}
+                  alt={`Review by ${customerName}`}
+                  decoding="async"
+                  className="max-h-[88dvh] max-w-full object-contain"
+                />
+              </DialogContent>
+            </Dialog>
           )}
         </div>
       </div>

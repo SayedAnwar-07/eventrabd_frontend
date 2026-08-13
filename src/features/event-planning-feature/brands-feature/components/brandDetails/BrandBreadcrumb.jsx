@@ -9,9 +9,9 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 
-const ServiceBreadcrumb = ({ brandSlug, brandName, serviceName }) => {
+const BrandBreadcrumb = ({ brandName }) => {
   return (
-    <Breadcrumb className="mb-6">
+    <Breadcrumb>
       <BreadcrumbList>
         <BreadcrumbItem>
           <BreadcrumbLink asChild>
@@ -22,18 +22,8 @@ const ServiceBreadcrumb = ({ brandSlug, brandName, serviceName }) => {
         <BreadcrumbSeparator />
 
         <BreadcrumbItem>
-          <BreadcrumbLink asChild>
-            <Link to={`/event-planner/brands/${brandSlug}`}>
-              {brandName || "Brand"}
-            </Link>
-          </BreadcrumbLink>
-        </BreadcrumbItem>
-
-        <BreadcrumbSeparator />
-
-        <BreadcrumbItem>
           <BreadcrumbPage className="max-w-55 truncate sm:max-w-87.5">
-            {serviceName}
+            {brandName || "Brand"}
           </BreadcrumbPage>
         </BreadcrumbItem>
       </BreadcrumbList>
@@ -41,4 +31,4 @@ const ServiceBreadcrumb = ({ brandSlug, brandName, serviceName }) => {
   );
 };
 
-export default ServiceBreadcrumb;
+export default BrandBreadcrumb;

@@ -19,12 +19,13 @@ export default function RatingStars({
 
   return (
     <div
-      className="flex items-center gap-1"
+      className="flex items-center gap-1.5"
       aria-label={`${rating.toFixed(1)} out of 5 stars`}
     >
       <div className="flex items-center gap-0.5">
         {Array.from({ length: 5 }).map((_, index) => {
           const starNumber = index + 1;
+
           const fillPercentage = Math.min(
             Math.max((rating - index) * 100, 0),
             100,
@@ -33,18 +34,20 @@ export default function RatingStars({
           return (
             <span
               key={starNumber}
-              className="relative inline-flex"
+              className="relative inline-flex shrink-0"
               style={{
                 width: size,
                 height: size,
               }}
             >
+              {/* Empty star */}
               <Star
                 size={size}
-                className="absolute inset-0 text-muted-foreground/30"
                 strokeWidth={1.8}
+                className="absolute inset-0 text-zinc-300 dark:text-zinc-700"
               />
 
+              {/* Filled star */}
               <span
                 className="absolute inset-0 overflow-hidden"
                 style={{
@@ -53,8 +56,13 @@ export default function RatingStars({
               >
                 <Star
                   size={size}
-                  className="fill-primary text-primary"
                   strokeWidth={1.8}
+                  className="
+                    fill-[#F5A623]
+                    text-[#F5A623]
+                    dark:fill-[#FFB52E]
+                    dark:text-[#FFB52E]
+                  "
                 />
               </span>
             </span>
@@ -63,7 +71,16 @@ export default function RatingStars({
       </div>
 
       {showValue && (
-        <span className="ml-1 text-sm font-semibold text-foreground">
+        <span
+          className="
+            ml-1
+            text-sm
+            font-semibold
+            tabular-nums
+            text-[#E99A00]
+            dark:text-[#FFB52E]
+          "
+        >
           {rating.toFixed(1)}
         </span>
       )}

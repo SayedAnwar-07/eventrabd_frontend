@@ -26,6 +26,36 @@ const waitForImages = async (element) => {
   );
 };
 
+const waitForClonedStylesheets = (clonedDocument) => {
+  const linkPromises = Array.from(
+    clonedDocument.querySelectorAll('link[rel="stylesheet"]'),
+  ).map((link) => {
+    if (link.sheet) {
+      return Promise.resolve();
+    }
+
+    return new Promise((resolve) => {
+      link.addEventListener("load", resolve, { once: true });
+      link.addEventListener("error", resolve, { once: true });
+      setTimeout(resolve, 2000);
+    });
+  });
+
+  const clonedWindow = clonedDocument.defaultView;
+
+  const framePromise = new Promise((resolve) => {
+    if (clonedWindow?.requestAnimationFrame) {
+      clonedWindow.requestAnimationFrame(() =>
+        clonedWindow.requestAnimationFrame(resolve),
+      );
+    } else {
+      setTimeout(resolve, 100);
+    }
+  });
+
+  return Promise.all([...linkPromises, framePromise]);
+};
+
 const DownloadInvoiceButton = ({
   targetRef,
   invoiceNumber,
@@ -51,6 +81,10 @@ const DownloadInvoiceButton = ({
 
       await waitForImages(invoiceElement);
 
+      await new Promise((resolve) =>
+        requestAnimationFrame(() => requestAnimationFrame(resolve)),
+      );
+
       const options = {
         margin: [0, 0, 0, 0],
 
@@ -67,12 +101,6 @@ const DownloadInvoiceButton = ({
           allowTaint: false,
           backgroundColor: "#ffffff",
           logging: false,
-
-          /*
-           * Force desktop viewport while rendering.
-           * Mobile and tablet downloads will therefore use
-           * the same desktop responsive layout.
-           */
           windowWidth: 1440,
           windowHeight: 1800,
 
@@ -85,7 +113,7 @@ const DownloadInvoiceButton = ({
             );
 
             if (!clonedInvoice) {
-              return;
+              return waitForClonedStylesheets(clonedDocument);
             }
 
             const clonedContainer = clonedDocument.querySelector(
@@ -114,10 +142,6 @@ const DownloadInvoiceButton = ({
               clonedScaler.style.transform = "none";
             }
 
-            /*
-             * Force exact A4 dimensions only inside
-             * the cloned document used for PDF export.
-             */
             clonedInvoice.style.width = "210mm";
             clonedInvoice.style.minWidth = "210mm";
             clonedInvoice.style.maxWidth = "210mm";
@@ -134,6 +158,7 @@ const DownloadInvoiceButton = ({
 
             clonedInvoice.style.transform = "none";
             clonedInvoice.style.backgroundColor = "#ffffff";
+            return waitForClonedStylesheets(clonedDocument);
           },
         },
 
