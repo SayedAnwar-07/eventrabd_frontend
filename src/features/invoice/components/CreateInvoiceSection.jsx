@@ -24,20 +24,20 @@ import {
 
 const MAX_TERMS_CONDITIONS = 3;
 const MAX_TERM_LENGTH = 300;
+const MAX_ADDITIONAL_CHARGE_REASON_LENGTH = 255;
 
 const getLocalToday = () => {
   const today = new Date();
 
   const year = today.getFullYear();
-
   const month = String(today.getMonth() + 1).padStart(2, "0");
-
   const day = String(today.getDate()).padStart(2, "0");
 
   return `${year}-${month}-${day}`;
 };
 
-// One row per booked date: { [booking_slot_id]: "shift count string" }
+// One row per booked date:
+// { [booking_slot_id]: "shift count string" }
 const buildInitialSlotShifts = (bookingSlots = []) => {
   const slotShifts = {};
 
@@ -50,20 +50,25 @@ const buildInitialSlotShifts = (bookingSlots = []) => {
 
 const getInitialFormData = (bookingSlots = []) => ({
   slot_shifts: buildInitialSlotShifts(bookingSlots),
+
   due_payment_last_date: "",
+
+  additional_charge: "0.00",
+  additional_charge_reason: "",
+
   discount_price: "0.00",
   advance_payment: "0.00",
+
   seller_note: "",
+
   terms_conditions: [],
 });
 
-const parseMoney = (value) => {
-  const amount = Number(value);
-
-  return Number.isFinite(amount) ? amount : 0;
-};
-
 const toDecimalString = (value) => {
+  if (value === "" || value === null || value === undefined) {
+    return "0.00";
+  }
+
   const amount = Number(value);
 
   return Number.isFinite(amount) ? amount.toFixed(2) : "0.00";
@@ -102,6 +107,18 @@ const formatSlotDate = (slot) => {
   });
 };
 
+const getBookingTitle = (hire) => {
+  return (
+    hire?.booking_title ||
+    hire?.package_snapshot_title ||
+    hire?.package_title ||
+    hire?.package?.title ||
+    hire?.service?.service_display_name ||
+    hire?.service?.service_name ||
+    "this booking"
+  );
+};
+
 const getErrorMessage = (error) => {
   if (!error) {
     return "";
@@ -122,7 +139,14 @@ const getErrorMessage = (error) => {
   return "Unable to create the invoice.";
 };
 
-const FormField = ({ id, label, icon: Icon, error, children }) => {
+const FormField = ({
+  id,
+  label,
+  icon: Icon,
+  error,
+  optionalText,
+  children,
+}) => {
   return (
     <div>
       <label
@@ -131,7 +155,13 @@ const FormField = ({ id, label, icon: Icon, error, children }) => {
       >
         {Icon ? <Icon className="h-4 w-4 text-[#b60018]" /> : null}
 
-        {label}
+        <span>{label}</span>
+
+        {optionalText ? (
+          <span className="text-xs font-normal text-gray-500">
+            {optionalText}
+          </span>
+        ) : null}
       </label>
 
       {children}
@@ -141,7 +171,10 @@ const FormField = ({ id, label, icon: Icon, error, children }) => {
   );
 };
 
-const PreviewItem = ({ label, value, emphasized = false }) => {
+const PreviewItem = ({ label, value, displayValue, emphasized = false }) => {
+  const content =
+    displayValue !== undefined ? displayValue : formatMoney(value);
+
   return (
     <div
       className={
@@ -160,10 +193,12 @@ const PreviewItem = ({ label, value, emphasized = false }) => {
 
       <p
         className={`mt-1 ${
-          emphasized ? "text-lg font-bold" : "font-semibold text-gray-950"
+          emphasized
+            ? "text-sm font-bold sm:text-base"
+            : "text-sm font-semibold text-gray-950"
         }`}
       >
-        {formatMoney(value)}
+        {content}
       </p>
     </div>
   );
@@ -173,11 +208,9 @@ const CreateInvoiceSection = ({ hire }) => {
   const dispatch = useDispatch();
 
   const createLoading = useSelector(selectInvoiceCreateLoading);
-
   const apiError = useSelector(selectInvoiceError);
 
   const [isOpen, setIsOpen] = useState(false);
-
   const [createdInvoice, setCreatedInvoice] = useState(null);
 
   const bookingSlots = useMemo(
@@ -203,11 +236,6 @@ const CreateInvoiceSection = ({ hire }) => {
     serviceSummary?.shift_hour_per_slot || hire?.service?.shift_hour || 0,
   );
 
-  const shiftChargePerSlot = parseMoney(
-    serviceSummary?.shift_charge_per_slot || hire?.service?.shift_charge,
-  );
-
-  // Sum of shift counts entered across every booked date.
   const totalShiftCount = useMemo(() => {
     return bookingSlots.reduce((sum, slot) => {
       const value = Number(formData.slot_shifts[slot.id]);
@@ -216,38 +244,21 @@ const CreateInvoiceSection = ({ hire }) => {
     }, 0);
   }, [bookingSlots, formData.slot_shifts]);
 
-  const effectiveShiftCount =
-    isOpen || createdInvoice ? totalShiftCount : Math.max(slotCount, 1);
-
   const bookedTotalShiftHours = shiftHourPerSlot * slotCount;
+  const totalShiftHours = shiftHourPerSlot * totalShiftCount;
 
-  const totalShiftHours = shiftHourPerSlot * effectiveShiftCount;
+  const additionalChargeAmount =
+    formData.additional_charge === "" ? 0 : Number(formData.additional_charge);
 
-  const servicePrice = shiftChargePerSlot * effectiveShiftCount;
+  const hasAdditionalCharge =
+    Number.isFinite(additionalChargeAmount) && additionalChargeAmount > 0;
+
+  const bookingTitle = getBookingTitle(hire);
 
   const isEligible =
     hire?.status === "accepted" &&
     hire?.is_accept === true &&
     hire?.can_create_invoice === true;
-
-  const financialPreview = useMemo(() => {
-    const discountPrice = parseMoney(formData.discount_price);
-
-    const advancePayment = parseMoney(formData.advance_payment);
-
-    const subtotal = Math.max(servicePrice - discountPrice, 0);
-
-    const duePayment = Math.max(subtotal - advancePayment, 0);
-
-    return {
-      servicePrice,
-      discountPrice,
-      advancePayment,
-      subtotal,
-      total: subtotal,
-      duePayment,
-    };
-  }, [servicePrice, formData.discount_price, formData.advance_payment]);
 
   if (!isEligible && !createdInvoice) {
     return null;
@@ -255,12 +266,14 @@ const CreateInvoiceSection = ({ hire }) => {
 
   const clearFormState = () => {
     setValidationErrors({});
+
     dispatch(clearInvoiceError());
     dispatch(clearInvoiceSuccessMessage());
   };
 
   const handleOpen = () => {
     clearFormState();
+
     setFormData(getInitialFormData(bookingSlots));
     setIsOpen(true);
   };
@@ -285,6 +298,11 @@ const CreateInvoiceSection = ({ hire }) => {
     setValidationErrors((currentErrors) => ({
       ...currentErrors,
       [name]: null,
+      ...(name === "additional_charge"
+        ? {
+            additional_charge_reason: null,
+          }
+        : {}),
     }));
 
     if (apiError) {
@@ -295,6 +313,7 @@ const CreateInvoiceSection = ({ hire }) => {
   const handleSlotShiftChange = (slotId, value) => {
     setFormData((currentData) => ({
       ...currentData,
+
       slot_shifts: {
         ...currentData.slot_shifts,
         [slotId]: value,
@@ -306,7 +325,9 @@ const CreateInvoiceSection = ({ hire }) => {
         return currentErrors;
       }
 
-      const currentSlotErrors = { ...currentErrors.slot_shifts };
+      const currentSlotErrors = {
+        ...currentErrors.slot_shifts,
+      };
 
       delete currentSlotErrors[slotId];
 
@@ -347,6 +368,7 @@ const CreateInvoiceSection = ({ hire }) => {
   const handleTermChange = (index, value) => {
     setFormData((currentData) => ({
       ...currentData,
+
       terms_conditions: currentData.terms_conditions.map((term, termIndex) =>
         termIndex === index ? value : term,
       ),
@@ -377,6 +399,7 @@ const CreateInvoiceSection = ({ hire }) => {
 
     setFormData((currentData) => ({
       ...currentData,
+
       terms_conditions: currentData.terms_conditions.filter(
         (_, termIndex) => termIndex !== index,
       ),
@@ -404,10 +427,14 @@ const CreateInvoiceSection = ({ hire }) => {
     const errors = {};
 
     const discountPrice = Number(formData.discount_price);
-
     const advancePayment = Number(formData.advance_payment);
 
-    const calculatedTotal = servicePrice - discountPrice;
+    const additionalCharge =
+      formData.additional_charge === ""
+        ? 0
+        : Number(formData.additional_charge);
+
+    const additionalChargeReason = formData.additional_charge_reason.trim();
 
     if (bookingSlots.length === 0) {
       errors.slot_shifts_general =
@@ -467,9 +494,19 @@ const CreateInvoiceSection = ({ hire }) => {
       errors.due_payment_last_date = "Due payment date cannot be in the past.";
     }
 
-    if (!Number.isFinite(servicePrice) || servicePrice <= 0) {
-      errors.service_price =
-        "The calculated service price must be greater than zero.";
+    if (!Number.isFinite(additionalCharge) || additionalCharge < 0) {
+      errors.additional_charge = "Additional charge cannot be negative.";
+    }
+
+    if (additionalChargeReason.length > MAX_ADDITIONAL_CHARGE_REASON_LENGTH) {
+      errors.additional_charge_reason = `Additional charge reason cannot contain more than ${MAX_ADDITIONAL_CHARGE_REASON_LENGTH} characters.`;
+    } else if (
+      Number.isFinite(additionalCharge) &&
+      additionalCharge > 0 &&
+      !additionalChargeReason
+    ) {
+      errors.additional_charge_reason =
+        "Additional charge reason is required when additional charge is greater than zero.";
     }
 
     if (
@@ -478,8 +515,6 @@ const CreateInvoiceSection = ({ hire }) => {
       discountPrice < 0
     ) {
       errors.discount_price = "Discount price cannot be negative.";
-    } else if (discountPrice > servicePrice) {
-      errors.discount_price = "Discount price cannot exceed service price.";
     }
 
     if (
@@ -488,9 +523,6 @@ const CreateInvoiceSection = ({ hire }) => {
       advancePayment < 0
     ) {
       errors.advance_payment = "Advance payment cannot be negative.";
-    } else if (advancePayment > calculatedTotal) {
-      errors.advance_payment =
-        "Advance payment cannot exceed the calculated total.";
     }
 
     setValidationErrors(errors);
@@ -508,6 +540,8 @@ const CreateInvoiceSection = ({ hire }) => {
       return;
     }
 
+    const additionalChargeReason = formData.additional_charge_reason.trim();
+
     const invoiceData = {
       hire: hire.id,
 
@@ -518,6 +552,8 @@ const CreateInvoiceSection = ({ hire }) => {
 
       due_payment_last_date: formData.due_payment_last_date,
 
+      additional_charge: toDecimalString(formData.additional_charge),
+
       discount_price: toDecimalString(formData.discount_price),
 
       advance_payment: toDecimalString(formData.advance_payment),
@@ -527,14 +563,22 @@ const CreateInvoiceSection = ({ hire }) => {
       terms_conditions: formData.terms_conditions.map((term) => term.trim()),
     };
 
+    if (additionalChargeReason) {
+      invoiceData.additional_charge_reason = additionalChargeReason;
+    }
+
     try {
       const invoice = await dispatch(createInvoice(invoiceData)).unwrap();
 
+      // Important:
+      // From this point forward, use the backend-returned
+      // service_price, additional_charge, total, due_payment, etc.
       setCreatedInvoice(invoice);
+
       setIsOpen(false);
       setValidationErrors({});
     } catch {
-      // Redux stores the backend error.
+      // Redux stores the backend/global API error.
     }
   };
 
@@ -586,9 +630,9 @@ const CreateInvoiceSection = ({ hire }) => {
                 </h2>
 
                 <p className="mt-2 max-w-xl text-sm leading-6 text-gray-600">
-                  This accepted hire is ready for invoice creation. Service
-                  price will be calculated from the shift count you set for each
-                  booked date.
+                  This accepted hire is ready for invoice creation. The backend
+                  will determine the base price from the normal service booking
+                  or the selected package price snapshot.
                 </p>
               </div>
             </div>
@@ -627,11 +671,11 @@ const CreateInvoiceSection = ({ hire }) => {
 
           <div>
             <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-gray-500">
-              Service Price
+              Base Price
             </p>
 
-            <p className="mt-1 text-lg font-semibold text-[#b60018]">
-              {formatMoney(shiftChargePerSlot * Math.max(slotCount, 1))}
+            <p className="mt-1 text-sm font-semibold text-[#b60018]">
+              Calculated by backend
             </p>
           </div>
         </div>
@@ -660,9 +704,7 @@ const CreateInvoiceSection = ({ hire }) => {
               <p className="mt-1 text-sm text-gray-600">
                 Invoice for{" "}
                 <span className="font-semibold text-gray-900">
-                  {hire?.service?.service_display_name ||
-                    hire?.service?.service_name ||
-                    "this service"}
+                  {bookingTitle}
                 </span>
               </p>
             </div>
@@ -690,15 +732,6 @@ const CreateInvoiceSection = ({ hire }) => {
           </div>
         ) : null}
 
-        {validationErrors.service_price ? (
-          <div
-            role="alert"
-            className="mb-6 border-l-2 border-red-600 bg-red-50 px-4 py-3 text-sm text-red-700"
-          >
-            {validationErrors.service_price}
-          </div>
-        ) : null}
-
         {validationErrors.slot_shifts_general ? (
           <div
             role="alert"
@@ -719,8 +752,8 @@ const CreateInvoiceSection = ({ hire }) => {
           </div>
 
           <p className="mt-1 text-xs leading-5 text-gray-500">
-            Set how many shifts apply to each booked date. The service price is
-            calculated from the total across all dates.
+            Set how many shifts apply to each booked date. Pricing is calculated
+            and validated by the backend.
           </p>
 
           <div className="mt-4 space-y-3">
@@ -779,9 +812,9 @@ const CreateInvoiceSection = ({ hire }) => {
           </div>
 
           <p className="mt-3 text-xs text-gray-500">
-            {totalShiftCount} Total Shift{totalShiftCount === 1 ? "" : "s"} ·{" "}
-            {shiftHourPerSlot} Hours × {totalShiftCount} Shifts ={" "}
-            {totalShiftHours} Hours
+            {totalShiftCount} Total Shift
+            {totalShiftCount === 1 ? "" : "s"} · {shiftHourPerSlot} Hours ×{" "}
+            {totalShiftCount} Shifts = {totalShiftHours} Hours
           </p>
         </div>
 
@@ -801,6 +834,28 @@ const CreateInvoiceSection = ({ hire }) => {
               onChange={handleChange}
               disabled={createLoading}
               aria-invalid={Boolean(validationErrors.due_payment_last_date)}
+              className="mt-2 h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none transition focus:border-[#b60018] focus:ring-2 focus:ring-red-100 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:opacity-60"
+            />
+          </FormField>
+
+          <FormField
+            id="invoice-additional-charge"
+            label="Additional Charge"
+            icon={CircleDollarSign}
+            error={validationErrors.additional_charge}
+            optionalText="Optional"
+          >
+            <input
+              id="invoice-additional-charge"
+              name="additional_charge"
+              type="number"
+              min="0"
+              step="0.01"
+              inputMode="decimal"
+              value={formData.additional_charge}
+              onChange={handleChange}
+              disabled={createLoading}
+              aria-invalid={Boolean(validationErrors.additional_charge)}
               className="mt-2 h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none transition focus:border-[#b60018] focus:ring-2 focus:ring-red-100 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:opacity-60"
             />
           </FormField>
@@ -845,6 +900,40 @@ const CreateInvoiceSection = ({ hire }) => {
               aria-invalid={Boolean(validationErrors.advance_payment)}
               className="mt-2 h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none transition focus:border-[#b60018] focus:ring-2 focus:ring-red-100 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:opacity-60"
             />
+          </FormField>
+        </div>
+
+        <div className="mt-5">
+          <FormField
+            id="invoice-additional-charge-reason"
+            label="Additional Charge Reason"
+            error={validationErrors.additional_charge_reason}
+            optionalText={hasAdditionalCharge ? "Required" : "Optional"}
+          >
+            <textarea
+              id="invoice-additional-charge-reason"
+              name="additional_charge_reason"
+              rows={3}
+              maxLength={MAX_ADDITIONAL_CHARGE_REASON_LENGTH}
+              value={formData.additional_charge_reason}
+              onChange={handleChange}
+              disabled={createLoading}
+              required={hasAdditionalCharge}
+              aria-invalid={Boolean(validationErrors.additional_charge_reason)}
+              placeholder={
+                hasAdditionalCharge
+                  ? "Explain why this additional charge is being added."
+                  : "Optional reason for the additional charge."
+              }
+              className="mt-2 w-full resize-y rounded-lg border border-gray-300 bg-white px-3 py-3 text-sm text-gray-950 outline-none transition focus:border-[#b60018] focus:ring-2 focus:ring-red-100 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:opacity-60"
+            />
+
+            <div className="mt-1 flex justify-end">
+              <p className="text-[11px] text-gray-400">
+                {formData.additional_charge_reason.length}/
+                {MAX_ADDITIONAL_CHARGE_REASON_LENGTH}
+              </p>
+            </div>
           </FormField>
         </div>
 
@@ -1002,32 +1091,29 @@ const CreateInvoiceSection = ({ hire }) => {
             <h3 className="font-semibold text-gray-950">Financial Preview</h3>
 
             <p className="mt-1 text-xs leading-5 text-gray-500">
-              Service price is calculated from the shift counts set above. Final
-              values will come from the backend.
+              Base price, total and due payment are calculated by the backend.
+              After invoice creation, the backend-returned financial values are
+              used.
             </p>
           </div>
 
-          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-            <PreviewItem
-              label="Service Price"
-              value={financialPreview.servicePrice}
-            />
+          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
+            <PreviewItem label="Base Price" displayValue="Backend calculated" />
 
             <PreviewItem
-              label="Discount"
-              value={financialPreview.discountPrice}
+              label="Additional Charge"
+              value={formData.additional_charge || 0}
             />
 
-            <PreviewItem label="Subtotal" value={financialPreview.subtotal} />
+            <PreviewItem label="Discount" value={formData.discount_price} />
 
-            <PreviewItem
-              label="Advance"
-              value={financialPreview.advancePayment}
-            />
+            <PreviewItem label="Advance" value={formData.advance_payment} />
+
+            <PreviewItem label="Total" displayValue="Backend calculated" />
 
             <PreviewItem
               label="Due Payment"
-              value={financialPreview.duePayment}
+              displayValue="Backend calculated"
               emphasized
             />
           </div>

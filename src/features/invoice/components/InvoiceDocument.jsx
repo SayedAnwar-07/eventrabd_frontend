@@ -76,6 +76,32 @@ const formatShiftDuration = (value) => {
   return `${hours} ${hours === 1 ? "Hour" : "Hours"}`;
 };
 
+const getBookingTitle = ({ invoice, hire, serviceSummary }) => {
+  const backendBookingTitle =
+    invoice?.booking_title ||
+    serviceSummary?.booking_title ||
+    invoice?.package_snapshot_title ||
+    serviceSummary?.package_snapshot_title ||
+    invoice?.package_title ||
+    serviceSummary?.package_title ||
+    invoice?.package?.title ||
+    hire?.package?.title;
+
+  if (backendBookingTitle) {
+    return String(backendBookingTitle);
+  }
+
+  const serviceTitle =
+    invoice?.service?.service_display_name ||
+    invoice?.service?.service_name ||
+    serviceSummary?.service_display_name ||
+    serviceSummary?.service_name ||
+    hire?.service?.service_display_name ||
+    hire?.service?.service_name;
+
+  return serviceTitle ? formatLabel(serviceTitle) : "Event Service";
+};
+
 const InvoiceDocument = ({
   invoice,
   hire,
@@ -94,30 +120,15 @@ const InvoiceDocument = ({
     ? serviceSummary.breakdown
     : [];
 
-  const backendSlotCount = Number(serviceSummary.slot_count || 0);
-
-  const slotCount = bookingSlots.length || backendSlotCount || 1;
-
   const shiftHourPerSlot = Number(
-    serviceSummary.shift_hour_per_slot || hire?.service?.shift_hour || 0,
+    serviceSummary?.shift_hour_per_slot || hire?.service?.shift_hour || 0,
   );
 
-  const fallbackShiftCharge =
-    slotCount > 0
-      ? Number(invoice?.service_price || 0) / slotCount
-      : Number(invoice?.service_price || 0);
-
-  const shiftChargePerSlot = Number(
-    serviceSummary.shift_charge_per_slot ||
-      hire?.service?.shift_charge ||
-      fallbackShiftCharge,
-  );
-
-  const serviceName =
-    invoice?.service?.service_name ||
-    hire?.service?.service_display_name ||
-    hire?.service?.service_name ||
-    "Event service";
+  const bookingTitle = getBookingTitle({
+    invoice,
+    hire,
+    serviceSummary,
+  });
 
   const brandName =
     invoice?.brand?.display_name ||
@@ -150,26 +161,52 @@ const InvoiceDocument = ({
 
   const normalizedCustomerWhatsApp = normalizeWhatsAppNumber(customerWhatsApp);
 
-  const venueName = firstSlot?.venue_name || "Not available";
+  const venueName =
+    firstSlot?.venue_name || breakdown?.[0]?.venue_name || "Not available";
 
-  const venueAddress = firstSlot?.venue_address || "Not available";
+  const venueAddress =
+    firstSlot?.venue_address ||
+    breakdown?.[0]?.venue_address ||
+    "Not available";
 
-  const eventDate = firstSlot?.starts_at
-    ? bookingSlots.length > 1
-      ? `${formatDate(firstSlot.starts_at)} (+${bookingSlots.length - 1} more)`
-      : formatDate(firstSlot.starts_at)
-    : "Not available";
+  const eventDate =
+    bookingSlots.length > 0 && firstSlot?.starts_at
+      ? bookingSlots.length > 1
+        ? `${formatDate(firstSlot.starts_at)} (+${
+            bookingSlots.length - 1
+          } more)`
+        : formatDate(firstSlot.starts_at)
+      : breakdown.length > 0
+        ? breakdown.length > 1
+          ? `${formatDate(breakdown[0]?.date)} (+${breakdown.length - 1} more)`
+          : formatDate(breakdown[0]?.date)
+        : "Not available";
 
+  /*
+   * IMPORTANT:
+   * No price is calculated here.
+   *
+   * This table only displays booking/shift information.
+   * Financial values come directly from invoice response.
+   */
   const eventRows =
     breakdown.length > 0
       ? breakdown.map((entry, index) => {
           const shiftCount = Number(entry?.shift_count || 1);
 
-          const totalShiftHours = shiftHourPerSlot * shiftCount;
-          const totalShiftCharge = shiftChargePerSlot * shiftCount;
+          const backendShiftHours = Number(
+            entry?.total_shift_hours || entry?.shift_hours || 0,
+          );
+
+          const totalShiftHours =
+            backendShiftHours > 0
+              ? backendShiftHours
+              : shiftHourPerSlot > 0
+                ? shiftHourPerSlot * shiftCount
+                : 0;
 
           const bookingSlot = bookingSlots.find(
-            (slot) => Number(slot?.id) === Number(entry?.booking_slot_id),
+            (slot) => String(slot?.id) === String(entry?.booking_slot_id),
           );
 
           return {
@@ -182,39 +219,56 @@ const InvoiceDocument = ({
 
             duration: formatShiftDuration(totalShiftHours),
 
-            charge: formatMoney(totalShiftCharge),
+            shiftCount,
 
-            service: formatLabel(serviceName),
+            bookingTitle,
           };
         })
       : bookingSlots.length > 0
         ? bookingSlots.map((slot, index) => ({
             id: slot?.id || `${invoice?.id}-slot-${index}`,
+
             date: formatDate(slot?.starts_at),
+
             duration: formatShiftDuration(shiftHourPerSlot),
-            charge: formatMoney(shiftChargePerSlot),
-            service: formatLabel(serviceName),
+
+            shiftCount: 1,
+
+            bookingTitle,
           }))
         : [
             {
               id: `${invoice?.id}-fallback-slot`,
               date: "Not available",
               duration: "Not available",
-              charge: formatMoney(invoice?.service_price),
-              service: formatLabel(serviceName),
+              shiftCount: Number(serviceSummary?.shift_count) || 1,
+              bookingTitle,
             },
           ];
 
-  const servicePrice = invoice?.service_price || "0.00";
+  /*
+   * Financial values:
+   * Backend is the only source of truth.
+   *
+   * DO NOT calculate these from service/package/shift data.
+   */
+  const servicePrice = invoice?.service_price ?? "0.00";
 
-  const discountPrice = invoice?.discount_price || "0.00";
+  const additionalCharge = invoice?.additional_charge ?? "0.00";
 
-  const calculatedSubtotal = Math.max(
-    Number(servicePrice || 0) - Number(discountPrice || 0),
-    0,
-  );
+  const additionalChargeReason = String(
+    invoice?.additional_charge_reason || "",
+  ).trim();
 
-  const subtotal = invoice?.sub_total ?? calculatedSubtotal;
+  const discountPrice = invoice?.discount_price ?? "0.00";
+
+  const total = invoice?.total ?? "0.00";
+
+  const advancePayment = invoice?.advance_payment ?? "0.00";
+
+  const duePayment = invoice?.due_payment ?? "0.00";
+
+  const hasAdditionalCharge = Number(additionalCharge) > 0;
 
   return (
     <section className="invoice-document w-full min-w-0">
@@ -285,7 +339,7 @@ const InvoiceDocument = ({
             />
 
             {/* Event details */}
-            <div className="mt-4 break-inside-avoid">
+            <div className="invoice-section mt-4 break-inside-avoid">
               <h2 className="font-serif text-base font-bold text-gray-950">
                 Event Details
               </h2>
@@ -303,11 +357,11 @@ const InvoiceDocument = ({
                       </th>
 
                       <th className="border-r border-white/60 px-3 py-1.5 text-left text-xs font-bold uppercase">
-                        Shift Charge
+                        Shift Count
                       </th>
 
                       <th className="px-3 py-1.5 text-left text-xs font-bold uppercase">
-                        Service Type
+                        Service / Package
                       </th>
                     </tr>
                   </thead>
@@ -323,12 +377,12 @@ const InvoiceDocument = ({
                           {row.duration}
                         </td>
 
-                        <td className="border-r border-gray-200 px-3 py-2 text-left text-sm font-medium text-gray-950">
-                          {row.charge}
+                        <td className="border-r border-gray-200 px-3 py-2 text-xs font-semibold text-gray-950">
+                          {row.shiftCount}
                         </td>
 
-                        <td className="px-3 py-2 text-xs text-gray-700">
-                          {row.service}
+                        <td className="px-3 py-2 text-xs font-medium text-gray-700">
+                          {row.bookingTitle}
                         </td>
                       </tr>
                     ))}
@@ -337,11 +391,10 @@ const InvoiceDocument = ({
               </div>
             </div>
 
-            <div className="mt-20">
-              {/* Agreement and price summary */}
+            <div className="mt-16">
+              {/* Agreement + financial summary */}
               <div className="grid grid-cols-[1fr_280px] gap-8 break-inside-avoid">
                 <div className="flex min-w-0 flex-col items-start justify-between">
-                  {/* Terms and conditions */}
                   <TermsConditions
                     terms={invoice?.terms_conditions}
                     brandName={brandName}
@@ -373,7 +426,31 @@ const InvoiceDocument = ({
                     </span>
                   </div>
 
-                  <SummaryRow label="Subtotal" value={formatMoney(subtotal)} />
+                  <SummaryRow
+                    label="Base Price"
+                    value={formatMoney(servicePrice)}
+                  />
+
+                  <SummaryRow
+                    label="Additional Charge"
+                    value={
+                      hasAdditionalCharge
+                        ? `+ ${formatMoney(additionalCharge)}`
+                        : formatMoney(additionalCharge)
+                    }
+                  />
+
+                  {additionalChargeReason ? (
+                    <div className="mb-2 border-b border-gray-200 pb-2">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                        Additional Charge Reason
+                      </p>
+
+                      <p className="mt-1 wrap-break-word text-[11px] leading-4 text-gray-700">
+                        {additionalChargeReason}
+                      </p>
+                    </div>
+                  ) : null}
 
                   <SummaryRow
                     label="Discount"
@@ -383,19 +460,19 @@ const InvoiceDocument = ({
 
                   <SummaryRow
                     label="Total"
-                    value={formatMoney(invoice?.total)}
+                    value={formatMoney(total)}
                     variant="total"
                   />
 
                   <SummaryRow
                     label="Advance Payment"
-                    value={`− ${formatMoney(invoice?.advance_payment)}`}
+                    value={`− ${formatMoney(advancePayment)}`}
                     variant="paid"
                   />
 
                   <SummaryRow
                     label="Due Payment"
-                    value={formatMoney(invoice?.due_payment)}
+                    value={formatMoney(duePayment)}
                     variant="due"
                   />
                 </div>

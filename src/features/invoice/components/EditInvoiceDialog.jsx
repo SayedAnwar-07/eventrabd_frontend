@@ -29,6 +29,7 @@ import {
 
 const MAX_TERMS_CONDITIONS = 3;
 const MAX_TERM_LENGTH = 300;
+const MAX_ADDITIONAL_CHARGE_REASON_LENGTH = 255;
 
 const normalizeTermsConditions = (value) => {
   if (!Array.isArray(value)) {
@@ -42,15 +43,14 @@ const getLocalToday = () => {
   const today = new Date();
 
   const year = today.getFullYear();
-
   const month = String(today.getMonth() + 1).padStart(2, "0");
-
   const day = String(today.getDate()).padStart(2, "0");
 
   return `${year}-${month}-${day}`;
 };
 
-// One row per booked date: { [booking_slot_id]: "shift count string" }
+// One row per booked date:
+// { [booking_slot_id]: "shift count string" }
 const buildInitialSlotShifts = (breakdown = []) => {
   const slotShifts = {};
 
@@ -68,22 +68,24 @@ const getInitialFormData = (invoice) => ({
     invoice?.service_summary?.breakdown || [],
   ),
 
-  discount_price: invoice?.discount_price || "0.00",
+  additional_charge: invoice?.additional_charge ?? "0.00",
 
-  advance_payment: invoice?.advance_payment || "0.00",
+  additional_charge_reason: invoice?.additional_charge_reason || "",
+
+  discount_price: invoice?.discount_price ?? "0.00",
+
+  advance_payment: invoice?.advance_payment ?? "0.00",
 
   seller_note: invoice?.seller_note || "",
 
   terms_conditions: normalizeTermsConditions(invoice?.terms_conditions),
 });
 
-const parseMoney = (value) => {
-  const amount = Number(value);
-
-  return Number.isFinite(amount) ? amount : 0;
-};
-
 const toDecimalString = (value) => {
+  if (value === "" || value === null || value === undefined) {
+    return "0.00";
+  }
+
   const amount = Number(value);
 
   return Number.isFinite(amount) ? amount.toFixed(2) : "0.00";
@@ -100,6 +102,21 @@ const formatMoney = (value) => {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })}`;
+};
+
+const getInvoiceBookingTitle = (invoice) => {
+  return (
+    invoice?.booking_title ||
+    invoice?.package_snapshot_title ||
+    invoice?.package_title ||
+    invoice?.service_title ||
+    invoice?.service_display_name ||
+    invoice?.service_summary?.booking_title ||
+    invoice?.service_summary?.package_title ||
+    invoice?.service_summary?.service_display_name ||
+    invoice?.service_summary?.service_name ||
+    ""
+  );
 };
 
 const getErrorMessage = (error) => {
@@ -122,7 +139,14 @@ const getErrorMessage = (error) => {
   return "Unable to update the invoice.";
 };
 
-const FormField = ({ id, label, icon: Icon, error, children }) => {
+const FormField = ({
+  id,
+  label,
+  icon: Icon,
+  error,
+  optionalText,
+  children,
+}) => {
   return (
     <div>
       <label
@@ -131,7 +155,13 @@ const FormField = ({ id, label, icon: Icon, error, children }) => {
       >
         {Icon ? <Icon className="h-4 w-4 text-[#b60018]" /> : null}
 
-        {label}
+        <span>{label}</span>
+
+        {optionalText ? (
+          <span className="text-xs font-normal text-gray-500">
+            {optionalText}
+          </span>
+        ) : null}
       </label>
 
       {children}
@@ -186,8 +216,6 @@ const EditInvoiceDialog = ({ invoice }) => {
 
   const today = getLocalToday();
 
-  // Booked dates for this invoice's hire, taken from the backend's
-  // per-slot breakdown (booking_slot_id, date label, shift_count, ...).
   const breakdown = useMemo(
     () => invoice?.service_summary?.breakdown || [],
     [invoice?.service_summary?.breakdown],
@@ -197,11 +225,6 @@ const EditInvoiceDialog = ({ invoice }) => {
     invoice?.service_summary?.shift_hour_per_slot || 0,
   );
 
-  const shiftChargePerSlot = parseMoney(
-    invoice?.service_summary?.shift_charge_per_slot,
-  );
-
-  // Sum of shift counts entered across every booked date.
   const totalShiftCount = useMemo(() => {
     return breakdown.reduce((sum, entry) => {
       const value = Number(formData.slot_shifts[entry.booking_slot_id]);
@@ -210,17 +233,15 @@ const EditInvoiceDialog = ({ invoice }) => {
     }, 0);
   }, [breakdown, formData.slot_shifts]);
 
-  const servicePrice = shiftChargePerSlot * totalShiftCount;
-
   const totalShiftHours = shiftHourPerSlot * totalShiftCount;
 
-  const discountPrice = parseMoney(formData.discount_price);
+  const additionalChargeAmount =
+    formData.additional_charge === "" ? 0 : Number(formData.additional_charge);
 
-  const advancePayment = parseMoney(formData.advance_payment);
+  const hasAdditionalCharge =
+    Number.isFinite(additionalChargeAmount) && additionalChargeAmount > 0;
 
-  const previewTotal = Math.max(servicePrice - discountPrice, 0);
-
-  const previewDuePayment = Math.max(previewTotal - advancePayment, 0);
+  const bookingTitle = getInvoiceBookingTitle(invoice);
 
   const handleOpenChange = (nextOpen) => {
     if (updateLoading) {
@@ -251,6 +272,11 @@ const EditInvoiceDialog = ({ invoice }) => {
     setValidationErrors((currentErrors) => ({
       ...currentErrors,
       [name]: null,
+      ...(name === "additional_charge"
+        ? {
+            additional_charge_reason: null,
+          }
+        : {}),
     }));
 
     setLocalMessage("");
@@ -263,6 +289,7 @@ const EditInvoiceDialog = ({ invoice }) => {
   const handleSlotShiftChange = (slotId, value) => {
     setFormData((currentData) => ({
       ...currentData,
+
       slot_shifts: {
         ...currentData.slot_shifts,
         [slotId]: value,
@@ -274,7 +301,9 @@ const EditInvoiceDialog = ({ invoice }) => {
         return currentErrors;
       }
 
-      const currentSlotErrors = { ...currentErrors.slot_shifts };
+      const currentSlotErrors = {
+        ...currentErrors.slot_shifts,
+      };
 
       delete currentSlotErrors[slotId];
 
@@ -301,6 +330,7 @@ const EditInvoiceDialog = ({ invoice }) => {
 
     setFormData((currentData) => ({
       ...currentData,
+
       terms_conditions: [...currentData.terms_conditions, ""],
     }));
 
@@ -319,6 +349,7 @@ const EditInvoiceDialog = ({ invoice }) => {
   const handleTermChange = (index, value) => {
     setFormData((currentData) => ({
       ...currentData,
+
       terms_conditions: currentData.terms_conditions.map((term, termIndex) =>
         termIndex === index ? value : term,
       ),
@@ -351,6 +382,7 @@ const EditInvoiceDialog = ({ invoice }) => {
 
     setFormData((currentData) => ({
       ...currentData,
+
       terms_conditions: currentData.terms_conditions.filter(
         (_, termIndex) => termIndex !== index,
       ),
@@ -383,7 +415,13 @@ const EditInvoiceDialog = ({ invoice }) => {
 
     const currentAdvancePayment = Number(formData.advance_payment);
 
-    const calculatedTotal = servicePrice - currentDiscountPrice;
+    const currentAdditionalCharge =
+      formData.additional_charge === ""
+        ? 0
+        : Number(formData.additional_charge);
+
+    const currentAdditionalChargeReason =
+      formData.additional_charge_reason.trim();
 
     const termsConditions = normalizeTermsConditions(formData.terms_conditions);
 
@@ -448,9 +486,24 @@ const EditInvoiceDialog = ({ invoice }) => {
       }
     }
 
-    if (!Number.isFinite(servicePrice) || servicePrice <= 0) {
-      errors.service_price =
-        "The calculated service price must be greater than zero.";
+    if (
+      !Number.isFinite(currentAdditionalCharge) ||
+      currentAdditionalCharge < 0
+    ) {
+      errors.additional_charge = "Additional charge cannot be negative.";
+    }
+
+    if (
+      currentAdditionalChargeReason.length > MAX_ADDITIONAL_CHARGE_REASON_LENGTH
+    ) {
+      errors.additional_charge_reason = `Additional charge reason cannot contain more than ${MAX_ADDITIONAL_CHARGE_REASON_LENGTH} characters.`;
+    } else if (
+      Number.isFinite(currentAdditionalCharge) &&
+      currentAdditionalCharge > 0 &&
+      !currentAdditionalChargeReason
+    ) {
+      errors.additional_charge_reason =
+        "Additional charge reason is required when additional charge is greater than zero.";
     }
 
     if (
@@ -459,8 +512,6 @@ const EditInvoiceDialog = ({ invoice }) => {
       currentDiscountPrice < 0
     ) {
       errors.discount_price = "Discount price cannot be negative.";
-    } else if (currentDiscountPrice > servicePrice) {
-      errors.discount_price = "Discount price cannot exceed service price.";
     }
 
     if (
@@ -469,9 +520,6 @@ const EditInvoiceDialog = ({ invoice }) => {
       currentAdvancePayment < 0
     ) {
       errors.advance_payment = "Advance payment cannot be negative.";
-    } else if (currentAdvancePayment > calculatedTotal) {
-      errors.advance_payment =
-        "Advance payment cannot exceed the calculated total.";
     }
 
     setValidationErrors(errors);
@@ -479,12 +527,10 @@ const EditInvoiceDialog = ({ invoice }) => {
     return Object.keys(errors).length === 0;
   };
 
-  // Builds the slot_shifts array in the shape the backend expects:
-  // [{ booking_slot, shift_count }]. Returns null if nothing changed
-  // from the invoice's saved breakdown.
   const getChangedSlotShifts = () => {
     const nextSlotShifts = breakdown.map((entry) => ({
       booking_slot: entry.booking_slot_id,
+
       shift_count: Number(formData.slot_shifts[entry.booking_slot_id]),
     }));
 
@@ -502,6 +548,10 @@ const EditInvoiceDialog = ({ invoice }) => {
   const getChangedFields = () => {
     const changedFields = {};
 
+    const nextAdditionalCharge = toDecimalString(formData.additional_charge);
+
+    const currentAdditionalCharge = toDecimalString(invoice?.additional_charge);
+
     const nextDiscountPrice = toDecimalString(formData.discount_price);
 
     const nextAdvancePayment = toDecimalString(formData.advance_payment);
@@ -514,6 +564,20 @@ const EditInvoiceDialog = ({ invoice }) => {
 
     if (changedSlotShifts) {
       changedFields.slot_shifts = changedSlotShifts;
+    }
+
+    if (nextAdditionalCharge !== currentAdditionalCharge) {
+      changedFields.additional_charge = nextAdditionalCharge;
+    }
+
+    const nextAdditionalChargeReason = formData.additional_charge_reason.trim();
+
+    const currentAdditionalChargeReason = String(
+      invoice?.additional_charge_reason || "",
+    ).trim();
+
+    if (nextAdditionalChargeReason !== currentAdditionalChargeReason) {
+      changedFields.additional_charge_reason = nextAdditionalChargeReason;
     }
 
     if (nextDiscountPrice !== currentDiscountPrice) {
@@ -564,7 +628,6 @@ const EditInvoiceDialog = ({ invoice }) => {
 
     if (!invoice?.id) {
       setLocalMessage("Invoice ID is missing.");
-
       return;
     }
 
@@ -594,11 +657,22 @@ const EditInvoiceDialog = ({ invoice }) => {
         }),
       ).unwrap();
 
+      // Backend response becomes Redux selectedInvoice.
+      // Backend remains source of truth for:
+      // service_price
+      // sub_total
+      // additional_charge
+      // discount_price
+      // total
+      // advance_payment
+      // due_payment
+      // payment_status
+
       setOpen(false);
       setValidationErrors({});
       setLocalMessage("");
     } catch {
-      // Redux stores the backend error.
+      // Redux stores the backend/global API error.
     }
   };
 
@@ -630,7 +704,18 @@ const EditInvoiceDialog = ({ invoice }) => {
             <span className="font-semibold text-gray-900">
               {invoice?.invoice_number || "this invoice"}
             </span>
-            . Only changed fields will be submitted.
+            .
+            {bookingTitle ? (
+              <>
+                {" "}
+                Booking:{" "}
+                <span className="font-semibold text-gray-900">
+                  {bookingTitle}
+                </span>
+                .
+              </>
+            ) : null}{" "}
+            Only changed fields will be submitted.
           </DialogDescription>
         </DialogHeader>
 
@@ -650,15 +735,6 @@ const EditInvoiceDialog = ({ invoice }) => {
               className="mb-5 border-l-2 border-amber-600 bg-amber-50 px-4 py-3 text-sm text-amber-800"
             >
               {localMessage}
-            </div>
-          ) : null}
-
-          {validationErrors.service_price ? (
-            <div
-              role="alert"
-              className="mb-5 border-l-2 border-red-600 bg-red-50 px-4 py-3 text-sm text-red-700"
-            >
-              {validationErrors.service_price}
             </div>
           ) : null}
 
@@ -682,8 +758,8 @@ const EditInvoiceDialog = ({ invoice }) => {
             </div>
 
             <p className="mt-1 text-xs leading-5 text-gray-500">
-              Update how many shifts apply to each booked date. The service
-              price is recalculated from the total across all dates.
+              Update how many shifts apply to each booked date. Pricing and
+              final financial values are recalculated by the backend.
             </p>
 
             <div className="mt-4 space-y-3">
@@ -748,9 +824,9 @@ const EditInvoiceDialog = ({ invoice }) => {
             </div>
 
             <p className="mt-3 text-xs text-gray-500">
-              {totalShiftCount} Total Shift{totalShiftCount === 1 ? "" : "s"} ·{" "}
-              {shiftHourPerSlot} Hours × {totalShiftCount} Shifts ={" "}
-              {totalShiftHours} Hours
+              {totalShiftCount} Total Shift
+              {totalShiftCount === 1 ? "" : "s"} · {shiftHourPerSlot} Hours ×{" "}
+              {totalShiftCount} Shifts = {totalShiftHours} Hours
             </p>
           </div>
 
@@ -770,6 +846,28 @@ const EditInvoiceDialog = ({ invoice }) => {
                 onChange={handleChange}
                 disabled={updateLoading}
                 aria-invalid={Boolean(validationErrors.due_payment_last_date)}
+                className="mt-2 h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none transition focus:border-[#b60018] focus:ring-2 focus:ring-red-100 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:opacity-60"
+              />
+            </FormField>
+
+            <FormField
+              id={`invoice-additional-charge-${invoice?.id}`}
+              label="Additional Charge"
+              icon={CircleDollarSign}
+              error={validationErrors.additional_charge}
+              optionalText="Optional"
+            >
+              <input
+                id={`invoice-additional-charge-${invoice?.id}`}
+                name="additional_charge"
+                type="number"
+                min="0"
+                step="0.01"
+                inputMode="decimal"
+                value={formData.additional_charge}
+                onChange={handleChange}
+                disabled={updateLoading}
+                aria-invalid={Boolean(validationErrors.additional_charge)}
                 className="mt-2 h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none transition focus:border-[#b60018] focus:ring-2 focus:ring-red-100 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:opacity-60"
               />
             </FormField>
@@ -814,6 +912,42 @@ const EditInvoiceDialog = ({ invoice }) => {
                 aria-invalid={Boolean(validationErrors.advance_payment)}
                 className="mt-2 h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none transition focus:border-[#b60018] focus:ring-2 focus:ring-red-100 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:opacity-60"
               />
+            </FormField>
+          </div>
+
+          <div className="mt-5">
+            <FormField
+              id={`invoice-additional-charge-reason-${invoice?.id}`}
+              label="Additional Charge Reason"
+              error={validationErrors.additional_charge_reason}
+              optionalText={hasAdditionalCharge ? "Required" : "Optional"}
+            >
+              <textarea
+                id={`invoice-additional-charge-reason-${invoice?.id}`}
+                name="additional_charge_reason"
+                rows={3}
+                maxLength={MAX_ADDITIONAL_CHARGE_REASON_LENGTH}
+                value={formData.additional_charge_reason}
+                onChange={handleChange}
+                disabled={updateLoading}
+                required={hasAdditionalCharge}
+                aria-invalid={Boolean(
+                  validationErrors.additional_charge_reason,
+                )}
+                placeholder={
+                  hasAdditionalCharge
+                    ? "Explain why this additional charge is being added."
+                    : "Optional reason for the additional charge."
+                }
+                className="mt-2 w-full resize-y rounded-lg border border-gray-300 bg-white px-3 py-3 text-sm text-gray-950 outline-none transition focus:border-[#b60018] focus:ring-2 focus:ring-red-100 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:opacity-60"
+              />
+
+              <div className="mt-1 flex justify-end">
+                <p className="text-[11px] text-gray-400">
+                  {formData.additional_charge_reason.length}/
+                  {MAX_ADDITIONAL_CHARGE_REASON_LENGTH}
+                </p>
+              </div>
             </FormField>
           </div>
 
@@ -968,26 +1102,34 @@ const EditInvoiceDialog = ({ invoice }) => {
 
           <div className="mt-6 rounded-2xl border border-gray-200 bg-gray-50 p-4 sm:p-5">
             <div>
-              <h3 className="font-semibold text-gray-950">Financial Preview</h3>
+              <h3 className="font-semibold text-gray-950">
+                Current Backend Values
+              </h3>
 
               <p className="mt-1 text-xs leading-5 text-gray-500">
-                Service price is calculated from the shift counts set above.
-                Final totals will be calculated and returned by the backend.
+                These are the currently saved values returned by the backend.
+                After saving changes, the backend recalculates and returns the
+                updated financial values.
               </p>
             </div>
 
-            <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-              <PreviewItem label="Service Price" value={servicePrice} />
+            <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
+              <PreviewItem label="Base Price" value={invoice?.service_price} />
 
-              <PreviewItem label="Discount" value={discountPrice} />
+              <PreviewItem
+                label="Additional Charge"
+                value={invoice?.additional_charge}
+              />
 
-              <PreviewItem label="Subtotal" value={previewTotal} />
+              <PreviewItem label="Discount" value={invoice?.discount_price} />
 
-              <PreviewItem label="Advance" value={advancePayment} />
+              <PreviewItem label="Total" value={invoice?.total} />
+
+              <PreviewItem label="Advance" value={invoice?.advance_payment} />
 
               <PreviewItem
                 label="Due Payment"
-                value={previewDuePayment}
+                value={invoice?.due_payment}
                 emphasized
               />
             </div>

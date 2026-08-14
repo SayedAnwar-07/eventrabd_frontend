@@ -1,5 +1,6 @@
 import BookingSlotCard from "./BookingSlotCard";
 import PriceSummary from "./PriceSummary";
+import PackageSummary from "./PackageSummary";
 
 export default function BookingSlots({ hire }) {
   const bookingSlots = Array.isArray(hire?.booking_slots)
@@ -9,7 +10,7 @@ export default function BookingSlots({ hire }) {
   return (
     <section className="grid w-full grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
       {/* BOOKING SLOTS */}
-      <div className="overflow-hidden ">
+      <div className="overflow-hidden">
         <div className="flex items-center gap-3 border-b border-gray-100 px-5 py-4 dark:border-gray-800">
           <h2 className="font-semibold text-gray-950 dark:text-white">
             Booking Slot
@@ -39,8 +40,16 @@ export default function BookingSlots({ hire }) {
         )}
       </div>
 
-      {/* PRICE SUMMARY */}
-      <PriceSummary service={hire?.service} summary={hire?.service_summary} />
+      {/* PRICE / PACKAGE SUMMARY */}
+      {hire?.is_package_hire ? (
+        <PackageSummary
+          packageData={hire?.package}
+          bookingTitle={hire?.booking_title}
+          bookingPrice={hire?.booking_price}
+        />
+      ) : (
+        <PriceSummary service={hire?.service} summary={hire?.service_summary} />
+      )}
     </section>
   );
 }

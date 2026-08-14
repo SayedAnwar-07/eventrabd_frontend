@@ -22,6 +22,7 @@ import ServiceHero from "../components/ServiceDetails/ServiceHero";
 import HireSellerSheet from "@/features/hire/sellers/components/HireSellerSheet";
 
 import ServiceReviews from "@/features/review/components/ServiceReviews";
+import PackagesDetails from "@/features/packages/components/PackagesDetails";
 
 const formatServiceName = (name = "") =>
   name.replaceAll("_", " ").replace(/\b\w/g, (char) => char.toUpperCase());
@@ -104,9 +105,12 @@ const ServiceDetailsPage = () => {
               service={service}
               formatServiceName={formatServiceName}
             />
+
+            {/* packages */}
+            <PackagesDetails service={service} />
           </div>
 
-          <aside className="h-fit lg:sticky lg:top-24">
+          <aside className="h-fit lg:top-24">
             <ServiceSummary
               service={service}
               formatServiceName={formatServiceName}

@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
 
 import {
   AlertDialog,
@@ -24,7 +25,13 @@ import {
 } from "@/components/ui/sheet";
 
 import HireRequestForm from "./HireRequestForm";
-import { useSelector } from "react-redux";
+
+import {
+  fetchPackagesByService,
+  selectPackageError,
+  selectPackagesByService,
+  selectPackagesLoading,
+} from "@/store/features/packages/packageSlice";
 
 const formatServiceName = (name = "") => {
   return name
@@ -32,7 +39,11 @@ const formatServiceName = (name = "") => {
     .replace(/\b\w/g, (character) => character.toUpperCase());
 };
 
+const PACKAGE_SUPPORTED_SERVICES = ["photography", "videography"];
+
 const HireSellerSheet = ({ service }) => {
+  const dispatch = useDispatch();
+
   const { user, isAuthenticated } = useSelector((state) => state.auth);
 
   const [authDialogType, setAuthDialogType] = useState(null);
@@ -41,9 +52,32 @@ const HireSellerSheet = ({ service }) => {
   const location = useLocation();
 
   const [sheetOpen, setSheetOpen] = useState(false);
-  // const [loginDialogOpen, setLoginDialogOpen] = useState(false);
 
   const isOwner = service?.brand?.is_owner === true;
+
+  const serviceId = service?.id;
+
+  const supportsPackages = PACKAGE_SUPPORTED_SERVICES.includes(
+    service?.service_name,
+  );
+
+  const packages = useSelector((state) =>
+    serviceId ? selectPackagesByService(state, serviceId) : [],
+  );
+
+  const packagesLoading = useSelector((state) =>
+    serviceId ? selectPackagesLoading(state, serviceId) : false,
+  );
+
+  const packagesError = useSelector(selectPackageError);
+
+  useEffect(() => {
+    if (!sheetOpen || !supportsPackages || !serviceId) {
+      return;
+    }
+
+    dispatch(fetchPackagesByService(serviceId));
+  }, [dispatch, sheetOpen, supportsPackages, serviceId]);
 
   const handleSheetOpenChange = (nextOpen) => {
     if (!nextOpen) {
@@ -71,7 +105,10 @@ const HireSellerSheet = ({ service }) => {
 
     navigate("/login", {
       state: {
-        from: { pathname: location.pathname, search: location.search },
+        from: {
+          pathname: location.pathname,
+          search: location.search,
+        },
       },
     });
   };
@@ -90,7 +127,7 @@ const HireSellerSheet = ({ service }) => {
         <SheetTrigger asChild>
           <button
             type="button"
-            className="w-full border bg-[#a2101b] px-5 py-3 text-sm font-semibold text-white transition rounded-md hover:bg-gray-200"
+            className="w-full rounded-md border bg-[#a2101b] px-5 py-3 text-sm font-semibold text-white transition hover:bg-gray-200"
           >
             Hire Seller
           </button>
@@ -137,7 +174,12 @@ const HireSellerSheet = ({ service }) => {
 
             <div className="mt-8">
               <HireRequestForm
-                serviceId={service?.id}
+                serviceId={serviceId}
+                serviceName={service?.service_name}
+                serviceCharge={service?.shift_charge}
+                packages={packages}
+                packagesLoading={packagesLoading}
+                packagesError={packagesError}
                 onSuccess={handleHireSuccess}
               />
             </div>

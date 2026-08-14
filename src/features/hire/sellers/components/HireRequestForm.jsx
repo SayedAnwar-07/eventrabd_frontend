@@ -12,6 +12,39 @@ import GlobalErrorMessage from "@/components/common/GlobalErrorMessage";
 
 const MAX_BOOKING_SLOTS = 5;
 
+const PACKAGE_SUPPORTED_SERVICES = ["photography", "videography"];
+
+const EVENT_TYPE_OPTIONS = [
+  {
+    value: "holud",
+    label: "Holud",
+  },
+  {
+    value: "mehedi",
+    label: "Mehedi",
+  },
+  {
+    value: "akhd_walima",
+    label: "Akhd/Walima",
+  },
+  {
+    value: "wedding_ceremony",
+    label: "Wedding Ceremony",
+  },
+  {
+    value: "reception",
+    label: "Reception",
+  },
+  {
+    value: "anniversary",
+    label: "Anniversary",
+  },
+  {
+    value: "birthday",
+    label: "Birthday",
+  },
+];
+
 const createEmptySlot = () => ({
   starts_at: "",
   whatsapp_number: "",
@@ -29,7 +62,29 @@ const getMinimumDateTime = () => {
   return now.toISOString().slice(0, 16);
 };
 
-const HireRequestForm = ({ serviceId, onSuccess }) => {
+const formatPrice = (value) => {
+  if (value === undefined || value === null || value === "") {
+    return null;
+  }
+
+  const numericValue = Number(value);
+
+  if (!Number.isFinite(numericValue)) {
+    return null;
+  }
+
+  return `৳${numericValue.toLocaleString("en-US")}`;
+};
+
+const HireRequestForm = ({
+  serviceId,
+  serviceName,
+  serviceCharge,
+  packages = [],
+  packagesLoading = false,
+  packagesError = null,
+  onSuccess,
+}) => {
   const dispatch = useDispatch();
 
   const loading = useSelector(selectCreateHireLoading);
@@ -42,6 +97,10 @@ const HireRequestForm = ({ serviceId, onSuccess }) => {
 
   const [bookingSlots, setBookingSlots] = useState([createEmptySlot()]);
 
+  const [eventType, setEventType] = useState("");
+
+  const [selectedPackageId, setSelectedPackageId] = useState("");
+
   // Only frontend validation errors
   const [fieldErrors, setFieldErrors] = useState({});
 
@@ -49,10 +108,28 @@ const HireRequestForm = ({ serviceId, onSuccess }) => {
 
   const [successMessage, setSuccessMessage] = useState("");
 
+  const supportsPackages = PACKAGE_SUPPORTED_SERVICES.includes(serviceName);
+
+  const availablePackages = Array.isArray(packages) ? packages : [];
+
+  const selectedPackage = availablePackages.find(
+    (item) => String(item?.id) === String(selectedPackageId),
+  );
+
+  const normalServicePrice = formatPrice(serviceCharge);
+
+  const selectedPackagePrice = formatPrice(selectedPackage?.package_price);
+
   const clearCreateError = () => {
     if (apiError) {
       dispatch(clearHireOperationError("create"));
     }
+  };
+
+  const clearFormMessages = () => {
+    setFormError("");
+    setSuccessMessage("");
+    clearCreateError();
   };
 
   const getDisplayedFieldError = (fieldPath) => {
@@ -110,6 +187,24 @@ const HireRequestForm = ({ serviceId, onSuccess }) => {
     setSuccessMessage("");
 
     clearCreateError();
+  };
+
+  const handleNormalServiceSelect = () => {
+    if (loading) {
+      return;
+    }
+
+    setSelectedPackageId("");
+    clearFormMessages();
+  };
+
+  const handlePackageSelect = (packageId) => {
+    if (loading) {
+      return;
+    }
+
+    setSelectedPackageId(String(packageId));
+    clearFormMessages();
   };
 
   const validateForm = () => {
@@ -216,12 +311,24 @@ const HireRequestForm = ({ serviceId, onSuccess }) => {
       })),
     };
 
+    if (selectedPackageId) {
+      payload.package = selectedPackageId;
+    }
+
+    if (eventType) {
+      payload.event_type = eventType;
+    }
+
     try {
       const createdHire = await dispatch(createHire(payload)).unwrap();
 
       setCustomerNote("");
 
       setBookingSlots([createEmptySlot()]);
+
+      setEventType("");
+
+      setSelectedPackageId("");
 
       setFieldErrors({});
 
@@ -235,9 +342,234 @@ const HireRequestForm = ({ serviceId, onSuccess }) => {
       // GlobalErrorMessage displays it
     }
   };
+
   return (
     <form onSubmit={handleSubmit} noValidate>
       <div className="space-y-8">
+        {/* Booking option */}
+        {supportsPackages && (
+          <section className="border border-gray-200 bg-white">
+            <div className="border-b border-gray-200 px-5 py-4">
+              <p className="text-xs font-medium uppercase tracking-[0.2em] text-gray-500">
+                Booking Option
+              </p>
+
+              <h3 className="mt-1 text-lg font-semibold text-gray-950">
+                Choose How You Want to Book
+              </h3>
+
+              <p className="mt-1 text-sm leading-6 text-gray-600">
+                Book the service normally or select one available package.
+              </p>
+            </div>
+
+            <div className="space-y-5 p-5">
+              {/* Option A */}
+              <div>
+                <p className="mb-2 text-xs font-semibold uppercase tracking-[0.15em] text-gray-500">
+                  Option A
+                </p>
+
+                <button
+                  type="button"
+                  disabled={loading}
+                  onClick={handleNormalServiceSelect}
+                  className={`w-full border p-4 text-left transition disabled:cursor-not-allowed disabled:opacity-60 ${
+                    !selectedPackageId
+                      ? "border-gray-950 bg-gray-50"
+                      : "border-gray-200 bg-white hover:border-gray-400"
+                  }`}
+                >
+                  <div className="flex items-start gap-3">
+                    <span
+                      className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${
+                        !selectedPackageId
+                          ? "border-gray-950"
+                          : "border-gray-300"
+                      }`}
+                    >
+                      {!selectedPackageId && (
+                        <span className="h-2.5 w-2.5 rounded-full bg-gray-950" />
+                      )}
+                    </span>
+
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold text-gray-950">
+                        Book Service Normally
+                      </p>
+
+                      <p className="mt-1 text-sm text-gray-600">
+                        Use the regular service charge.
+                      </p>
+
+                      <p className="mt-2 text-sm font-semibold text-gray-950">
+                        {normalServicePrice
+                          ? `${normalServicePrice} per shift`
+                          : "Service charge unavailable"}
+                      </p>
+                    </div>
+                  </div>
+                </button>
+              </div>
+
+              {/* Option B */}
+              <div>
+                <p className="mb-2 text-xs font-semibold uppercase tracking-[0.15em] text-gray-500">
+                  Option B
+                </p>
+
+                <div className="border border-gray-200">
+                  <div className="border-b border-gray-200 px-4 py-3">
+                    <p className="font-semibold text-gray-950">
+                      Select One Package
+                    </p>
+
+                    <p className="mt-1 text-sm text-gray-600">
+                      Package selection is optional.
+                    </p>
+                  </div>
+
+                  <div className="p-4">
+                    {packagesLoading ? (
+                      <div className="py-4 text-center">
+                        <p className="text-sm text-gray-500">
+                          Loading packages...
+                        </p>
+                      </div>
+                    ) : packagesError ? (
+                      <div className="space-y-3">
+                        <GlobalErrorMessage error={packagesError} />
+
+                        <p className="text-xs text-gray-500">
+                          You can still book this service normally.
+                        </p>
+                      </div>
+                    ) : availablePackages.length === 0 ? (
+                      <div className="py-4 text-center">
+                        <p className="text-sm text-gray-500">
+                          No packages are currently available for this service.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {availablePackages.map((item) => {
+                          const isSelected =
+                            String(selectedPackageId) === String(item?.id);
+
+                          const packagePrice = formatPrice(item?.package_price);
+
+                          return (
+                            <button
+                              key={item.id}
+                              type="button"
+                              disabled={loading}
+                              onClick={() => handlePackageSelect(item.id)}
+                              className={`w-full border p-4 text-left transition disabled:cursor-not-allowed disabled:opacity-60 ${
+                                isSelected
+                                  ? "border-[#a2101b] bg-red-50/40"
+                                  : "border-gray-200 bg-white hover:border-gray-400"
+                              }`}
+                            >
+                              <div className="flex items-start gap-3">
+                                <span
+                                  className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${
+                                    isSelected
+                                      ? "border-[#a2101b]"
+                                      : "border-gray-300"
+                                  }`}
+                                >
+                                  {isSelected && (
+                                    <span className="h-2.5 w-2.5 rounded-full bg-[#a2101b]" />
+                                  )}
+                                </span>
+
+                                <div className="min-w-0 flex-1">
+                                  <p className="wrap-break-word font-semibold text-gray-950">
+                                    {item?.package_title || "Untitled Package"}
+                                  </p>
+
+                                  <p className="mt-1 text-sm font-semibold text-[#a2101b]">
+                                    {packagePrice ||
+                                      "Package price unavailable"}
+                                  </p>
+                                </div>
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Current price summary */}
+              {selectedPackage ? (
+                <div className="border-l-2 border-[#a2101b] bg-red-50/50 px-4 py-3">
+                  <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                    Selected Package
+                  </p>
+
+                  <p className="mt-1 font-semibold text-gray-950">
+                    {selectedPackage.package_title}
+                  </p>
+
+                  <p className="mt-1 text-sm font-semibold text-[#a2101b]">
+                    {selectedPackagePrice || "Package price unavailable"}
+                  </p>
+                </div>
+              ) : (
+                <div className="border-l-2 border-gray-950 bg-gray-50 px-4 py-3">
+                  <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                    Normal Service
+                  </p>
+
+                  <p className="mt-1 font-semibold text-gray-950">
+                    Book Service Normally
+                  </p>
+
+                  <p className="mt-1 text-sm font-semibold text-gray-950">
+                    {normalServicePrice
+                      ? `${normalServicePrice} per shift`
+                      : "Service charge unavailable"}
+                  </p>
+                </div>
+              )}
+            </div>
+          </section>
+        )}
+
+        {/* Event Type */}
+        <div>
+          <label
+            htmlFor="event-type"
+            className="mb-2 block text-sm font-medium text-gray-950"
+          >
+            Event Type
+            <span className="ml-1 font-normal text-gray-500">(Optional)</span>
+          </label>
+
+          <select
+            id="event-type"
+            value={eventType}
+            disabled={loading}
+            onChange={(event) => {
+              setEventType(event.target.value);
+              clearFormMessages();
+            }}
+            className="h-11 w-full border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none disabled:bg-gray-100"
+          >
+            <option value="">Select event type</option>
+
+            {EVENT_TYPE_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Existing booking slots */}
         {bookingSlots.map((slot, index) => {
           const fieldPrefix = `booking_slots.${index}`;
 
@@ -353,7 +685,6 @@ const HireRequestForm = ({ serviceId, onSuccess }) => {
                       onChange={(event) => {
                         let digitsOnly = event.target.value.replace(/\D/g, "");
 
-                        // If user pastes +88017... / 88017..., normalize to 017...
                         if (digitsOnly.startsWith("880")) {
                           digitsOnly = digitsOnly.slice(2);
                         }
