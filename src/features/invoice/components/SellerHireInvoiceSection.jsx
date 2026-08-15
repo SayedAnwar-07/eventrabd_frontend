@@ -208,7 +208,7 @@ const SellerHireInvoiceSection = ({ hire }) => {
             ) : null}
 
             {!customerDecisionSubmitted && existingInvoice.can_edit ? (
-              <EditInvoiceDialog invoice={existingInvoice} />
+              <EditInvoiceDialog invoice={existingInvoice} hire={hire} />
             ) : null}
 
             {!customerAgreed &&

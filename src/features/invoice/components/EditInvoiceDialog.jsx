@@ -49,24 +49,24 @@ const getLocalToday = () => {
   return `${year}-${month}-${day}`;
 };
 
-// One row per booked date:
-// { [booking_slot_id]: "shift count string" }
 const buildInitialSlotShifts = (breakdown = []) => {
   const slotShifts = {};
 
   breakdown.forEach((entry) => {
+    if (!entry?.booking_slot_id) {
+      return;
+    }
+
     slotShifts[entry.booking_slot_id] = String(entry.shift_count ?? 1);
   });
 
   return slotShifts;
 };
 
-const getInitialFormData = (invoice) => ({
+const getInitialFormData = (invoice, breakdown = []) => ({
   due_payment_last_date: invoice?.due_payment_last_date || "",
 
-  slot_shifts: buildInitialSlotShifts(
-    invoice?.service_summary?.breakdown || [],
-  ),
+  slot_shifts: buildInitialSlotShifts(breakdown),
 
   additional_charge: invoice?.additional_charge ?? "0.00",
 
@@ -102,6 +102,41 @@ const formatMoney = (value) => {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })}`;
+};
+
+const formatEventType = (value) => {
+  if (!value) {
+    return "Event";
+  }
+
+  if (value === "akhd_walima") {
+    return "Akhd/Walima";
+  }
+
+  return String(value)
+    .replaceAll("_", " ")
+    .replace(/\b\w/g, (character) => character.toUpperCase());
+};
+
+const formatSlotDate = (slot, fallbackDate = "") => {
+  const rawDate =
+    slot?.starts_at || slot?.date || slot?.booking_date || fallbackDate;
+
+  if (!rawDate) {
+    return "Booked date";
+  }
+
+  const parsedDate = new Date(rawDate);
+
+  if (Number.isNaN(parsedDate.getTime())) {
+    return String(rawDate);
+  }
+
+  return parsedDate.toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
 };
 
 const getInvoiceBookingTitle = (invoice) => {
@@ -199,27 +234,56 @@ const PreviewItem = ({ label, value, emphasized = false }) => {
   );
 };
 
-const EditInvoiceDialog = ({ invoice }) => {
+const EditInvoiceDialog = ({ invoice, hire }) => {
   const dispatch = useDispatch();
 
   const updateLoading = useSelector(selectInvoiceUpdateLoading);
-
   const apiError = useSelector(selectInvoiceError);
+
+  /*
+   * Raw Hire slots are still preserved.
+   * Only dated slots become invoiceable slots.
+   */
+  const bookingSlots = Array.isArray(hire?.booking_slots)
+    ? hire.booking_slots
+    : [];
+
+  const invoiceableSlots = bookingSlots.filter((slot) =>
+    Boolean(slot?.starts_at),
+  );
+
+  const invoiceableSlotMap = new Map(
+    invoiceableSlots
+      .filter((slot) => slot?.id)
+      .map((slot) => [String(slot.id), slot]),
+  );
+
+  const rawBreakdown = Array.isArray(invoice?.service_summary?.breakdown)
+    ? invoice.service_summary.breakdown
+    : [];
+
+  const breakdown =
+    bookingSlots.length === 0
+      ? rawBreakdown
+      : rawBreakdown.filter((entry) => {
+          if (!entry?.booking_slot_id) {
+            return false;
+          }
+
+          return invoiceableSlotMap.has(String(entry.booking_slot_id));
+        });
 
   const [open, setOpen] = useState(false);
 
-  const [formData, setFormData] = useState(() => getInitialFormData(invoice));
+  const [formData, setFormData] = useState(() =>
+    getInitialFormData(invoice, breakdown),
+  );
 
   const [validationErrors, setValidationErrors] = useState({});
 
   const [localMessage, setLocalMessage] = useState("");
 
   const today = getLocalToday();
-
-  const breakdown = useMemo(
-    () => invoice?.service_summary?.breakdown || [],
-    [invoice?.service_summary?.breakdown],
-  );
 
   const shiftHourPerSlot = Number(
     invoice?.service_summary?.shift_hour_per_slot || 0,
@@ -249,7 +313,7 @@ const EditInvoiceDialog = ({ invoice }) => {
     }
 
     if (nextOpen) {
-      setFormData(getInitialFormData(invoice));
+      setFormData(getInitialFormData(invoice, breakdown));
 
       setValidationErrors({});
       setLocalMessage("");
@@ -461,7 +525,7 @@ const EditInvoiceDialog = ({ invoice }) => {
 
     if (breakdown.length === 0) {
       errors.slot_shifts_general =
-        "This invoice's hire has no booking slots to edit.";
+        "This invoice's hire has no dated booking slots to edit.";
     } else {
       const slotErrors = {};
 
@@ -477,7 +541,7 @@ const EditInvoiceDialog = ({ invoice }) => {
           shiftValue < 1
         ) {
           slotErrors[entry.booking_slot_id] =
-            "Enter at least 1 shift for this date.";
+            "Enter at least 1 shift for this event.";
         }
       });
 
@@ -528,6 +592,10 @@ const EditInvoiceDialog = ({ invoice }) => {
   };
 
   const getChangedSlotShifts = () => {
+    /*
+     * breakdown already contains only currently invoiceable slots,
+     * so an undated secondary event can never be submitted here.
+     */
     const nextSlotShifts = breakdown.map((entry) => ({
       booking_slot: entry.booking_slot_id,
 
@@ -536,6 +604,7 @@ const EditInvoiceDialog = ({ invoice }) => {
 
     const currentSlotShifts = breakdown.map((entry) => ({
       booking_slot: entry.booking_slot_id,
+
       shift_count: Number(entry.shift_count),
     }));
 
@@ -657,16 +726,19 @@ const EditInvoiceDialog = ({ invoice }) => {
         }),
       ).unwrap();
 
-      // Backend response becomes Redux selectedInvoice.
-      // Backend remains source of truth for:
-      // service_price
-      // sub_total
-      // additional_charge
-      // discount_price
-      // total
-      // advance_payment
-      // due_payment
-      // payment_status
+      /*
+       * Backend response becomes Redux selectedInvoice.
+       *
+       * Backend remains source of truth for:
+       * service_price
+       * sub_total
+       * additional_charge
+       * discount_price
+       * total
+       * advance_payment
+       * due_payment
+       * payment_status
+       */
 
       setOpen(false);
       setValidationErrors({});
@@ -747,23 +819,37 @@ const EditInvoiceDialog = ({ invoice }) => {
             </div>
           ) : null}
 
-          {/* Per-date shift counts */}
+          {/* Per-event shift counts */}
           <div>
             <div className="flex items-center gap-2">
               <CalendarDays className="h-4 w-4 text-[#b60018]" />
 
               <h3 className="text-sm font-semibold text-gray-800">
-                Shift Count per Booked Date
+                Shift Count per Booked Event
               </h3>
             </div>
 
             <p className="mt-1 text-xs leading-5 text-gray-500">
-              Update how many shifts apply to each booked date. Pricing and
-              final financial values are recalculated by the backend.
+              Update how many shifts apply to each booked event. Only dated
+              booking slots are invoiceable. Pricing and final financial values
+              are recalculated by the backend.
             </p>
 
             <div className="mt-4 space-y-3">
               {breakdown.map((entry) => {
+                const bookingSlot = invoiceableSlotMap.get(
+                  String(entry.booking_slot_id),
+                );
+
+                const eventLabel = formatEventType(
+                  bookingSlot?.event_type || entry?.event_type,
+                );
+
+                const eventDate = formatSlotDate(
+                  bookingSlot,
+                  entry?.date || "",
+                );
+
                 const slotError =
                   validationErrors.slot_shifts?.[entry.booking_slot_id];
 
@@ -777,9 +863,15 @@ const EditInvoiceDialog = ({ invoice }) => {
                         <CalendarDays className="h-4 w-4 text-[#b60018]" />
                       </div>
 
-                      <p className="text-sm font-semibold text-gray-900">
-                        {entry.date || "Booked date"}
-                      </p>
+                      <div>
+                        <p className="text-sm font-semibold text-gray-900">
+                          {eventLabel}
+                        </p>
+
+                        <p className="mt-0.5 text-xs text-gray-500">
+                          {eventDate}
+                        </p>
+                      </div>
                     </div>
 
                     <div className="sm:w-40">
@@ -787,7 +879,7 @@ const EditInvoiceDialog = ({ invoice }) => {
                         htmlFor={`invoice-slot-shift-${invoice?.id}-${entry.booking_slot_id}`}
                         className="sr-only"
                       >
-                        Shift count for {entry.date}
+                        Shift count for {eventLabel} on {eventDate}
                       </label>
 
                       <input

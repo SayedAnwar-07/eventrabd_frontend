@@ -36,7 +36,7 @@ const getLocalToday = () => {
   return `${year}-${month}-${day}`;
 };
 
-// One row per booked date:
+// One row per invoiceable booked date:
 // { [booking_slot_id]: "shift count string" }
 const buildInitialSlotShifts = (bookingSlots = []) => {
   const slotShifts = {};
@@ -105,6 +105,20 @@ const formatSlotDate = (slot) => {
     month: "short",
     year: "numeric",
   });
+};
+
+const formatEventType = (value) => {
+  if (!value) {
+    return "Event";
+  }
+
+  if (value === "akhd_walima") {
+    return "Akhd/Walima";
+  }
+
+  return String(value)
+    .replaceAll("_", " ")
+    .replace(/\b\w/g, (character) => character.toUpperCase());
 };
 
 const getBookingTitle = (hire) => {
@@ -213,24 +227,39 @@ const CreateInvoiceSection = ({ hire }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [createdInvoice, setCreatedInvoice] = useState(null);
 
-  const bookingSlots = useMemo(
-    () => hire?.booking_slots || [],
-    [hire?.booking_slots],
+  /*
+   * Only slots with starts_at are invoiceable.
+   *
+   * Secondary selected events without a booking date must not:
+   * - receive a shift input
+   * - be counted as invoice slots
+   * - be submitted in slot_shifts
+   */
+  const rawBookingSlots = Array.isArray(hire?.booking_slots)
+    ? hire.booking_slots
+    : [];
+
+  const bookingSlots = rawBookingSlots.filter((slot) =>
+    Boolean(slot?.starts_at),
   );
 
   const [formData, setFormData] = useState(() =>
     getInitialFormData(bookingSlots),
   );
-
+  
   const [validationErrors, setValidationErrors] = useState({});
 
   const today = getLocalToday();
 
   const serviceSummary = hire?.service_summary || {};
 
-  const slotCount = Number(
-    serviceSummary?.slot_count || bookingSlots.length || 0,
-  );
+  /*
+   * Do not use the raw booking_slots length or backend summary slot_count
+   * for the invoiceable event count.
+   *
+   * Only dated booking slots are invoiceable.
+   */
+  const slotCount = bookingSlots.length;
 
   const shiftHourPerSlot = Number(
     serviceSummary?.shift_hour_per_slot || hire?.service?.shift_hour || 0,
@@ -438,7 +467,7 @@ const CreateInvoiceSection = ({ hire }) => {
 
     if (bookingSlots.length === 0) {
       errors.slot_shifts_general =
-        "This hire has no booking slots. At least one booking slot is required before creating an invoice.";
+        "This hire has no dated booking slots. At least one booked event with a date is required before creating an invoice.";
     } else {
       const slotErrors = {};
 
@@ -453,7 +482,7 @@ const CreateInvoiceSection = ({ hire }) => {
           !Number.isInteger(shiftValue) ||
           shiftValue < 1
         ) {
-          slotErrors[slot.id] = "Enter at least 1 shift for this date.";
+          slotErrors[slot.id] = "Enter at least 1 shift for this event.";
         }
       });
 
@@ -545,6 +574,10 @@ const CreateInvoiceSection = ({ hire }) => {
     const invoiceData = {
       hire: hire.id,
 
+      /*
+       * bookingSlots is already filtered to starts_at != null.
+       * Undated secondary events are never submitted.
+       */
       slot_shifts: bookingSlots.map((slot) => ({
         booking_slot: slot.id,
         shift_count: Number(formData.slot_shifts[slot.id]),
@@ -570,9 +603,11 @@ const CreateInvoiceSection = ({ hire }) => {
     try {
       const invoice = await dispatch(createInvoice(invoiceData)).unwrap();
 
-      // Important:
-      // From this point forward, use the backend-returned
-      // service_price, additional_charge, total, due_payment, etc.
+      /*
+       * From this point forward, use backend-returned financial values.
+       *
+       * service_price is NEVER calculated authoritatively here.
+       */
       setCreatedInvoice(invoice);
 
       setIsOpen(false);
@@ -741,24 +776,28 @@ const CreateInvoiceSection = ({ hire }) => {
           </div>
         ) : null}
 
-        {/* Per-date shift counts */}
+        {/* Per-event shift counts */}
         <div>
           <div className="flex items-center gap-2">
             <CalendarDays className="h-4 w-4 text-[#b60018]" />
 
             <h3 className="text-sm font-semibold text-gray-800">
-              Shift Count per Booked Date
+              Shift Count per Booked Event
             </h3>
           </div>
 
           <p className="mt-1 text-xs leading-5 text-gray-500">
-            Set how many shifts apply to each booked date. Pricing is calculated
-            and validated by the backend.
+            Set how many shifts apply to each booked event. Only events with a
+            booking date are invoiceable. Pricing is calculated and validated by
+            the backend.
           </p>
 
           <div className="mt-4 space-y-3">
             {bookingSlots.map((slot) => {
               const slotError = validationErrors.slot_shifts?.[slot.id];
+
+              const eventLabel = formatEventType(slot?.event_type);
+              const eventDate = formatSlotDate(slot);
 
               return (
                 <div
@@ -770,9 +809,15 @@ const CreateInvoiceSection = ({ hire }) => {
                       <CalendarDays className="h-4 w-4 text-[#b60018]" />
                     </div>
 
-                    <p className="text-sm font-semibold text-gray-900">
-                      {formatSlotDate(slot)}
-                    </p>
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900">
+                        {eventLabel}
+                      </p>
+
+                      <p className="mt-0.5 text-xs text-gray-500">
+                        {eventDate}
+                      </p>
+                    </div>
                   </div>
 
                   <div className="sm:w-40">
@@ -780,7 +825,7 @@ const CreateInvoiceSection = ({ hire }) => {
                       htmlFor={`slot-shift-${slot.id}`}
                       className="sr-only"
                     >
-                      Shift count for {formatSlotDate(slot)}
+                      Shift count for {eventLabel} on {eventDate}
                     </label>
 
                     <input

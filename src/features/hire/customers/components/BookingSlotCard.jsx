@@ -1,16 +1,66 @@
-import { Building2, MapPin } from "lucide-react";
+import { Building2, CalendarClock, MapPin } from "lucide-react";
 
 import map from "@/assets/map.webp";
 
 const CLOUDINARY_URL = import.meta.env.VITE_CLOUDINARY_URL;
 
+const EVENT_TYPE_LABELS = {
+  holud: "Holud",
+  mehedi: "Mehedi",
+  akhd_walima: "Akhd/Walima",
+  wedding_ceremony: "Wedding Ceremony",
+  reception: "Reception",
+  anniversary: "Anniversary",
+  birthday: "Birthday",
+};
+
+const formatEventType = (eventType) => {
+  if (!eventType) {
+    return "Event";
+  }
+
+  return (
+    EVENT_TYPE_LABELS[eventType] ||
+    eventType
+      .replaceAll("_", " ")
+      .replace(/\b\w/g, (character) => character.toUpperCase())
+  );
+};
+
+const formatStartDateTime = (value) => {
+  if (!value) {
+    return "Date not provided";
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "Date not provided";
+  }
+
+  return new Intl.DateTimeFormat("en-BD", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(date);
+};
+
 export default function BookingSlotCard({ slot, brand }) {
+  const eventTypeLabel = formatEventType(slot?.event_type);
+
   const rows = [
     {
       type: "image",
       label: "Brand",
       value: brand?.display_name || "Service provider",
       image: brand?.logo,
+    },
+    {
+      icon: CalendarClock,
+      label: "Start Date & Time",
+      value: formatStartDateTime(slot?.starts_at),
     },
     {
       icon: Building2,
@@ -28,6 +78,25 @@ export default function BookingSlotCard({ slot, brand }) {
 
   return (
     <div className="p-5 sm:p-6">
+      {/* Event type */}
+      <div className="mb-6 flex items-center justify-between gap-4 border-b border-gray-100 pb-4 dark:border-gray-800">
+        <div>
+          <p className="text-[11px] font-medium uppercase tracking-[0.15em] text-gray-500 dark:text-gray-400">
+            Event Type
+          </p>
+
+          <h3 className="mt-1 text-lg font-semibold text-gray-950 dark:text-white">
+            {eventTypeLabel}
+          </h3>
+        </div>
+
+        {slot?.event_type && (
+          <span className="shrink-0 rounded-full bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-600 dark:bg-red-950/30">
+            {eventTypeLabel}
+          </span>
+        )}
+      </div>
+
       <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
         <div className="space-y-6">
           {rows.map((row, index) => {
@@ -64,7 +133,7 @@ export default function BookingSlotCard({ slot, brand }) {
                     {row.label}
                   </p>
 
-                  <p className="text-sm font-medium text-gray-950 dark:text-white">
+                  <p className="wrap-break-word text-sm font-medium text-gray-950 dark:text-white">
                     {row.value}
                   </p>
                 </div>
@@ -84,7 +153,7 @@ export default function BookingSlotCard({ slot, brand }) {
           >
             <img
               src={map}
-              alt="Location map"
+              alt={`${eventTypeLabel} location map`}
               className="h-48 w-full object-cover transition duration-300 group-hover:scale-105"
             />
 

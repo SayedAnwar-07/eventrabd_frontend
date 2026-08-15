@@ -13,7 +13,7 @@ export default function BookingSlots({ hire }) {
       <div className="overflow-hidden">
         <div className="flex items-center gap-3 border-b border-gray-100 px-5 py-4 dark:border-gray-800">
           <h2 className="font-semibold text-gray-950 dark:text-white">
-            Booking Slot
+            Booking Slots
           </h2>
 
           <span className="rounded-full bg-red-600 px-3 py-1 text-xs font-semibold text-white">

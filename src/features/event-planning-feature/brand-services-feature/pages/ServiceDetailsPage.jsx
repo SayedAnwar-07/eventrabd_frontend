@@ -19,7 +19,7 @@ import ServiceGalleryCarousel from "../components/ServiceDetails/ServiceGalleryC
 import ServiceSummary from "../components/ServiceDetails/ServiceSummary";
 import ServiceHero from "../components/ServiceDetails/ServiceHero";
 
-import HireSellerSheet from "@/features/hire/sellers/components/HireSellerSheet";
+import HireSellerSheet from "@/features/hire/components/HireRequestSheet";
 
 import ServiceReviews from "@/features/review/components/ServiceReviews";
 import PackagesDetails from "@/features/packages/components/PackagesDetails";

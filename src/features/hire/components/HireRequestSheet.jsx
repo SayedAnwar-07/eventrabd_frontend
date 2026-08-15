@@ -133,7 +133,7 @@ const HireSellerSheet = ({ service }) => {
           </button>
         </SheetTrigger>
 
-        <SheetContent className="flex w-full flex-col rounded-none border-l border-gray-200 bg-white p-0 shadow-none sm:max-w-xl [&>button]:rounded-none">
+        <SheetContent className="flex w-full flex-col rounded-none border-l border-gray-200 bg-white p-0 shadow-none sm:max-w-2xl lg:max-w-4xl [&>button]:rounded-none">
           <SheetHeader className="border-b border-gray-200 px-6 py-6 text-left">
             <p className="text-xs font-medium uppercase tracking-[0.2em] text-gray-500">
               Booking Request
@@ -144,7 +144,8 @@ const HireSellerSheet = ({ service }) => {
             </SheetTitle>
 
             <SheetDescription className="text-sm leading-6 text-gray-600">
-              Submit your event dates and venue information for this service.
+              Select your event types and submit the booking and venue
+              information for this service.
             </SheetDescription>
           </SheetHeader>
 
@@ -174,6 +175,7 @@ const HireSellerSheet = ({ service }) => {
 
             <div className="mt-8">
               <HireRequestForm
+                key={serviceId}
                 serviceId={serviceId}
                 serviceName={service?.service_name}
                 serviceCharge={service?.shift_charge}
