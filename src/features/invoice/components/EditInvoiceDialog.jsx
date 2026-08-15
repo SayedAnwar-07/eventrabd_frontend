@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   CalendarDays,
@@ -118,9 +118,8 @@ const formatEventType = (value) => {
     .replace(/\b\w/g, (character) => character.toUpperCase());
 };
 
-const formatSlotDate = (slot, fallbackDate = "") => {
-  const rawDate =
-    slot?.starts_at || slot?.date || slot?.booking_date || fallbackDate;
+const formatHireSlotDate = (slot) => {
+  const rawDate = slot?.starts_at || slot?.date || slot?.booking_date;
 
   if (!rawDate) {
     return "Booked date";
@@ -139,17 +138,87 @@ const formatSlotDate = (slot, fallbackDate = "") => {
   });
 };
 
-const getInvoiceBookingTitle = (invoice) => {
+/*
+ * Invoice service_summary.breakdown is the authoritative source for invoice
+ * booking title, unit price, shift count and amount.
+ * Hire slots are used only as a display fallback for event/date information.
+ */
+const buildHireSlotMap = (hire) => {
+  const slotMap = new Map();
+
+  const bookingItems = Array.isArray(hire?.booking_items)
+    ? hire.booking_items
+    : [];
+
+  bookingItems.forEach((item) => {
+    const itemSlots = Array.isArray(item?.booking_slots)
+      ? item.booking_slots
+      : [];
+
+    itemSlots.forEach((slot) => {
+      if (slot?.id) {
+        slotMap.set(String(slot.id), slot);
+      }
+    });
+  });
+
+  const topLevelSlots = Array.isArray(hire?.booking_slots)
+    ? hire.booking_slots
+    : [];
+
+  topLevelSlots.forEach((slot) => {
+    if (!slot?.id) {
+      return;
+    }
+
+    const existing = slotMap.get(String(slot.id));
+
+    slotMap.set(String(slot.id), {
+      ...(existing || {}),
+      ...slot,
+    });
+  });
+
+  return slotMap;
+};
+
+const getBreakdownDate = (entry, hireSlot) => {
+  if (entry?.date) {
+    return String(entry.date);
+  }
+
+  return formatHireSlotDate(hireSlot);
+};
+
+const getInvoiceBookingTitle = (invoice, breakdown) => {
+  const uniqueTitles = [
+    ...new Set(
+      breakdown
+        .map((entry) => entry?.booking_title)
+        .filter((title) => Boolean(title)),
+    ),
+  ];
+
+  if (uniqueTitles.length === 1) {
+    return uniqueTitles[0];
+  }
+
+  if (uniqueTitles.length > 1) {
+    const serviceName =
+      invoice?.service?.service_display_name ||
+      invoice?.service?.service_name ||
+      invoice?.service?.name ||
+      invoice?.service_name_snapshot ||
+      "Service";
+
+    return `${serviceName} (${uniqueTitles.length} booking options)`;
+  }
+
   return (
-    invoice?.booking_title ||
-    invoice?.package_snapshot_title ||
-    invoice?.package_title ||
-    invoice?.service_title ||
-    invoice?.service_display_name ||
-    invoice?.service_summary?.booking_title ||
-    invoice?.service_summary?.package_title ||
-    invoice?.service_summary?.service_display_name ||
-    invoice?.service_summary?.service_name ||
+    invoice?.service_name_snapshot ||
+    invoice?.service?.service_display_name ||
+    invoice?.service?.service_name ||
+    invoice?.service?.name ||
     ""
   );
 };
@@ -240,38 +309,17 @@ const EditInvoiceDialog = ({ invoice, hire }) => {
   const updateLoading = useSelector(selectInvoiceUpdateLoading);
   const apiError = useSelector(selectInvoiceError);
 
+  const hireSlotMap = buildHireSlotMap(hire);
+
   /*
-   * Raw Hire slots are still preserved.
-   * Only dated slots become invoiceable slots.
+   * Do NOT filter service_summary.breakdown through current Hire slots.
+   * The Invoice response is the historical/backend source of truth.
    */
-  const bookingSlots = Array.isArray(hire?.booking_slots)
-    ? hire.booking_slots
+  const breakdown = Array.isArray(invoice?.service_summary?.breakdown)
+    ? invoice.service_summary.breakdown.filter((entry) =>
+        Boolean(entry?.booking_slot_id),
+      )
     : [];
-
-  const invoiceableSlots = bookingSlots.filter((slot) =>
-    Boolean(slot?.starts_at),
-  );
-
-  const invoiceableSlotMap = new Map(
-    invoiceableSlots
-      .filter((slot) => slot?.id)
-      .map((slot) => [String(slot.id), slot]),
-  );
-
-  const rawBreakdown = Array.isArray(invoice?.service_summary?.breakdown)
-    ? invoice.service_summary.breakdown
-    : [];
-
-  const breakdown =
-    bookingSlots.length === 0
-      ? rawBreakdown
-      : rawBreakdown.filter((entry) => {
-          if (!entry?.booking_slot_id) {
-            return false;
-          }
-
-          return invoiceableSlotMap.has(String(entry.booking_slot_id));
-        });
 
   const [open, setOpen] = useState(false);
 
@@ -289,13 +337,11 @@ const EditInvoiceDialog = ({ invoice, hire }) => {
     invoice?.service_summary?.shift_hour_per_slot || 0,
   );
 
-  const totalShiftCount = useMemo(() => {
-    return breakdown.reduce((sum, entry) => {
-      const value = Number(formData.slot_shifts[entry.booking_slot_id]);
+  const totalShiftCount = breakdown.reduce((sum, entry) => {
+    const value = Number(formData.slot_shifts[entry.booking_slot_id]);
 
-      return sum + (Number.isFinite(value) ? value : 0);
-    }, 0);
-  }, [breakdown, formData.slot_shifts]);
+    return sum + (Number.isFinite(value) ? value : 0);
+  }, 0);
 
   const totalShiftHours = shiftHourPerSlot * totalShiftCount;
 
@@ -305,7 +351,7 @@ const EditInvoiceDialog = ({ invoice, hire }) => {
   const hasAdditionalCharge =
     Number.isFinite(additionalChargeAmount) && additionalChargeAmount > 0;
 
-  const bookingTitle = getInvoiceBookingTitle(invoice);
+  const bookingTitle = getInvoiceBookingTitle(invoice, breakdown);
 
   const handleOpenChange = (nextOpen) => {
     if (updateLoading) {
@@ -476,7 +522,6 @@ const EditInvoiceDialog = ({ invoice, hire }) => {
     const errors = {};
 
     const currentDiscountPrice = Number(formData.discount_price);
-
     const currentAdvancePayment = Number(formData.advance_payment);
 
     const currentAdditionalCharge =
@@ -515,23 +560,16 @@ const EditInvoiceDialog = ({ invoice, hire }) => {
       errors.due_payment_last_date = "Due payment date is required.";
     } else if (formData.due_payment_last_date < today) {
       errors.due_payment_last_date = "Due payment date cannot be in the past.";
-    } else if (
-      invoice?.issue_date &&
-      formData.due_payment_last_date < invoice.issue_date
-    ) {
-      errors.due_payment_last_date =
-        "Due payment date cannot be before the issue date.";
     }
 
     if (breakdown.length === 0) {
       errors.slot_shifts_general =
-        "This invoice's hire has no dated booking slots to edit.";
+        "The invoice response has no service_summary.breakdown entries to edit.";
     } else {
       const slotErrors = {};
 
       breakdown.forEach((entry) => {
         const rawValue = formData.slot_shifts[entry.booking_slot_id];
-
         const shiftValue = Number(rawValue);
 
         if (
@@ -586,25 +624,26 @@ const EditInvoiceDialog = ({ invoice, hire }) => {
       errors.advance_payment = "Advance payment cannot be negative.";
     }
 
+    /*
+     * The backend validates:
+     * discount <= recalculated service_price + additional_charge
+     * advance <= recalculated total
+     * because changing slot_shifts can change service_price.
+     */
+
     setValidationErrors(errors);
 
     return Object.keys(errors).length === 0;
   };
 
   const getChangedSlotShifts = () => {
-    /*
-     * breakdown already contains only currently invoiceable slots,
-     * so an undated secondary event can never be submitted here.
-     */
     const nextSlotShifts = breakdown.map((entry) => ({
       booking_slot: entry.booking_slot_id,
-
       shift_count: Number(formData.slot_shifts[entry.booking_slot_id]),
     }));
 
     const currentSlotShifts = breakdown.map((entry) => ({
       booking_slot: entry.booking_slot_id,
-
       shift_count: Number(entry.shift_count),
     }));
 
@@ -618,15 +657,12 @@ const EditInvoiceDialog = ({ invoice, hire }) => {
     const changedFields = {};
 
     const nextAdditionalCharge = toDecimalString(formData.additional_charge);
-
     const currentAdditionalCharge = toDecimalString(invoice?.additional_charge);
 
     const nextDiscountPrice = toDecimalString(formData.discount_price);
-
-    const nextAdvancePayment = toDecimalString(formData.advance_payment);
-
     const currentDiscountPrice = toDecimalString(invoice?.discount_price);
 
+    const nextAdvancePayment = toDecimalString(formData.advance_payment);
     const currentAdvancePayment = toDecimalString(invoice?.advance_payment);
 
     const changedSlotShifts = getChangedSlotShifts();
@@ -662,7 +698,6 @@ const EditInvoiceDialog = ({ invoice, hire }) => {
     }
 
     const nextSellerNote = formData.seller_note.trim();
-
     const currentSellerNote = String(invoice?.seller_note || "").trim();
 
     if (nextSellerNote !== currentSellerNote) {
@@ -702,7 +737,6 @@ const EditInvoiceDialog = ({ invoice, hire }) => {
 
     if (!invoice?.can_edit) {
       setLocalMessage("This invoice can no longer be edited.");
-
       return;
     }
 
@@ -714,7 +748,6 @@ const EditInvoiceDialog = ({ invoice, hire }) => {
 
     if (Object.keys(changedFields).length === 0) {
       setLocalMessage("No invoice changes were detected.");
-
       return;
     }
 
@@ -727,9 +760,8 @@ const EditInvoiceDialog = ({ invoice, hire }) => {
       ).unwrap();
 
       /*
-       * Backend response becomes Redux selectedInvoice.
-       *
-       * Backend remains source of truth for:
+       * Backend response remains authoritative for:
+       * service_summary.breakdown
        * service_price
        * sub_total
        * additional_charge
@@ -744,7 +776,7 @@ const EditInvoiceDialog = ({ invoice, hire }) => {
       setValidationErrors({});
       setLocalMessage("");
     } catch {
-      // Redux stores the backend/global API error.
+      // Existing Redux/global API error handling stores the backend error.
     }
   };
 
@@ -819,7 +851,7 @@ const EditInvoiceDialog = ({ invoice, hire }) => {
             </div>
           ) : null}
 
-          {/* Per-event shift counts */}
+          {/* Backend Invoice breakdown -> per-booking-slot shift counts */}
           <div>
             <div className="flex items-center gap-2">
               <CalendarDays className="h-4 w-4 text-[#b60018]" />
@@ -830,25 +862,20 @@ const EditInvoiceDialog = ({ invoice, hire }) => {
             </div>
 
             <p className="mt-1 text-xs leading-5 text-gray-500">
-              Update how many shifts apply to each booked event. Only dated
-              booking slots are invoiceable. Pricing and final financial values
-              are recalculated by the backend.
+              Each row comes from the backend Invoice service summary, so a
+              multi-package Hire keeps the correct booking title and unit price.
+              Changing shifts makes the backend recalculate service_price.
             </p>
 
             <div className="mt-4 space-y-3">
               {breakdown.map((entry) => {
-                const bookingSlot = invoiceableSlotMap.get(
-                  String(entry.booking_slot_id),
-                );
+                const hireSlot = hireSlotMap.get(String(entry.booking_slot_id));
 
                 const eventLabel = formatEventType(
-                  bookingSlot?.event_type || entry?.event_type,
+                  entry?.event_type || hireSlot?.event_type,
                 );
 
-                const eventDate = formatSlotDate(
-                  bookingSlot,
-                  entry?.date || "",
-                );
+                const eventDate = getBreakdownDate(entry, hireSlot);
 
                 const slotError =
                   validationErrors.slot_shifts?.[entry.booking_slot_id];
@@ -858,18 +885,26 @@ const EditInvoiceDialog = ({ invoice, hire }) => {
                     key={entry.booking_slot_id}
                     className="flex flex-col gap-3 rounded-xl border border-gray-200 bg-gray-50 p-3 sm:flex-row sm:items-center sm:justify-between"
                   >
-                    <div className="flex items-center gap-3">
+                    <div className="flex min-w-0 items-center gap-3">
                       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-red-50">
                         <CalendarDays className="h-4 w-4 text-[#b60018]" />
                       </div>
 
-                      <div>
-                        <p className="text-sm font-semibold text-gray-900">
-                          {eventLabel}
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-gray-950">
+                          {entry?.booking_title || "Booking"}
                         </p>
 
-                        <p className="mt-0.5 text-xs text-gray-500">
-                          {eventDate}
+                        <p className="mt-0.5 text-xs text-gray-600">
+                          {eventLabel} · {eventDate}
+                        </p>
+
+                        <p className="mt-1 text-xs font-medium text-[#b60018]">
+                          {formatMoney(entry?.unit_price)} per shift
+                        </p>
+
+                        <p className="mt-0.5 text-[11px] text-gray-500">
+                          Current backend amount: {formatMoney(entry?.amount)}
                         </p>
                       </div>
                     </div>
@@ -879,7 +914,8 @@ const EditInvoiceDialog = ({ invoice, hire }) => {
                         htmlFor={`invoice-slot-shift-${invoice?.id}-${entry.booking_slot_id}`}
                         className="sr-only"
                       >
-                        Shift count for {eventLabel} on {eventDate}
+                        Shift count for {entry?.booking_title || eventLabel} on{" "}
+                        {eventDate}
                       </label>
 
                       <input
@@ -1199,9 +1235,9 @@ const EditInvoiceDialog = ({ invoice, hire }) => {
               </h3>
 
               <p className="mt-1 text-xs leading-5 text-gray-500">
-                These are the currently saved values returned by the backend.
-                After saving changes, the backend recalculates and returns the
-                updated financial values.
+                These are the currently saved Invoice values returned by the
+                backend. After saving, the backend recalculates and returns the
+                updated service price, totals, due payment and payment status.
               </p>
             </div>
 

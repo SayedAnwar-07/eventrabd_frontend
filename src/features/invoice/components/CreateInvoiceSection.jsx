@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   CalendarDays,
@@ -36,20 +36,143 @@ const getLocalToday = () => {
   return `${year}-${month}-${day}`;
 };
 
-// One row per invoiceable booked date:
+const getServiceName = (hire) => {
+  return (
+    hire?.service?.service_display_name ||
+    hire?.service?.service_name ||
+    hire?.service?.name ||
+    "Service"
+  );
+};
+
+const getLegacyBookingTitle = (hire) => {
+  return (
+    hire?.package_title_snapshot ||
+    hire?.booking_title ||
+    getServiceName(hire) ||
+    "Booking"
+  );
+};
+
+const getLegacyUnitPrice = (hire) => {
+  const isPackageHire = Boolean(hire?.package || hire?.is_package_hire);
+
+  if (isPackageHire) {
+    return hire?.package_price_snapshot ?? null;
+  }
+
+  return hire?.service?.shift_charge ?? null;
+};
+
+/*
+ * New Hire source of truth:
+ * booking_items -> booking_slots.
+ *
+ * The top-level booking_slots array is still used when present because the
+ * Hire detail response may expose the same slots in flattened form. Each slot
+ * is enriched with its exact booking item's title/unit_price by matching IDs.
+ */
+const buildBookingRows = (hire) => {
+  const bookingItems = Array.isArray(hire?.booking_items)
+    ? hire.booking_items
+    : [];
+
+  const topLevelSlots = Array.isArray(hire?.booking_slots)
+    ? hire.booking_slots
+    : [];
+
+  const itemById = new Map();
+  const itemMetaBySlotId = new Map();
+  const nestedSlots = [];
+
+  bookingItems.forEach((item) => {
+    if (item?.id) {
+      itemById.set(String(item.id), item);
+    }
+
+    const itemSlots = Array.isArray(item?.booking_slots)
+      ? item.booking_slots
+      : [];
+
+    itemSlots.forEach((slot) => {
+      if (!slot?.id) {
+        return;
+      }
+
+      nestedSlots.push(slot);
+      itemMetaBySlotId.set(String(slot.id), {
+        item,
+        nestedSlot: slot,
+      });
+    });
+  });
+
+  const sourceSlots = topLevelSlots.length > 0 ? topLevelSlots : nestedSlots;
+
+  return sourceSlots
+    .filter((slot) => Boolean(slot?.id))
+    .map((slot) => {
+      const slotId = String(slot.id);
+      const nestedMeta = itemMetaBySlotId.get(slotId);
+
+      const rawBookingItemId =
+        slot?.booking_item_id ||
+        (typeof slot?.booking_item === "string"
+          ? slot.booking_item
+          : slot?.booking_item?.id) ||
+        nestedMeta?.item?.id ||
+        null;
+
+      const bookingItem =
+        nestedMeta?.item ||
+        (rawBookingItemId ? itemById.get(String(rawBookingItemId)) : undefined);
+
+      const mergedSlot = {
+        ...(nestedMeta?.nestedSlot || {}),
+        ...slot,
+      };
+
+      const isPackage = bookingItem
+        ? (bookingItem?.is_package ?? Boolean(bookingItem?.package))
+        : Boolean(hire?.package || hire?.is_package_hire);
+
+      const bookingTitle =
+        bookingItem?.booking_title || getLegacyBookingTitle(hire);
+
+      const unitPrice =
+        bookingItem?.unit_price ??
+        (bookingItem
+          ? isPackage
+            ? null
+            : (hire?.service?.shift_charge ?? null)
+          : getLegacyUnitPrice(hire));
+
+      return {
+        ...mergedSlot,
+        booking_item_id: bookingItem?.id || rawBookingItemId,
+        booking_title: bookingTitle,
+        unit_price: unitPrice,
+        is_package: isPackage,
+      };
+    });
+};
+
+// One row per required Hire booking slot:
 // { [booking_slot_id]: "shift count string" }
-const buildInitialSlotShifts = (bookingSlots = []) => {
+const buildInitialSlotShifts = (bookingRows = []) => {
   const slotShifts = {};
 
-  bookingSlots.forEach((slot) => {
-    slotShifts[slot.id] = "1";
+  bookingRows.forEach((slot) => {
+    if (slot?.id) {
+      slotShifts[slot.id] = "1";
+    }
   });
 
   return slotShifts;
 };
 
-const getInitialFormData = (bookingSlots = []) => ({
-  slot_shifts: buildInitialSlotShifts(bookingSlots),
+const getInitialFormData = (bookingRows = []) => ({
+  slot_shifts: buildInitialSlotShifts(bookingRows),
 
   due_payment_last_date: "",
 
@@ -78,7 +201,7 @@ const formatMoney = (value) => {
   const amount = Number(value);
 
   if (!Number.isFinite(amount)) {
-    return "৳0.00";
+    return null;
   }
 
   return `৳${amount.toLocaleString("en-US", {
@@ -91,7 +214,7 @@ const formatSlotDate = (slot) => {
   const rawDate = slot?.starts_at || slot?.date || slot?.booking_date;
 
   if (!rawDate) {
-    return "Booked date";
+    return "Date not set";
   }
 
   const parsedDate = new Date(rawDate);
@@ -121,16 +244,28 @@ const formatEventType = (value) => {
     .replace(/\b\w/g, (character) => character.toUpperCase());
 };
 
-const getBookingTitle = (hire) => {
-  return (
-    hire?.booking_title ||
-    hire?.package_snapshot_title ||
-    hire?.package_title ||
-    hire?.package?.title ||
-    hire?.service?.service_display_name ||
-    hire?.service?.service_name ||
-    "this booking"
-  );
+const getBookingTitle = (hire, bookingRows) => {
+  if (hire?.booking_title) {
+    return hire.booking_title;
+  }
+
+  const uniqueTitles = [
+    ...new Set(
+      bookingRows
+        .map((row) => row?.booking_title)
+        .filter((title) => Boolean(title)),
+    ),
+  ];
+
+  if (uniqueTitles.length === 1) {
+    return uniqueTitles[0];
+  }
+
+  if (uniqueTitles.length > 1) {
+    return `${getServiceName(hire)} (${uniqueTitles.length} booking options)`;
+  }
+
+  return getLegacyBookingTitle(hire);
 };
 
 const getErrorMessage = (error) => {
@@ -187,7 +322,7 @@ const FormField = ({
 
 const PreviewItem = ({ label, value, displayValue, emphasized = false }) => {
   const content =
-    displayValue !== undefined ? displayValue : formatMoney(value);
+    displayValue !== undefined ? displayValue : formatMoney(value) || "৳0.00";
 
   return (
     <div
@@ -228,50 +363,32 @@ const CreateInvoiceSection = ({ hire }) => {
   const [createdInvoice, setCreatedInvoice] = useState(null);
 
   /*
-   * Only slots with starts_at are invoiceable.
-   *
-   * Secondary selected events without a booking date must not:
-   * - receive a shift input
-   * - be counted as invoice slots
-   * - be submitted in slot_shifts
+   * IMPORTANT:
+   * Do not filter out starts_at = null slots.
+   * The backend requires one slot_shifts entry for every required booking slot,
+   * and currently requires every selected booking slot to have starts_at before
+   * an invoice can be created.
    */
-  const rawBookingSlots = Array.isArray(hire?.booking_slots)
-    ? hire.booking_slots
-    : [];
-
-  const bookingSlots = rawBookingSlots.filter((slot) =>
-    Boolean(slot?.starts_at),
-  );
+  const bookingRows = buildBookingRows(hire);
+  const undatedBookingRows = bookingRows.filter((slot) => !slot?.starts_at);
 
   const [formData, setFormData] = useState(() =>
-    getInitialFormData(bookingSlots),
+    getInitialFormData(bookingRows),
   );
-  
+
   const [validationErrors, setValidationErrors] = useState({});
 
   const today = getLocalToday();
 
-  const serviceSummary = hire?.service_summary || {};
+  const slotCount = bookingRows.length;
 
-  /*
-   * Do not use the raw booking_slots length or backend summary slot_count
-   * for the invoiceable event count.
-   *
-   * Only dated booking slots are invoiceable.
-   */
-  const slotCount = bookingSlots.length;
+  const shiftHourPerSlot = Number(hire?.service?.shift_hour || 0);
 
-  const shiftHourPerSlot = Number(
-    serviceSummary?.shift_hour_per_slot || hire?.service?.shift_hour || 0,
-  );
+  const totalShiftCount = bookingRows.reduce((sum, slot) => {
+    const value = Number(formData.slot_shifts[slot.id]);
 
-  const totalShiftCount = useMemo(() => {
-    return bookingSlots.reduce((sum, slot) => {
-      const value = Number(formData.slot_shifts[slot.id]);
-
-      return sum + (Number.isFinite(value) ? value : 0);
-    }, 0);
-  }, [bookingSlots, formData.slot_shifts]);
+    return sum + (Number.isFinite(value) ? value : 0);
+  }, 0);
 
   const bookedTotalShiftHours = shiftHourPerSlot * slotCount;
   const totalShiftHours = shiftHourPerSlot * totalShiftCount;
@@ -282,12 +399,68 @@ const CreateInvoiceSection = ({ hire }) => {
   const hasAdditionalCharge =
     Number.isFinite(additionalChargeAmount) && additionalChargeAmount > 0;
 
-  const bookingTitle = getBookingTitle(hire);
+  const hasAllPreviewUnitPrices =
+    bookingRows.length > 0 &&
+    bookingRows.every((slot) => {
+      if (
+        slot?.unit_price === null ||
+        slot?.unit_price === undefined ||
+        slot?.unit_price === ""
+      ) {
+        return false;
+      }
+
+      return Number.isFinite(Number(slot.unit_price));
+    });
+
+  const previewBasePrice = hasAllPreviewUnitPrices
+    ? bookingRows.reduce((total, slot) => {
+        const unitPrice = Number(slot.unit_price);
+        const shiftCount = Number(formData.slot_shifts[slot.id]);
+
+        if (
+          !Number.isFinite(unitPrice) ||
+          !Number.isFinite(shiftCount) ||
+          shiftCount < 1
+        ) {
+          return total;
+        }
+
+        return total + unitPrice * shiftCount;
+      }, 0)
+    : null;
+
+  const previewAdditionalCharge = Number.isFinite(
+    Number(formData.additional_charge),
+  )
+    ? Number(formData.additional_charge)
+    : 0;
+
+  const previewDiscount = Number.isFinite(Number(formData.discount_price))
+    ? Number(formData.discount_price)
+    : 0;
+
+  const previewAdvance = Number.isFinite(Number(formData.advance_payment))
+    ? Number(formData.advance_payment)
+    : 0;
+
+  const previewTotal =
+    previewBasePrice !== null
+      ? previewBasePrice + previewAdditionalCharge - previewDiscount
+      : null;
+
+  const previewDuePayment =
+    previewTotal !== null ? previewTotal - previewAdvance : null;
+
+  const bookingTitle = getBookingTitle(hire, bookingRows);
 
   const isEligible =
     hire?.status === "accepted" &&
     hire?.is_accept === true &&
     hire?.can_create_invoice === true;
+
+  const canStartInvoice =
+    isEligible && bookingRows.length > 0 && undatedBookingRows.length === 0;
 
   if (!isEligible && !createdInvoice) {
     return null;
@@ -303,7 +476,23 @@ const CreateInvoiceSection = ({ hire }) => {
   const handleOpen = () => {
     clearFormState();
 
-    setFormData(getInitialFormData(bookingSlots));
+    if (bookingRows.length === 0) {
+      setValidationErrors({
+        slot_shifts_general:
+          "This hire has no booking slots. An invoice cannot be created until the Hire has its required booking slots.",
+      });
+      return;
+    }
+
+    if (undatedBookingRows.length > 0) {
+      setValidationErrors({
+        slot_shifts_general:
+          "Invoice creation is blocked because one or more required Hire booking slots do not have a booking date (starts_at). This is a Hire-side workflow issue and those slots must be completed before creating the invoice.",
+      });
+      return;
+    }
+
+    setFormData(getInitialFormData(bookingRows));
     setIsOpen(true);
   };
 
@@ -465,15 +654,17 @@ const CreateInvoiceSection = ({ hire }) => {
 
     const additionalChargeReason = formData.additional_charge_reason.trim();
 
-    if (bookingSlots.length === 0) {
+    if (bookingRows.length === 0) {
       errors.slot_shifts_general =
-        "This hire has no dated booking slots. At least one booked event with a date is required before creating an invoice.";
+        "This hire has no booking slots. An invoice cannot be created yet.";
+    } else if (undatedBookingRows.length > 0) {
+      errors.slot_shifts_general =
+        "Every required Hire booking slot must have starts_at before an invoice can be created. Complete the missing booking dates first.";
     } else {
       const slotErrors = {};
 
-      bookingSlots.forEach((slot) => {
+      bookingRows.forEach((slot) => {
         const rawValue = formData.slot_shifts[slot.id];
-
         const shiftValue = Number(rawValue);
 
         if (
@@ -554,6 +745,12 @@ const CreateInvoiceSection = ({ hire }) => {
       errors.advance_payment = "Advance payment cannot be negative.";
     }
 
+    /*
+     * Do not validate discount/advance maximums by calculating service_price
+     * in the frontend. slot_shifts can change the backend service_price, so
+     * the backend remains authoritative for those cross-field limits.
+     */
+
     setValidationErrors(errors);
 
     return Object.keys(errors).length === 0;
@@ -575,10 +772,10 @@ const CreateInvoiceSection = ({ hire }) => {
       hire: hire.id,
 
       /*
-       * bookingSlots is already filtered to starts_at != null.
-       * Undated secondary events are never submitted.
+       * Submit exactly one entry for every required Hire booking slot.
+       * No slot is silently removed from the request.
        */
-      slot_shifts: bookingSlots.map((slot) => ({
+      slot_shifts: bookingRows.map((slot) => ({
         booking_slot: slot.id,
         shift_count: Number(formData.slot_shifts[slot.id]),
       })),
@@ -604,16 +801,15 @@ const CreateInvoiceSection = ({ hire }) => {
       const invoice = await dispatch(createInvoice(invoiceData)).unwrap();
 
       /*
-       * From this point forward, use backend-returned financial values.
-       *
-       * service_price is NEVER calculated authoritatively here.
+       * Backend response is the financial source of truth from here onward.
+       * service_price is never submitted or authoritatively calculated here.
        */
       setCreatedInvoice(invoice);
 
       setIsOpen(false);
       setValidationErrors({});
     } catch {
-      // Redux stores the backend/global API error.
+      // Existing Redux/global API error handling stores the backend error.
     }
   };
 
@@ -665,9 +861,9 @@ const CreateInvoiceSection = ({ hire }) => {
                 </h2>
 
                 <p className="mt-2 max-w-xl text-sm leading-6 text-gray-600">
-                  This accepted hire is ready for invoice creation. The backend
-                  will determine the base price from the normal service booking
-                  or the selected package price snapshot.
+                  This accepted hire is ready for invoice creation. Each booking
+                  slot keeps its exact service/package booking item, while the
+                  backend calculates the authoritative invoice price.
                 </p>
               </div>
             </div>
@@ -675,7 +871,8 @@ const CreateInvoiceSection = ({ hire }) => {
             <button
               type="button"
               onClick={handleOpen}
-              className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-lg bg-[#b60018] px-6 text-sm font-semibold text-white transition hover:bg-[#960014]"
+              disabled={!canStartInvoice}
+              className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-lg bg-[#b60018] px-6 text-sm font-semibold text-white transition hover:bg-[#960014] disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-500"
             >
               <FilePlus2 className="h-4 w-4" />
               Create Invoice
@@ -683,10 +880,26 @@ const CreateInvoiceSection = ({ hire }) => {
           </div>
         </div>
 
+        {bookingRows.length === 0 ? (
+          <div className="border-b border-amber-200 bg-amber-50 px-6 py-4 text-sm leading-6 text-amber-800 sm:px-8">
+            Invoice creation is blocked because this Hire has no booking slots.
+          </div>
+        ) : null}
+
+        {undatedBookingRows.length > 0 ? (
+          <div className="border-b border-amber-200 bg-amber-50 px-6 py-4 text-sm leading-6 text-amber-800 sm:px-8">
+            Invoice creation is blocked because {undatedBookingRows.length}{" "}
+            required booking slot{undatedBookingRows.length === 1 ? "" : "s"}{" "}
+            {undatedBookingRows.length === 1 ? "does" : "do"} not have a booking
+            date yet. This must be resolved in the Hire workflow before creating
+            the invoice.
+          </div>
+        ) : null}
+
         <div className="grid gap-5 px-6 py-6 sm:grid-cols-3 sm:px-8">
           <div>
             <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-gray-500">
-              Booked Slots
+              Booking Slots
             </p>
 
             <p className="mt-1 text-lg font-semibold text-gray-950">
@@ -696,7 +909,7 @@ const CreateInvoiceSection = ({ hire }) => {
 
           <div>
             <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-gray-500">
-              Total Shift Hours
+              Base Shift Hours
             </p>
 
             <p className="mt-1 text-lg font-semibold text-gray-950">
@@ -776,7 +989,7 @@ const CreateInvoiceSection = ({ hire }) => {
           </div>
         ) : null}
 
-        {/* Per-event shift counts */}
+        {/* Per-booking-slot shift counts */}
         <div>
           <div className="flex items-center gap-2">
             <CalendarDays className="h-4 w-4 text-[#b60018]" />
@@ -787,35 +1000,42 @@ const CreateInvoiceSection = ({ hire }) => {
           </div>
 
           <p className="mt-1 text-xs leading-5 text-gray-500">
-            Set how many shifts apply to each booked event. Only events with a
-            booking date are invoiceable. Pricing is calculated and validated by
-            the backend.
+            Set the shift count for every Hire booking slot. Each row keeps its
+            exact normal-service/package booking item. Final pricing is
+            calculated and validated by the backend.
           </p>
 
           <div className="mt-4 space-y-3">
-            {bookingSlots.map((slot) => {
+            {bookingRows.map((slot) => {
               const slotError = validationErrors.slot_shifts?.[slot.id];
 
               const eventLabel = formatEventType(slot?.event_type);
               const eventDate = formatSlotDate(slot);
+              const unitPrice = formatMoney(slot?.unit_price);
 
               return (
                 <div
                   key={slot.id}
                   className="flex flex-col gap-3 rounded-xl border border-gray-200 bg-gray-50 p-3 sm:flex-row sm:items-center sm:justify-between"
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex min-w-0 items-center gap-3">
                     <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-red-50">
                       <CalendarDays className="h-4 w-4 text-[#b60018]" />
                     </div>
 
-                    <div>
-                      <p className="text-sm font-semibold text-gray-900">
-                        {eventLabel}
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-gray-950">
+                        {slot?.booking_title || "Booking"}
                       </p>
 
-                      <p className="mt-0.5 text-xs text-gray-500">
-                        {eventDate}
+                      <p className="mt-0.5 text-xs text-gray-600">
+                        {eventLabel} · {eventDate}
+                      </p>
+
+                      <p className="mt-1 text-xs font-medium text-[#b60018]">
+                        {unitPrice
+                          ? `${unitPrice} per shift`
+                          : "Unit price will be resolved by backend"}
                       </p>
                     </div>
                   </div>
@@ -825,7 +1045,8 @@ const CreateInvoiceSection = ({ hire }) => {
                       htmlFor={`slot-shift-${slot.id}`}
                       className="sr-only"
                     >
-                      Shift count for {eventLabel} on {eventDate}
+                      Shift count for {slot?.booking_title || eventLabel} on{" "}
+                      {eventDate}
                     </label>
 
                     <input
@@ -1137,13 +1358,19 @@ const CreateInvoiceSection = ({ hire }) => {
 
             <p className="mt-1 text-xs leading-5 text-gray-500">
               Base price, total and due payment are calculated by the backend.
-              After invoice creation, the backend-returned financial values are
-              used.
+              The frontend never submits service_price and does not combine
+              booking-item prices into an authoritative invoice total.
             </p>
           </div>
 
           <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
-            <PreviewItem label="Base Price" displayValue="Backend calculated" />
+            <PreviewItem
+              label="Base Price"
+              value={previewBasePrice ?? 0}
+              displayValue={
+                previewBasePrice === null ? "Backend calculated" : undefined
+              }
+            />
 
             <PreviewItem
               label="Additional Charge"
@@ -1154,11 +1381,20 @@ const CreateInvoiceSection = ({ hire }) => {
 
             <PreviewItem label="Advance" value={formData.advance_payment} />
 
-            <PreviewItem label="Total" displayValue="Backend calculated" />
+            <PreviewItem
+              label="Total"
+              value={previewTotal ?? 0}
+              displayValue={
+                previewTotal === null ? "Backend calculated" : undefined
+              }
+            />
 
             <PreviewItem
               label="Due Payment"
-              displayValue="Backend calculated"
+              value={previewDuePayment ?? 0}
+              displayValue={
+                previewDuePayment === null ? "Backend calculated" : undefined
+              }
               emphasized
             />
           </div>
