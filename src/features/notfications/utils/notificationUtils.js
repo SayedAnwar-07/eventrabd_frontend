@@ -144,7 +144,6 @@ export const getNotificationTypeLabel = (notificationType) => {
   }
 };
 
-
 export const getNotificationToneClass = (notificationType) => {
   switch (notificationType) {
     case NOTIFICATION_TYPES.HIRE_CREATED:
@@ -195,13 +194,13 @@ export const getNotificationDestination = (notification) => {
 
     case NOTIFICATION_TYPES.INVOICE_CREATED:
     case NOTIFICATION_TYPES.INVOICE_UPDATED:
-      if (!notification.invoice?.id) {
+      if (!notification.invoice?.hire_id) {
         return null;
       }
 
       return {
         type: "invoice",
-        id: notification.invoice.id,
+        id: notification.invoice.hire_id,
       };
 
     default:

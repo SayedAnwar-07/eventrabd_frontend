@@ -86,8 +86,17 @@ export default function Navbar() {
   };
 
   const handleNotificationNavigate = (destination) => {
-    if (destination?.type === "hire" && isSeller && destination?.id) {
+    if (!destination?.id) {
+      return;
+    }
+
+    if (destination.type === "hire" && user?.role === "seller") {
       navigate(`/seller/hire-requests/${destination.id}`);
+      return;
+    }
+
+    if (destination.type === "invoice" && user?.role === "customer") {
+      navigate(`/customer/hire-requests/${destination.id}`);
     }
   };
 

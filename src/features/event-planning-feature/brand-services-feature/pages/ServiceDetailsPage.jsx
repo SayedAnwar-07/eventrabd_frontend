@@ -1,6 +1,6 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 
 import { fetchEventServiceDetail } from "@/store/features/eventService/eventServiceSlice";
 
@@ -32,24 +32,25 @@ const ServiceDetailsPage = () => {
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const hireSheetRef = useRef(null);
+  const autoOpenedRef = useRef(false);
 
   const service = useSelector(selectCurrentService);
-
   const galleryImages = useSelector(selectCurrentServiceGallery);
-
   const loading = useSelector(selectCurrentServiceLoading);
-
   const error = useSelector(selectCurrentServiceError);
 
   const isOwner = service?.brand?.is_owner === true;
+
+  const shouldOpenHireForm = location.state?.openHireForm === true;
 
   const refreshServiceDetail = () => {
     dispatch(
       fetchEventServiceDetail({
         brandSlug,
-
         serviceId: service?.id || serviceId,
-
         serviceName: service?.slug || service?.service_name || serviceName,
       }),
     );
@@ -66,6 +67,45 @@ const ServiceDetailsPage = () => {
       );
     }
   }, [dispatch, brandSlug, serviceId, serviceName]);
+
+  // Automatically open existing HireSellerSheet
+  // after service detail has finished loading.
+  useEffect(() => {
+    if (
+      !shouldOpenHireForm ||
+      loading ||
+      !service ||
+      isOwner ||
+      autoOpenedRef.current
+    ) {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      const triggerButton = hireSheetRef.current?.querySelector("button");
+
+      if (!triggerButton) return;
+
+      autoOpenedRef.current = true;
+
+      triggerButton.click();
+
+      // Remove navigation state only AFTER opening the sheet.
+      navigate(location.pathname, {
+        replace: true,
+        state: {},
+      });
+    }, 0);
+
+    return () => clearTimeout(timer);
+  }, [
+    shouldOpenHireForm,
+    loading,
+    service,
+    isOwner,
+    navigate,
+    location.pathname,
+  ]);
 
   if (loading) {
     return (
@@ -98,7 +138,6 @@ const ServiceDetailsPage = () => {
         />
 
         {/* Service Details */}
-
         <section className="mt-10 grid grid-cols-1 gap-8 lg:grid-cols-3">
           <div className="lg:col-span-2">
             <ServiceHero
@@ -106,7 +145,7 @@ const ServiceDetailsPage = () => {
               formatServiceName={formatServiceName}
             />
 
-            {/* packages */}
+            {/* Packages */}
             <PackagesDetails service={service} />
           </div>
 
@@ -117,7 +156,7 @@ const ServiceDetailsPage = () => {
             />
 
             {!isOwner && (
-              <div className="mt-4">
+              <div ref={hireSheetRef} className="mt-4">
                 <HireSellerSheet service={service} />
               </div>
             )}
@@ -163,7 +202,6 @@ const ServiceDetailsPage = () => {
         </section>
 
         {/* Reviews */}
-
         <div className="mt-12">
           <ServiceReviews service={service} />
         </div>

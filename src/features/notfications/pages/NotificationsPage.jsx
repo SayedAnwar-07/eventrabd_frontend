@@ -162,12 +162,9 @@ export default function NotificationsPage() {
       return;
     }
 
-    /*
-     * Invoice route is intentionally not invented here.
-     *
-     * Your current router does not contain an Invoice detail route yet.
-     * The notification is still marked as read successfully.
-     */
+    if (destination.type === "invoice" && user?.role === "customer") {
+      navigate(`/customer/hire-requests/${destination.id}`);
+    }
   };
 
   // ── Notification click ──────────────────────────────────────────────────────

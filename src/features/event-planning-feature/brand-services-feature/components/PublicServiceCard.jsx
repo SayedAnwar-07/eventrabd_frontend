@@ -124,6 +124,8 @@ const PublicServiceCard = ({ service }) => {
   const brand = service?.brand || {};
   const seller = service?.seller || {};
 
+  const isOwner = brand?.is_owner === true;
+
   const brandSlug = brand?.slug || "";
 
   const isGalleryOnlyService = GALLERY_ONLY_SERVICE_TYPES.includes(serviceName);
@@ -358,7 +360,9 @@ const PublicServiceCard = ({ service }) => {
               href={whatsappUrl}
               target="_blank"
               rel="noreferrer"
-              aria-label={`Contact ${seller?.full_name || "seller"} on WhatsApp`}
+              aria-label={`Contact ${
+                seller?.full_name || "seller"
+              } on WhatsApp`}
               className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border bg-background text-foreground transition hover:border-primary hover:text-primary"
             >
               <MessageCircle className="h-4 w-4" />
@@ -367,24 +371,23 @@ const PublicServiceCard = ({ service }) => {
         </div>
 
         {/* Actions */}
-        <div className="mt-4 flex items-center justify-between gap-4">
+        <div className="mt-4 flex items-center gap-3">
           <Link
             to={detailPath}
-            className="text-sm font-semibold text-primary hover:underline hover:underline-offset-4"
+            className="flex flex-1 items-center justify-center rounded-md border border-border bg-background px-4 py-3 text-sm font-semibold text-foreground transition hover:bg-muted"
           >
-            View Service Details
+            View Details
           </Link>
 
-          {service?.drive_link ? (
-            <a
-              href={service.drive_link}
-              target="_blank"
-              rel="noreferrer"
-              className="text-sm font-medium text-muted-foreground transition hover:text-foreground"
+          {!isOwner && (
+            <Link
+              to={detailPath}
+              state={{ openHireForm: true }}
+              className="flex flex-1 items-center justify-center rounded-md bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
             >
-              Portfolio
-            </a>
-          ) : null}
+              Hire
+            </Link>
+          )}
         </div>
       </div>
     </article>
