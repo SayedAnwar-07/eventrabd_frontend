@@ -20,6 +20,8 @@ const BrandDetailsPage = () => {
     (state) => state.eventPlanner,
   );
 
+  // console.log(publicBrandDetails);
+
   useEffect(() => {
     if (slug) dispatch(fetchBrandBySlug(slug));
 

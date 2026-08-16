@@ -7,6 +7,7 @@ import hireReducer from "./features/hire/hireSlice";
 import invoiceReducer from "./features/invoice/invoiceSlice";
 import packageReducer from "./features/packages/packageSlice";
 import reviewReducer from "./features/review/reviewSlice";
+import notificationReducer from "./features/notification/notificationSlice";
 
 export const store = configureStore({
   reducer: {
@@ -17,6 +18,7 @@ export const store = configureStore({
     invoice: invoiceReducer,
     packages: packageReducer,
     review: reviewReducer,
+    notification: notificationReducer,
   },
 });
 

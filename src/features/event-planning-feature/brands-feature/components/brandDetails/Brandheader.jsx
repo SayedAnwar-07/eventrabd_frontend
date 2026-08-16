@@ -1,5 +1,4 @@
-import { Building2, Layers, MapPin, Pencil } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Layers, MapPin, Pencil } from "lucide-react";
 
 import BrandDeleteDialog from "../BrandDeleteDialog";
 import BrandSidebarPanel from "./Brandsidebarpanel";

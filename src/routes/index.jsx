@@ -32,6 +32,7 @@ import SellerHireRequestsPage from "@/features/hire/sellers/pages/SellerHireRequ
 import CustomerHireRequestsPage from "@/features/hire/customers/pages/CustomerHireRequestsPage";
 import CustomerHireRequestDetailsPage from "@/features/hire/customers/pages/CustomerHireRequestDetailsPage";
 import SellerHireDetailsPage from "@/features/hire/sellers/pages/SellerHireDetailsPage";
+import NotificationsPage from "@/features/notfications/pages/NotificationsPage";
 
 // hire pages
 
@@ -171,6 +172,16 @@ const router = createBrowserRouter([
           <PrivateRoute
             element={<CustomerHireRequestDetailsPage />}
             allowedRoles={["customer"]}
+          />
+        ),
+      },
+
+      {
+        path: "notifications",
+        element: (
+          <PrivateRoute
+            element={<NotificationsPage />}
+            allowedRoles={["customer", "seller"]}
           />
         ),
       },
