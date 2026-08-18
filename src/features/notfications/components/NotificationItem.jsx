@@ -4,6 +4,7 @@ import {
   FilePenLine,
   Loader2,
   ReceiptText,
+  Star,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -31,6 +32,9 @@ function NotificationIcon({ type, className = "" }) {
     case NOTIFICATION_TYPES.INVOICE_UPDATED:
       return <FilePenLine className={className} />;
 
+    case NOTIFICATION_TYPES.REVIEW_CREATED:
+      return <Star className={className} />;
+
     default:
       return <Bell className={className} />;
   }
@@ -41,12 +45,29 @@ function NotificationIcon({ type, className = "" }) {
 const getSourceMeta = (notification) => {
   if (notification?.notification_type === NOTIFICATION_TYPES.HIRE_CREATED) {
     const customerName = notification.hire?.customer_name;
+
     const serviceName = notification.hire?.service_display_name;
 
     return [customerName, serviceName].filter(Boolean).join(" · ");
   }
 
+  if (notification?.notification_type === NOTIFICATION_TYPES.REVIEW_CREATED) {
+    const customerName = notification.review?.customer_name;
+
+    const serviceName = notification.review?.service_display_name;
+
+    const stars = notification.review?.stars;
+
+    const ratingLabel =
+      stars !== null && stars !== undefined && stars !== ""
+        ? `${stars} ★`
+        : null;
+
+    return [customerName, serviceName, ratingLabel].filter(Boolean).join(" · ");
+  }
+
   const invoiceNumber = notification?.invoice?.invoice_number;
+
   const total = notification?.invoice?.total;
 
   if (invoiceNumber && total !== null && total !== undefined) {

@@ -2,6 +2,7 @@ import {
   BriefcaseBusiness,
   CalendarDays,
   ChevronDown,
+  FileWarning,
   LogOut,
   // Moon,
   // Sun,
@@ -192,15 +193,27 @@ export default function DesktopAndLaptopNav({
                 </DropdownMenuItem>
 
                 {user.role === "customer" ? (
-                  <DropdownMenuItem asChild>
-                    <Link
-                      to="/customer/hire-requests"
-                      className="flex cursor-pointer items-center gap-2"
-                    >
-                      <CalendarDays className="h-4 w-4" />
-                      My Hire Orders
-                    </Link>
-                  </DropdownMenuItem>
+                  <>
+                    <DropdownMenuItem asChild>
+                      <Link
+                        to="/customer/hire-requests"
+                        className="flex cursor-pointer items-center gap-2"
+                      >
+                        <CalendarDays className="h-4 w-4" />
+                        My Hire Orders
+                      </Link>
+                    </DropdownMenuItem>
+
+                    <DropdownMenuItem asChild>
+                      <Link
+                        to="/customer/reports"
+                        className="flex cursor-pointer items-center gap-2"
+                      >
+                        <FileWarning className="h-4 w-4" />
+                        My Reports
+                      </Link>
+                    </DropdownMenuItem>
+                  </>
                 ) : null}
 
                 {user.role === "seller" ? (

@@ -82,41 +82,42 @@ export default function ReviewCard({ review }) {
               <RatingStars value={stars} size={16} showValue />
             </div>
           </div>
-
-          {review?.comment && (
-            <p className="mt-4 whitespace-pre-line text-sm leading-7 text-muted-foreground sm:text-[15px]">
-              {review.comment}
-            </p>
-          )}
-
-          {review?.image_url && (
-            <Dialog>
-              <DialogTrigger asChild>
-                <button
-                  type="button"
-                  className="mt-5 block max-w-xl overflow-hidden rounded-md border border-border bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                  aria-label={`Open review image by ${customerName}`}
-                >
-                  <img
-                    src={review.image_url}
-                    alt={`Review by ${customerName}`}
-                    loading="lazy"
-                    className="max-h-105 w-full cursor-zoom-in object-cover transition-transform duration-300 hover:scale-[1.02]"
-                  />
-                </button>
-              </DialogTrigger>
-
-              <DialogContent className="flex max-h-[95dvh] w-[calc(100%-16px)] max-w-6xl items-center justify-center overflow-hidden rounded-md border-0 bg-black/95 p-2 sm:w-[calc(100%-48px)] sm:p-4">
+        </div>
+      </div>
+      <div>
+        {" "}
+        {review?.comment && (
+          <p className="mt-4 whitespace-pre-line text-sm leading-7 text-muted-foreground sm:text-[15px]">
+            {review.comment}
+          </p>
+        )}
+        {review?.image_url && (
+          <Dialog>
+            <DialogTrigger asChild>
+              <button
+                type="button"
+                className="mt-5 block max-w-xl overflow-hidden rounded-md border border-border bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                aria-label={`Open review image by ${customerName}`}
+              >
                 <img
                   src={review.image_url}
                   alt={`Review by ${customerName}`}
-                  decoding="async"
-                  className="max-h-[88dvh] max-w-full object-contain"
+                  loading="lazy"
+                  className="max-h-105 w-full cursor-zoom-in object-cover transition-transform duration-300 hover:scale-[1.02]"
                 />
-              </DialogContent>
-            </Dialog>
-          )}
-        </div>
+              </button>
+            </DialogTrigger>
+
+            <DialogContent className="flex max-h-[95dvh] w-[calc(100%-16px)] max-w-6xl items-center justify-center overflow-hidden rounded-md border-0 bg-black/95 p-2 sm:w-[calc(100%-48px)] sm:p-4">
+              <img
+                src={review.image_url}
+                alt={`Review by ${customerName}`}
+                decoding="async"
+                className="max-h-[88dvh] max-w-full object-contain"
+              />
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
     </article>
   );

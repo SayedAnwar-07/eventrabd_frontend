@@ -1,6 +1,7 @@
 import {
   BriefcaseBusiness,
   CalendarDays,
+  FileWarning,
   Home,
   LogIn,
   LogOut,
@@ -238,6 +239,12 @@ export default function MobileAndTabNav({
                 to="/customer/hire-requests"
                 label="Orders"
                 icon={<CalendarDays className="h-5 w-5 shrink-0" />}
+              />
+
+              <AppNavLink
+                to="/customer/reports"
+                label="Reports"
+                icon={<FileWarning className="h-5 w-5 shrink-0" />}
               />
 
               <AppNavLink

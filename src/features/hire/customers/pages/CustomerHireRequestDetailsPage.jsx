@@ -1,12 +1,16 @@
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { ArrowLeft, PencilLine, Star } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 
-import { Button } from "@/components/ui/button";
 import GlobalErrorMessage from "@/components/common/GlobalErrorMessage";
 
-import { useHireDetails } from "../hooks/useHireDetails";
+import CustomerInvoiceDetails from "@/features/invoice/components/CustomerInvoiceDetails";
+import CustomerReviewSection from "@/features/review/components/CustomerReviewSection";
+
+import CreateReportModal from "@/features/report/components/CreateReportModal";
+import { findReportByHireId } from "@/features/report/utils/reportUtils";
+import { fetchMyReports } from "@/store/features/report/reportSlice";
 
 import BookingSlots from "../components/BookingSlots";
 import ErrorState from "../components/ErrorState";
@@ -14,19 +18,7 @@ import HireTimeline from "../components/HireTimeline";
 import LoadingState from "../components/LoadingState";
 import PeopleInformation from "../components/PeopleInformation";
 
-import CustomerInvoiceDetails from "@/features/invoice/components/CustomerInvoiceDetails";
-
-import CreateReviewDialog from "@/features/review/components/CreateReviewDialog";
-import EditReviewDialog from "@/features/review/components/EditReviewDialog";
-
-import {
-  clearReviewEligibility,
-  clearReviewError,
-  fetchReviewEligibility,
-  selectReviewEligibility,
-  selectReviewEligibilityLoading,
-  selectReviewError,
-} from "@/store/features/review/reviewSlice";
+import { useHireDetails } from "../hooks/useHireDetails";
 
 export default function CustomerHireRequestDetailsPage() {
   const { id } = useParams();
@@ -35,43 +27,18 @@ export default function CustomerHireRequestDetailsPage() {
 
   const { hire, loading, error, retry } = useHireDetails(id);
 
-  // console.log("My hire detail : ", hire);
-  const reviewEligibility = useSelector(selectReviewEligibility);
-
-  const reviewEligibilityLoading = useSelector(selectReviewEligibilityLoading);
-
-  const reviewError = useSelector(selectReviewError);
-
-  // Customer agreement is the final condition
-  // for showing the review feature.
-  const isReviewReady = hire?.invoice?.customer_agreed === true;
+  const { reports } = useSelector((state) => state.report);
 
   useEffect(() => {
-    if (!id || !isReviewReady) {
-      return;
+    if (hire?.status === "completed") {
+      dispatch(fetchMyReports());
     }
+  }, [dispatch, hire?.status]);
 
-    dispatch(clearReviewError());
-    dispatch(clearReviewEligibility());
+  const existingReport = findReportByHireId(reports, hire?.id);
 
-    const request = dispatch(fetchReviewEligibility(id));
-
-    return () => {
-      request.abort();
-    };
-  }, [dispatch, id, isReviewReady]);
-
-  const refreshReviewEligibility = () => {
-    if (!id) {
-      return;
-    }
-
-    dispatch(fetchReviewEligibility(id));
-  };
-
+  // Refresh hire after invoice decision.
   const handleInvoiceDecisionSuccess = async () => {
-    // Refresh the full hire so customer_agreed,
-    // completed status and completed_at are updated.
     await retry();
   };
 
@@ -112,6 +79,7 @@ export default function CustomerHireRequestDetailsPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <main className="mx-auto max-w-6xl px-4 py-8 lg:py-10">
+        {/* Back navigation */}
         <Link
           to="/customer/hire-requests"
           className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
@@ -120,96 +88,42 @@ export default function CustomerHireRequestDetailsPage() {
           Back to My Bookings
         </Link>
 
+        {/* Background refresh error */}
         {error?.message && (
           <GlobalErrorMessage error={error} className="mt-5 rounded-md" />
         )}
 
-        {/* Timeline */}
-
+        {/* Hire timeline */}
         <section className="mt-5 flex justify-end">
           <HireTimeline hire={hire} />
         </section>
 
-        {/* Review Action */}
-        {isReviewReady && (
-          <section className="mt-8">
-            <div className="flex flex-col gap-4 rounded-md border border-border bg-card p-5 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <h2 className="text-base font-semibold text-foreground">
-                  Service Review
-                </h2>
+        {/* Customer review */}
+        <CustomerReviewSection hire={hire} />
 
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Share your experience with this service.
-                </p>
-              </div>
-
-              <div className="shrink-0">
-                {reviewEligibilityLoading ? (
-                  <Button
-                    type="button"
-                    disabled
-                    variant="outline"
-                    className="rounded-md"
-                  >
-                    Checking review...
-                  </Button>
-                ) : reviewError && !reviewEligibility ? (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="rounded-md"
-                    onClick={refreshReviewEligibility}
-                  >
-                    Try Again
-                  </Button>
-                ) : reviewEligibility?.review_id ? (
-                  <EditReviewDialog
-                    reviewId={reviewEligibility.review_id}
-                    onSuccess={refreshReviewEligibility}
-                    trigger={
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="rounded-md"
-                      >
-                        <PencilLine className="mr-2 h-4 w-4" />
-                        Edit Review
-                      </Button>
-                    }
-                  />
-                ) : (
-                  <CreateReviewDialog
-                    hireId={hire.id}
-                    onSuccess={refreshReviewEligibility}
-                    trigger={
-                      <Button type="button" className="rounded-md">
-                        <Star className="mr-2 h-4 w-4" />
-                        Write a Review
-                      </Button>
-                    }
-                  />
-                )}
-              </div>
-            </div>
-
-            {reviewError && reviewEligibility && (
-              <GlobalErrorMessage
-                error={reviewError}
-                className="mt-3 rounded-md"
-              />
-            )}
+        {/* Customer report */}
+        {hire.status === "completed" && (
+          <section className="mt-6 flex justify-end">
+            <CreateReportModal
+              hire={hire}
+              invoice={hire?.invoice}
+              existingReport={existingReport}
+              serviceName={
+                hire?.service?.service_display_name ||
+                hire?.service_display_name ||
+                hire?.service?.service_name ||
+                "this service"
+              }
+            />
           </section>
         )}
 
-        {/* Booking Slots */}
-
+        {/* Booking slots */}
         <section className="mt-12">
           <BookingSlots hire={hire} />
         </section>
 
-        {/* People + Invoice */}
-
+        {/* Customer, seller and invoice information */}
         <section className="mt-10 grid grid-cols-1 items-start gap-6 xl:grid-cols-[360px_210mm] xl:justify-center">
           <div className="min-w-0">
             <PeopleInformation hire={hire} />

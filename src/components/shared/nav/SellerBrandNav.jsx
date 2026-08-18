@@ -78,8 +78,10 @@ export default function SellerBrandNav({
       ) : (
         <Plus className="h-5 w-5 shrink-0" />
       )}
-
-      <span className="max-w-19.5 truncate text-[10px] font-medium">
+      <span
+        className="max-w-16 truncate text-[10px] font-medium"
+        title={hasBrand ? brandLabel : "Create Brand"}
+      >
         {hasBrand ? brandLabel : "Create Brand"}
       </span>
     </NavLink>

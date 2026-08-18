@@ -3,11 +3,14 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import {
+  BadgeCheck,
   ChevronLeft,
   ChevronRight,
   Clock3,
+  FileText,
   MapPin,
-  MessageCircle,
+  Phone,
+  Send,
   Star,
 } from "lucide-react";
 
@@ -57,6 +60,16 @@ const getGalleryImages = (service) => {
     .filter((image) => image.url);
 };
 
+const getCallUrl = (number) => {
+  if (!number) return null;
+
+  const normalizedNumber = String(number).replace(/[^\d+]/g, "");
+
+  if (!normalizedNumber) return null;
+
+  return `tel:${normalizedNumber}`;
+};
+
 const getCoverPhotoImage = (service) => {
   if (!service) return [];
 
@@ -76,21 +89,11 @@ const getCoverPhotoImage = (service) => {
   ];
 };
 
-const getWhatsAppUrl = (number) => {
-  if (!number) return null;
-
-  const normalizedNumber = String(number).replace(/\D/g, "");
-
-  if (!normalizedNumber) return null;
-
-  return `https://wa.me/${normalizedNumber}`;
-};
-
 const Rating = ({ value, count, size = "default" }) => {
   const numericRating = Number(value || 0);
 
   return (
-    <div className="flex items-center gap-1.5">
+    <div className="flex items-center gap-1">
       <Star
         className={
           size === "small"
@@ -110,7 +113,7 @@ const Rating = ({ value, count, size = "default" }) => {
       </span>
 
       {count !== undefined && count !== null && (
-        <span className="text-xs text-muted-foreground">({count})</span>
+        <span className="text-[11px] text-muted-foreground">({count})</span>
       )}
     </div>
   );
@@ -151,7 +154,7 @@ const PublicServiceCard = ({ service }) => {
 
   const location = formatLocation(brand?.division, brand?.district);
 
-  const whatsappUrl = getWhatsAppUrl(seller?.whatsapp_number);
+  const contactUrl = getCallUrl(seller?.contact_number);
 
   const detailPath =
     brandSlug && service?.id && serviceName
@@ -171,9 +174,9 @@ const PublicServiceCard = ({ service }) => {
   };
 
   return (
-    <article className="group overflow-hidden rounded-md border border-border bg-card shadow-sm transition-shadow duration-300 hover:shadow-md">
-      {/* Image */}
-      <div className="relative aspect-4/3 w-full overflow-hidden bg-muted">
+    <article className="group overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">
+      {/* ================= IMAGE ================= */}
+      <div className="relative aspect-4/2.75 w-full overflow-hidden bg-muted">
         {activeImage ? (
           <img
             src={activeImage.url}
@@ -188,66 +191,84 @@ const PublicServiceCard = ({ service }) => {
           </div>
         )}
 
-        {/* Price */}
-        <div className="absolute left-3 top-3 rounded-md bg-background/95 px-3 py-1.5 shadow-sm backdrop-blur">
-          <p className="text-sm font-bold text-foreground">
-            ৳{service?.shift_charge ?? "0.00"}
+        <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-black/20 via-transparent to-black/5" />
+
+        {/* ================= PRICE ================= */}
+        <div className="absolute left-3 top-3 rounded-xl bg-background/95 px-3 py-2 shadow-md backdrop-blur-md">
+          <p className="mb-1 text-[11px] font-semibold text-muted-foreground">
+            Starting Price
+          </p>
+          <p className="text-base font-bold leading-none text-foreground">
+            ৳ {service?.shift_charge ?? "0.00"}
           </p>
         </div>
 
-        {/* Service Rating */}
-        <div className="absolute right-3 top-3 rounded-md bg-background/95 px-2.5 py-1.5 shadow-sm backdrop-blur">
-          <Rating
-            value={service?.rating}
-            count={service?.review_count}
-            size="small"
-          />
+        {/* ================= RATING ================= */}
+        <div className="absolute right-3 top-3 rounded-xl bg-black/75 px-3 py-2 text-white shadow-md backdrop-blur-md">
+          <div className="flex items-center gap-1.5">
+            <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+
+            <span className="text-xs font-semibold text-white">
+              {Number(service?.rating || 0).toFixed(1)}
+            </span>
+
+            <span className="text-[10px] text-white/70">
+              ({service?.review_count ?? 0})
+            </span>
+          </div>
         </div>
 
-        {/* Previous */}
+        {/* ================= SHIFT ================= */}
+        {service?.shift_hour ? (
+          <div className="absolute bottom-3 left-3 rounded-xl bg-black/65 px-3 py-2 text-white shadow-md backdrop-blur-md">
+            <div className="flex items-center gap-1.5">
+              <Clock3 className="h-4 w-4" />
+
+              <span className="text-sm font-semibold">
+                {service.shift_hour} Hour
+                {Number(service.shift_hour) > 1 ? "s" : ""}
+              </span>
+            </div>
+
+            <p className="mt-1 text-[10px] text-white/75">Shift Duration</p>
+          </div>
+        ) : null}
+
+        {/* ================= PREVIOUS ================= */}
         {hasMultipleImages && (
           <button
             type="button"
             onClick={goPrevious}
             aria-label="Previous image"
-            className="absolute left-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-background/90 text-foreground shadow-sm backdrop-blur transition hover:bg-background"
+            className="absolute left-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-background/90 text-foreground opacity-0 shadow-md backdrop-blur transition-all hover:bg-background group-hover:opacity-100"
           >
-            <ChevronLeft className="h-5 w-5" />
+            <ChevronLeft className="h-4 w-4" />
           </button>
         )}
 
-        {/* Next */}
+        {/* ================= NEXT ================= */}
         {hasMultipleImages && (
           <button
             type="button"
             onClick={goNext}
             aria-label="Next image"
-            className="absolute right-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-background/90 text-foreground shadow-sm backdrop-blur transition hover:bg-background"
+            className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-background/90 text-foreground opacity-0 shadow-md backdrop-blur transition-all hover:bg-background group-hover:opacity-100"
           >
-            <ChevronRight className="h-5 w-5" />
+            <ChevronRight className="h-4 w-4" />
           </button>
         )}
 
-        {/* Image Counter */}
+        {/* ================= SLIDER DOTS ================= */}
         {hasMultipleImages && (
-          <div className="absolute bottom-3 left-3 rounded-md bg-background/90 px-2.5 py-1 text-xs font-medium text-foreground backdrop-blur">
-            {safeIndex + 1} / {images.length}
-          </div>
-        )}
-
-        {/* Slider Indicator */}
-        {hasMultipleImages && (
-          <div className="absolute bottom-3 right-3 flex items-center gap-1">
+          <div className="absolute bottom-2 left-1/2 flex -translate-x-1/2 items-center gap-1">
             {images.map((image, index) => (
               <button
                 key={image.id}
                 type="button"
                 onClick={() => setActiveImageIndex(index)}
                 aria-label={`Go to image ${index + 1}`}
-                className={`h-1.5 rounded-full transition-all ${
-                  index === safeIndex
-                    ? "w-5 bg-primary"
-                    : "w-1.5 bg-background/80"
+                className={`h-1.5 rounded-full shadow-sm transition-all ${
+                  index === safeIndex ? "w-4 bg-white" : "w-1.5 bg-white/60"
                 }`}
               />
             ))}
@@ -255,82 +276,44 @@ const PublicServiceCard = ({ service }) => {
         )}
       </div>
 
-      {/* Content */}
+      {/* ================= CONTENT ================= */}
       <div className="p-4">
-        {/* Service */}
-        <div className="flex items-start justify-between gap-3">
+        {/* ================= SERVICE HEADER ================= */}
+        <div className="flex items-center gap-3">
+          <div className="h-12 w-12 shrink-0 overflow-hidden rounded-full border border-border bg-muted shadow-sm">
+            {brand?.logo_url ? (
+              <img
+                src={brand.logo_url}
+                alt={brandName}
+                className="h-full w-full object-cover"
+                loading="lazy"
+                decoding="async"
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center bg-primary text-lg font-bold text-primary-foreground">
+                {brandName?.charAt(0)?.toUpperCase()}
+              </div>
+            )}
+          </div>
+
           <div className="min-w-0">
-            <h3 className="truncate text-lg font-semibold text-foreground">
-              {serviceTitle}
+            <h3 className="truncate text-xl font-bold tracking-tight text-foreground">
+              {service?.description || brandName}
             </h3>
 
-            {service?.shift_hour ? (
-              <div className="mt-1.5 flex items-center gap-1.5 text-sm text-muted-foreground">
-                <Clock3 className="h-4 w-4 shrink-0" />
-
-                <span>
-                  {service.shift_hour} hour
-                  {Number(service.shift_hour) > 1 ? "s" : ""} shift
-                </span>
-              </div>
-            ) : null}
+            <p className="mt-0.5 line-clamp-1 text-xs font-semibold text-muted-foreground">
+              Service Name : {serviceTitle}
+            </p>
           </div>
         </div>
 
-        {/* Description */}
-        {service?.description ? (
-          <p className="mt-3 line-clamp-2 text-sm leading-6 text-muted-foreground">
-            {service.description}
-          </p>
-        ) : null}
+        {/* ================= DIVIDER ================= */}
+        <div className="my-3.5 border-t border-border" />
 
-        {/* Brand */}
-        <div className="mt-4 border-t border-border pt-4">
-          <div className="flex items-center gap-3">
-            <div className="h-11 w-11 shrink-0 overflow-hidden rounded-lg border border-border bg-muted">
-              {brand?.logo_url ? (
-                <img
-                  src={brand.logo_url}
-                  alt={brandName}
-                  className="h-full w-full object-cover"
-                  loading="lazy"
-                  decoding="async"
-                />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center text-sm font-semibold text-muted-foreground">
-                  {brandName?.charAt(0)?.toUpperCase()}
-                </div>
-              )}
-            </div>
-
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2">
-                <p className="truncate text-sm font-semibold text-foreground">
-                  {brandName}
-                </p>
-
-                <Rating
-                  value={brand?.rating}
-                  count={brand?.review_count}
-                  size="small"
-                />
-              </div>
-
-              {location ? (
-                <div className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
-                  <MapPin className="h-3.5 w-3.5 shrink-0" />
-
-                  <span className="truncate">{location}</span>
-                </div>
-              ) : null}
-            </div>
-          </div>
-        </div>
-
-        {/* Seller */}
-        <div className="mt-4 flex items-center justify-between gap-3 rounded-lg bg-muted/40 p-3">
+        {/* ================= SELLER ================= */}
+        <div className="mt-3.5 flex items-center justify-between gap-3 rounded-xl bg-muted/50 p-3">
           <div className="flex min-w-0 items-center gap-2.5">
-            <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full bg-muted">
+            <div className="h-11 w-11 shrink-0 overflow-hidden rounded-full border-2 border-background bg-muted shadow-sm">
               {seller?.profile_image_url ? (
                 <img
                   src={seller.profile_image_url}
@@ -340,42 +323,51 @@ const PublicServiceCard = ({ service }) => {
                   decoding="async"
                 />
               ) : (
-                <div className="flex h-full w-full items-center justify-center text-xs font-semibold text-muted-foreground">
+                <div className="flex h-full w-full items-center justify-center text-sm font-semibold text-muted-foreground">
                   {seller?.full_name?.charAt(0)?.toUpperCase() || "S"}
                 </div>
               )}
             </div>
 
             <div className="min-w-0">
-              <p className="text-xs text-muted-foreground">Seller</p>
-
-              <p className="truncate text-sm font-medium text-foreground">
+              <p className="truncate text-sm font-semibold text-foreground">
                 {seller?.full_name || "Unknown Seller"}
               </p>
+              {location ? (
+                <div className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
+                  <span className="truncate">{location}</span>
+                </div>
+              ) : (
+                <div />
+              )}
+
+              {seller?.is_verified ? (
+                <div className="mt-0.5 flex items-center gap-1 text-[11px] font-medium text-primary">
+                  <BadgeCheck className="h-3.5 w-3.5" />
+                  <span>Verified Seller</span>
+                </div>
+              ) : null}
             </div>
           </div>
 
-          {whatsappUrl ? (
+          {contactUrl ? (
             <a
-              href={whatsappUrl}
-              target="_blank"
-              rel="noreferrer"
-              aria-label={`Contact ${
-                seller?.full_name || "seller"
-              } on WhatsApp`}
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border bg-background text-foreground transition hover:border-primary hover:text-primary"
+              href={contactUrl}
+              aria-label={`Call ${seller?.full_name || "seller"}`}
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border bg-background text-primary shadow-sm transition-all hover:border-primary hover:bg-primary hover:text-primary-foreground"
             >
-              <MessageCircle className="h-4 w-4" />
+              <Phone className="h-4 w-4" />
             </a>
           ) : null}
         </div>
 
-        {/* Actions */}
-        <div className="mt-4 flex items-center gap-3">
+        {/* ================= ACTIONS ================= */}
+        <div className="mt-3.5 flex items-center gap-2.5">
           <Link
             to={detailPath}
-            className="flex flex-1 items-center justify-center rounded-md border border-border bg-background px-4 py-3 text-sm font-semibold text-foreground transition hover:bg-muted"
+            className="flex flex-1 items-center justify-center gap-2 rounded-md border border-primary bg-background px-3 py-2.5 text-xs font-semibold text-primary transition-all hover:bg-primary/5"
           >
+            <FileText className="h-4 w-4" />
             View Details
           </Link>
 
@@ -383,9 +375,10 @@ const PublicServiceCard = ({ service }) => {
             <Link
               to={detailPath}
               state={{ openHireForm: true }}
-              className="flex flex-1 items-center justify-center rounded-md bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
+              className="flex flex-1 items-center justify-center gap-2 rounded-md bg-primary px-3 py-2.5 text-xs font-semibold text-primary-foreground shadow-sm transition-all hover:bg-primary/90"
             >
-              Hire
+              <Send className="h-4 w-4" />
+              Hire Now
             </Link>
           )}
         </div>

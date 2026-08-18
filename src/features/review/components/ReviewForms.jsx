@@ -107,27 +107,26 @@ export default function ReviewForms({
 
     if (!rating) {
       setLocalError("Please select a rating.");
-
       return;
     }
 
     const cleanedComment = comment.trim();
 
-    if (!cleanedComment) {
-      setLocalError("Review comment cannot be empty.");
-
-      return;
-    }
-
     const payload = {
       rating,
-      comment: cleanedComment,
     };
+
+    if (mode === "edit") {
+      payload.comment = cleanedComment;
+    } else if (cleanedComment) {
+      payload.comment = cleanedComment;
+    }
 
     if (image) {
       payload.image = image;
     }
 
+    // Clear existing image on edit.
     if (mode === "edit" && imageRemoved) {
       payload.image = null;
     }
@@ -201,12 +200,16 @@ export default function ReviewForms({
       {/* Comment */}
 
       <div>
-        <label
-          htmlFor="review-comment"
-          className="text-sm font-semibold text-foreground"
-        >
-          Comment
-        </label>
+        <div className="flex items-center gap-2">
+          <label
+            htmlFor="review-comment"
+            className="text-sm font-semibold text-foreground"
+          >
+            Comment
+          </label>
+
+          <span className="text-xs text-muted-foreground">(Optional)</span>
+        </div>
 
         <Textarea
           id="review-comment"

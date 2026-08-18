@@ -4,6 +4,7 @@ export const NOTIFICATION_TYPES = {
   HIRE_CREATED: "hire_created",
   INVOICE_CREATED: "invoice_created",
   INVOICE_UPDATED: "invoice_updated",
+  REVIEW_CREATED: "review_created",
 };
 
 export const NOTIFICATION_FIELD_LABELS = {
@@ -139,6 +140,9 @@ export const getNotificationTypeLabel = (notificationType) => {
     case NOTIFICATION_TYPES.INVOICE_UPDATED:
       return "Invoice Updated";
 
+    case NOTIFICATION_TYPES.REVIEW_CREATED:
+      return "New Service Review";
+
     default:
       return "Notification";
   }
@@ -154,6 +158,9 @@ export const getNotificationToneClass = (notificationType) => {
 
     case NOTIFICATION_TYPES.INVOICE_UPDATED:
       return "bg-amber-500/10 text-amber-600 dark:text-amber-400";
+
+    case NOTIFICATION_TYPES.REVIEW_CREATED:
+      return "bg-violet-500/10 text-violet-600 dark:text-violet-400";
 
     default:
       return "bg-muted text-muted-foreground";
@@ -203,6 +210,25 @@ export const getNotificationDestination = (notification) => {
         id: notification.invoice.hire_id,
       };
 
+    case NOTIFICATION_TYPES.REVIEW_CREATED: {
+      const brandSlug = notification.data?.brand_slug;
+
+      const serviceId = notification.data?.service_id;
+
+      const serviceName = notification.data?.service_name;
+
+      if (!brandSlug || !serviceId || !serviceName) {
+        return null;
+      }
+
+      return {
+        type: "service",
+        brandSlug,
+        serviceId,
+        serviceName,
+      };
+    }
+
     default:
       return null;
   }
@@ -229,8 +255,12 @@ export const handleNotificationClick = async ({
         resolvedNotification = result.notification;
       }
     } catch {
-      // The Redux slice already stores the API error.
-      // Navigation should still be allowed if the destination is valid.
+      /*
+       * Redux slice already stores the API error.
+       *
+       * Navigation is still allowed using the
+       * originally loaded notification.
+       */
     }
   }
 

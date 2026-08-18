@@ -1,11 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
+
 import { useDispatch, useSelector } from "react-redux";
+
 import { useNavigate } from "react-router-dom";
+
 import { Bell, CheckCheck, Loader2 } from "lucide-react";
 
 import GlobalErrorMessage from "@/components/common/GlobalErrorMessage";
+
 import { Badge } from "@/components/ui/badge";
+
 import { Button } from "@/components/ui/button";
+
 import { Separator } from "@/components/ui/separator";
 
 import {
@@ -18,9 +24,11 @@ import {
 import NotificationEmptyState from "../components/NotificationEmptyState";
 import NotificationItem from "../components/NotificationItem";
 import NotificationListSkeleton from "../components/NotificationListSkeleton";
+
 import { handleNotificationClick } from "../utils/notificationUtils";
 
 const EMPTY_NOTIFICATIONS = Object.freeze([]);
+
 const EMPTY_LOADING_IDS = Object.freeze({});
 
 const FILTERS = [
@@ -43,6 +51,7 @@ const FILTERS = [
 
 export default function NotificationsPage() {
   const dispatch = useDispatch();
+
   const navigate = useNavigate();
 
   const [filter, setFilter] = useState("all");
@@ -157,13 +166,25 @@ export default function NotificationsPage() {
       return;
     }
 
+    // Seller -> Hire details
     if (destination.type === "hire" && user?.role === "seller") {
       navigate(`/seller/hire-requests/${destination.id}`);
+
       return;
     }
 
+    // Customer -> Hire / Invoice details
     if (destination.type === "invoice" && user?.role === "customer") {
       navigate(`/customer/hire-requests/${destination.id}`);
+
+      return;
+    }
+
+    // Seller -> Reviewed service details
+    if (destination.type === "service" && user?.role === "seller") {
+      navigate(
+        `/event-planner/brands/${destination.brandSlug}/services/${destination.serviceId}/${destination.serviceName}`,
+      );
     }
   };
 
@@ -201,7 +222,7 @@ export default function NotificationsPage() {
             </div>
 
             <p className="mt-0.5 text-sm text-muted-foreground">
-              Stay updated with your Hire and Invoice activity.
+              Stay updated with your Hire, Invoice, and Review activity.
             </p>
           </div>
         </div>

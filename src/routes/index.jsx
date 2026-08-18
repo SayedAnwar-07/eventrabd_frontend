@@ -33,6 +33,8 @@ import CustomerHireRequestsPage from "@/features/hire/customers/pages/CustomerHi
 import CustomerHireRequestDetailsPage from "@/features/hire/customers/pages/CustomerHireRequestDetailsPage";
 import SellerHireDetailsPage from "@/features/hire/sellers/pages/SellerHireDetailsPage";
 import NotificationsPage from "@/features/notfications/pages/NotificationsPage";
+import MyReportsPage from "@/features/report/pages/MyReportsPage";
+import ReportDetailsPage from "@/features/report/pages/ReportDetailsPage";
 
 // hire pages
 
@@ -182,6 +184,28 @@ const router = createBrowserRouter([
           <PrivateRoute
             element={<NotificationsPage />}
             allowedRoles={["customer", "seller"]}
+          />
+        ),
+      },
+
+      // =========================
+      // Customer Report Routes
+      // =========================
+      {
+        path: "customer/reports",
+        element: (
+          <PrivateRoute
+            element={<MyReportsPage />}
+            allowedRoles={["customer"]}
+          />
+        ),
+      },
+      {
+        path: "customer/reports/:reportId",
+        element: (
+          <PrivateRoute
+            element={<ReportDetailsPage />}
+            allowedRoles={["customer"]}
           />
         ),
       },
