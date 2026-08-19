@@ -1,6 +1,7 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import api from "@/store/constant/api";
 import getApiErrorPayload from "@/store/constant/getApiErrorPayload";
+import { connectWebSocket } from "@/websocket/websocketClient";
 
 // ── Local storage helpers ─────────────────────────────────────────────────────
 const fromStorage = (key) => {
@@ -303,6 +304,7 @@ const authSlice = createSlice({
         state.isAuthenticated = true;
 
         saveSession(access, user);
+        connectWebSocket(access);
       })
 
       // ── Login
@@ -321,12 +323,13 @@ const authSlice = createSlice({
         state.user = user;
         state.accessToken = access;
 
-        // Refresh token is not returned in JSON.
         state.refreshToken = null;
 
         state.isAuthenticated = true;
 
         saveSession(access, user);
+
+        connectWebSocket(access);
       })
 
       // ── Get own profile
