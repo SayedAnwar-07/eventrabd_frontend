@@ -16,8 +16,8 @@ const EMPTY_FORM_VALUES = {
   display_name: "",
   brand_name: "",
   whatsapp_number: "",
-  division: "",
-  district: "",
+  division: [],
+  office_address: "",
   short_description: "",
   portfolio_link: "",
   logo: null,
@@ -28,8 +28,8 @@ const getBrandFormValues = (brand) => ({
   display_name: brand?.display_name ?? "",
   brand_name: brand?.brand_name ?? "",
   whatsapp_number: brand?.whatsapp_number ?? "",
-  division: brand?.division ?? "",
-  district: brand?.district ?? "",
+  division: Array.isArray(brand?.division) ? brand.division : [],
+  office_address: brand?.office_address ?? "",
   short_description: brand?.short_description ?? "",
   portfolio_link: brand?.portfolio_link ?? "",
 });
@@ -210,7 +210,6 @@ function EditBrandFormContent({
     setValues((previousValues) => ({
       ...previousValues,
       [name]: value,
-      ...(name === "division" ? { district: "" } : {}),
     }));
   };
 
@@ -251,13 +250,21 @@ function EditBrandFormContent({
     }
 
     const formData = new FormData();
-    
+
     formData.append("display_name", values.display_name.trim());
+
     formData.append("brand_name", values.brand_name.trim());
+
     formData.append("whatsapp_number", values.whatsapp_number.trim());
-    formData.append("division", values.division);
-    formData.append("district", values.district);
+
+    values.division.forEach((division) => {
+      formData.append("division", division);
+    });
+
+    formData.append("office_address", values.office_address.trim());
+
     formData.append("short_description", values.short_description.trim());
+
     formData.append("portfolio_link", values.portfolio_link.trim());
 
     if (values.logo instanceof File) {
@@ -339,9 +346,12 @@ export default function EditBrandPage() {
     const redirectedSlug = publicDetails.redirectInfo?.newSlug;
 
     if (redirectedSlug && redirectedSlug !== slug) {
-      navigate(`/event-planner/brands/${redirectedSlug}/edit`, {
-        replace: true,
-      });
+      navigate(
+        `/event-planner/brands/${encodeURIComponent(redirectedSlug)}/edit`,
+        {
+          replace: true,
+        },
+      );
     }
   }, [publicDetails.redirectInfo, slug, navigate]);
 
@@ -364,7 +374,7 @@ export default function EditBrandPage() {
         publicBrandDetails?.slug ||
         slug;
 
-      navigate(`/event-planner/brands/${updatedSlug}`, {
+      navigate(`/event-planner/brands/${encodeURIComponent(updatedSlug)}`, {
         replace: true,
       });
     }

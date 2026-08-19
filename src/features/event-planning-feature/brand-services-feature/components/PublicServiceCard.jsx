@@ -28,8 +28,12 @@ const formatServiceName = (value = "") => {
     .replace(/\b\w/g, (char) => char.toUpperCase());
 };
 
-const formatLocation = (division, district) => {
-  return [district, division]
+const formatLocation = (division) => {
+  if (!Array.isArray(division) || division.length === 0) {
+    return "—";
+  }
+
+  return division
     .filter(Boolean)
     .map((value) =>
       String(value)
@@ -152,7 +156,7 @@ const PublicServiceCard = ({ service }) => {
 
   const brandName = brand?.display_name || brand?.brand_name || "Unknown Brand";
 
-  const location = formatLocation(brand?.division, brand?.district);
+  const location = formatLocation(brand?.division);
 
   const contactUrl = getCallUrl(seller?.contact_number);
 

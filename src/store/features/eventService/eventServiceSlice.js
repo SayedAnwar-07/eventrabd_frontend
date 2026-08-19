@@ -38,10 +38,9 @@ export const fetchPublicServices = createAsyncThunk(
     {
       page = 1,
       pageSize = 12,
-      serviceType = null,
-      search = null,
-      division = null,
-      district = null,
+      serviceType = "",
+      search = "",
+      division = "",
     } = {},
     { rejectWithValue },
   ) => {
@@ -51,25 +50,23 @@ export const fetchPublicServices = createAsyncThunk(
         page_size: pageSize,
       };
 
-      if (serviceType) {
-        params.service_type = serviceType;
+      const normalizedServiceType = serviceType?.trim();
+      const normalizedSearch = search?.trim();
+      const normalizedDivision = division?.trim().toLowerCase();
+
+      if (normalizedServiceType) {
+        params.service_type = normalizedServiceType;
       }
 
-      if (search) {
-        params.search = search;
+      if (normalizedSearch) {
+        params.search = normalizedSearch;
       }
 
-      if (division) {
-        params.division = division;
+      if (normalizedDivision) {
+        params.division = normalizedDivision;
       }
 
-      if (district) {
-        params.district = district;
-      }
-
-      const response = await api.get("/event-services/services/", {
-        params,
-      });
+      const response = await api.get("/event-services/services/", { params });
 
       return response.data;
     } catch (error) {

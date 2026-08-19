@@ -1,6 +1,15 @@
 import PersonCard from "./PersonCard";
 
 export default function PeopleInformation({ hire, customerRole = "Customer" }) {
+  const seller = hire?.seller;
+  const customer = hire?.customer;
+  const brand = hire?.brand;
+
+  const sellerLocation = {
+    division: Array.isArray(brand?.division) ? brand.division : [],
+    office_address: brand?.office_address || "",
+  };
+
   return (
     <section className="min-w-0">
       <div className="flex flex-col gap-5">
@@ -18,12 +27,9 @@ export default function PeopleInformation({ hire, customerRole = "Customer" }) {
 
           <PersonCard
             role="Seller"
-            person={hire?.seller}
-            whatsapp={hire?.brand?.whatsapp_number}
-            location={{
-              division: hire?.brand?.division,
-              district: hire?.brand?.district,
-            }}
+            person={seller}
+            whatsapp={brand?.whatsapp_number}
+            location={sellerLocation}
             note={hire?.seller_note}
             noteLabel="Seller Note"
           />
@@ -43,12 +49,8 @@ export default function PeopleInformation({ hire, customerRole = "Customer" }) {
 
           <PersonCard
             role={customerRole}
-            person={hire?.customer}
-            whatsapp={hire?.booking_slots?.[0]?.customer_whatsapp_number}
-            location={{
-              division: hire?.customer?.division,
-              district: hire?.customer?.district,
-            }}
+            person={customer}
+            whatsapp={hire?.customer_whatsapp_number}
             note={hire?.customer_note}
             noteLabel="Customer Note"
           />

@@ -1,20 +1,10 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 import BrandLogoUpload from "./BrandLogoUpload";
 
-import {
-  DIVISION_DISTRICTS,
-  DIVISION_OPTIONS,
-} from "@/store/features/eventPlanner/bangladeshLocations";
+import { DIVISION_OPTIONS } from "@/store/features/eventPlanner/bangladeshLocations";
 
 const fieldClass =
   "h-auto w-full rounded-none border-0 border-b-2 border-input bg-transparent px-0 pb-2 text-base shadow-none transition-colors focus-visible:border-foreground focus-visible:ring-0";
@@ -30,20 +20,6 @@ function FieldLabel({ htmlFor, children }) {
   );
 }
 
-function Chevron() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      className="pointer-events-none absolute right-0 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
 export default function BrandFormFields({
   values,
   onChange,
@@ -54,23 +30,46 @@ export default function BrandFormFields({
   onLogoChange,
   onRemoveLogo,
 }) {
-  const selectedDivision = values.division || "";
-
-  const availableDistricts = selectedDivision
-    ? DIVISION_DISTRICTS[selectedDivision] || []
+  const selectedDivisions = Array.isArray(values.division)
+    ? values.division
     : [];
 
-  const handleSelectChange = (name) => (value) => {
-    onChange({ target: { name, value } });
+  const handleDivisionToggle = (division) => {
+    let nextDivisions;
+
+    if (division === "whole_bangladesh") {
+      nextDivisions = selectedDivisions.includes("whole_bangladesh")
+        ? []
+        : ["whole_bangladesh"];
+    } else {
+      const individualDivisions = selectedDivisions.filter(
+        (item) => item !== "whole_bangladesh",
+      );
+
+      nextDivisions = individualDivisions.includes(division)
+        ? individualDivisions.filter((item) => item !== division)
+        : [...individualDivisions, division];
+    }
+
+    onChange({
+      target: {
+        name: "division",
+        value: nextDivisions,
+      },
+    });
   };
 
   function handleWhatsappChange(e) {
-    // keep only digits the user actually typed in the "01..." part
     const digits = e.target.value.replace(/\D/g, "").slice(0, 11);
-    onChange({ target: { name: "whatsapp_number", value: `+88${digits}` } });
+
+    onChange({
+      target: {
+        name: "whatsapp_number",
+        value: `+88${digits}`,
+      },
+    });
   }
 
-  // value shown in the input — strip the +88 (or 88) prefix back off for display
   const whatsappLocal = (values.whatsapp_number || "")
     .replace(/^\+?88/, "")
     .slice(0, 11);
@@ -115,7 +114,7 @@ export default function BrandFormFields({
             type="text"
             value={values.display_name || ""}
             onChange={onChange}
-            placeholder="Enter you brand name here"
+            placeholder="Enter your brand name here"
             maxLength={255}
             required
             disabled={loading}
@@ -190,73 +189,77 @@ export default function BrandFormFields({
 
           {renderErrors("whatsapp_number")}
         </div>
+
+        <div className="grid gap-2">
+          <FieldLabel htmlFor="office_address">
+            Office Address (Optional)
+          </FieldLabel>
+
+          <Textarea
+            id="office_address"
+            name="office_address"
+            value={values.office_address || ""}
+            onChange={onChange}
+            placeholder="Enter your office or business address"
+            maxLength={500}
+            disabled={loading}
+            aria-invalid={Boolean(errors.office_address)}
+            className="peer min-h-24 resize-none rounded-none border-0 border-b-2 border-input bg-transparent px-0 pb-2 text-base leading-relaxed shadow-none transition-colors focus-visible:border-foreground focus-visible:ring-0"
+          />
+
+          {renderErrors("office_address")}
+        </div>
       </div>
 
-      {/* Location */}
-      <div className="grid gap-6">
-        <div className="grid gap-6 sm:grid-cols-2">
-          <div className="grid gap-2">
-            <FieldLabel htmlFor="division">Division</FieldLabel>
+      {/* Service Areas */}
+      <div className="grid gap-3">
+        <div>
+          <p className="text-[13px] font-normal text-muted-foreground">
+            Service Areas (Divisions)
+          </p>
 
-            <Select
-              value={selectedDivision}
-              onValueChange={handleSelectChange("division")}
-              disabled={loading}
-            >
-              <SelectTrigger
-                id="division"
-                aria-invalid={Boolean(errors.division)}
-                className="h-auto w-full justify-between rounded-none border-0 border-b-2 border-input bg-transparent px-0 pb-2 text-base shadow-none transition-colors focus:ring-0 focus-visible:border-foreground focus-visible:ring-0 disabled:cursor-not-allowed disabled:opacity-50 [&>svg]:text-muted-foreground"
-              >
-                <SelectValue placeholder="Select a division" />
-              </SelectTrigger>
-
-              <SelectContent>
-                {DIVISION_OPTIONS.map((division) => (
-                  <SelectItem key={division.value} value={division.value}>
-                    {division.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            {renderErrors("division")}
-          </div>
-
-          <div className="grid gap-2">
-            <FieldLabel htmlFor="district">District</FieldLabel>
-
-            <Select
-              value={values.district || ""}
-              onValueChange={handleSelectChange("district")}
-              disabled={loading || !selectedDivision}
-            >
-              <SelectTrigger
-                id="district"
-                aria-invalid={Boolean(errors.district)}
-                className="h-auto w-full justify-between rounded-none border-0 border-b-2 border-input bg-transparent px-0 pb-2 text-base shadow-none transition-colors focus:ring-0 focus-visible:border-foreground focus-visible:ring-0 disabled:cursor-not-allowed disabled:opacity-50 [&>svg]:text-muted-foreground"
-              >
-                <SelectValue
-                  placeholder={
-                    selectedDivision
-                      ? "Select a district"
-                      : "Select division first"
-                  }
-                />
-              </SelectTrigger>
-
-              <SelectContent>
-                {availableDistricts.map((district) => (
-                  <SelectItem key={district} value={district}>
-                    {district}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            {renderErrors("district")}
-          </div>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Select all divisions where your brand provides services.
+          </p>
         </div>
+
+        <div
+          className="grid gap-3 sm:grid-cols-2"
+          aria-invalid={Boolean(errors.division)}
+        >
+          {DIVISION_OPTIONS.map((division) => {
+            const checked = selectedDivisions.includes(division.value);
+
+            return (
+              <label
+                key={division.value}
+                className={`flex cursor-pointer items-center gap-3 border px-4 py-3 transition-colors ${
+                  checked
+                    ? "border-foreground bg-muted"
+                    : "border-border hover:bg-muted/50"
+                } ${
+                  loading
+                    ? "pointer-events-none cursor-not-allowed opacity-50"
+                    : ""
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  name="division"
+                  value={division.value}
+                  checked={checked}
+                  onChange={() => handleDivisionToggle(division.value)}
+                  disabled={loading}
+                  className="h-4 w-4 accent-foreground"
+                />
+
+                <span className="text-sm font-medium">{division.label}</span>
+              </label>
+            );
+          })}
+        </div>
+
+        {renderErrors("division")}
       </div>
 
       {/* Portfolio */}

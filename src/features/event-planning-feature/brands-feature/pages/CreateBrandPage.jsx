@@ -13,8 +13,8 @@ const initialValues = {
   display_name: "",
   brand_name: "",
   whatsapp_number: "",
-  division: "",
-  district: "",
+  division: [],
+  office_address: "",
   short_description: "",
   portfolio_link: "",
   logo: null,
@@ -30,8 +30,8 @@ export default function CreateBrandPage() {
   const [logoPreview, setLogoPreview] = useState(null);
 
   /*
-   * Clear any stale create-brand result when entering the page
-   * and again when leaving the page.
+   * Clear stale create-brand state when entering
+   * and leaving the page.
    */
   useEffect(() => {
     dispatch(clearCreateBrandState());
@@ -42,8 +42,8 @@ export default function CreateBrandPage() {
   }, [dispatch]);
 
   /*
-   * Revoke the current browser-generated preview URL whenever
-   * it changes or when the component unmounts.
+   * Revoke browser-generated preview URL when it
+   * changes or when the component unmounts.
    */
   useEffect(() => {
     return () => {
@@ -59,12 +59,6 @@ export default function CreateBrandPage() {
     setValues((previousValues) => ({
       ...previousValues,
       [name]: value,
-
-      /*
-       * A district belongs to one division only.
-       * Clear the previous district whenever division changes.
-       */
-      ...(name === "division" ? { district: "" } : {}),
     }));
   };
 
@@ -101,17 +95,38 @@ export default function CreateBrandPage() {
 
     const formData = new FormData();
 
-    /*
-     * Build the payload explicitly instead of sending every
-     * property from the React state.
-     */
     formData.append("display_name", values.display_name.trim());
+
     formData.append("brand_name", values.brand_name.trim());
+
     formData.append("whatsapp_number", values.whatsapp_number.trim());
-    formData.append("division", values.division);
-    formData.append("district", values.district);
-    formData.append("short_description", values.short_description.trim());
-    formData.append("portfolio_link", values.portfolio_link.trim());
+
+    /*
+     * Division is now an ArrayField/ListField.
+     * Send every selected division using the
+     * same multipart field name.
+     */
+    values.division.forEach((division) => {
+      formData.append("division", division);
+    });
+
+    const officeAddress = values.office_address.trim();
+
+    const shortDescription = values.short_description.trim();
+
+    const portfolioLink = values.portfolio_link.trim();
+
+    if (officeAddress) {
+      formData.append("office_address", officeAddress);
+    }
+
+    if (shortDescription) {
+      formData.append("short_description", shortDescription);
+    }
+
+    if (portfolioLink) {
+      formData.append("portfolio_link", portfolioLink);
+    }
 
     if (values.logo instanceof File) {
       formData.append("logo", values.logo);
@@ -123,7 +138,7 @@ export default function CreateBrandPage() {
       const createdSlug = result.payload?.slug;
 
       if (createdSlug) {
-        navigate(`/event-planner/brands/${createdSlug}`, {
+        navigate(`/event-planner/brands/${encodeURIComponent(createdSlug)}`, {
           replace: true,
         });
       }

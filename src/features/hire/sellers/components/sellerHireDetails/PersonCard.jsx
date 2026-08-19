@@ -1,10 +1,24 @@
 import { MapPin, StickyNote } from "lucide-react";
 import { FaWhatsapp } from "react-icons/fa";
 
-const capitalize = (value) => {
-  if (!value) return "";
+import { DIVISION_OPTIONS } from "@/store/features/eventPlanner/bangladeshLocations";
 
-  return value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
+const getDivisionLabels = (divisions) => {
+  if (!Array.isArray(divisions) || divisions.length === 0) {
+    return "";
+  }
+
+  if (divisions.includes("whole_bangladesh")) {
+    return "Whole Bangladesh";
+  }
+
+  return divisions
+    .map(
+      (value) =>
+        DIVISION_OPTIONS.find((division) => division.value === value)?.label ||
+        value,
+    )
+    .join(", ");
 };
 
 const getWhatsAppNumber = (value) => {
@@ -35,14 +49,18 @@ export default function PersonCard({
   noteLabel,
 }) {
   const whatsappNumber = getWhatsAppNumber(whatsapp);
-  const personName = person?.full_name || "Not available";
 
-  const locationText =
-    [capitalize(location?.division), capitalize(location?.district)]
-      .filter(Boolean)
-      .join(", ") || "Bangladesh";
+  const personName = person?.full_name?.trim() || "Not available";
+
+  const divisionText = getDivisionLabels(location?.division);
+
+  const officeAddress = location?.office_address?.trim() || "";
 
   const isSeller = role?.toLowerCase() === "seller";
+
+  const emptyNoteText = isSeller
+    ? "No additional note was provided by the seller."
+    : "No additional note was provided by the customer.";
 
   return (
     <article className="flex h-full flex-col overflow-hidden rounded-md border border-gray-200 bg-white shadow-sm transition-shadow hover:shadow-md dark:border-gray-800 dark:bg-gray-950">
@@ -53,6 +71,7 @@ export default function PersonCard({
               src={person.profile_image_url}
               alt={personName}
               className="h-16 w-16 rounded-2xl object-cover ring-1 ring-gray-200 dark:ring-gray-700"
+              loading="lazy"
             />
           ) : (
             <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gray-100 text-base font-semibold text-gray-700 ring-1 ring-gray-200 dark:bg-gray-900 dark:text-gray-300 dark:ring-gray-700">
@@ -79,7 +98,7 @@ export default function PersonCard({
           </div>
 
           <div className="mt-3 space-y-2">
-            {whatsapp && (
+            {whatsapp && whatsappNumber && (
               <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
                 <FaWhatsapp className="h-4 w-4 shrink-0 text-[#25D366]" />
 
@@ -94,11 +113,21 @@ export default function PersonCard({
               </div>
             )}
 
-            <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-              <MapPin className="h-4 w-4 shrink-0 text-gray-400 dark:text-gray-500" />
+            {divisionText && (
+              <div className="flex items-start gap-2 text-xs text-gray-500 dark:text-gray-400">
+                <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-gray-400 dark:text-gray-500" />
 
-              <span>{locationText}</span>
-            </div>
+                <span>{divisionText}</span>
+              </div>
+            )}
+
+            {officeAddress && (
+              <div className="flex items-start gap-2 text-xs text-gray-500 dark:text-gray-400">
+                <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-gray-400 dark:text-gray-500" />
+
+                <span className="break-words">{officeAddress}</span>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -107,6 +136,7 @@ export default function PersonCard({
         <div className="mt-auto border-t border-gray-100 bg-gray-50/70 p-5 dark:border-gray-800 dark:bg-gray-900/40 sm:p-6">
           <div className="mb-3 flex items-center gap-2">
             <StickyNote className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+
             <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
               {noteLabel}
             </p>
@@ -114,7 +144,7 @@ export default function PersonCard({
 
           <div className="rounded-xl border border-gray-200 bg-white px-4 py-3.5 dark:border-gray-800 dark:bg-gray-950">
             <p className="whitespace-pre-wrap text-sm leading-6 text-gray-700 dark:text-gray-300">
-              {note || "No additional note was provided by the seller."}
+              {note || emptyNoteText}
             </p>
           </div>
         </div>

@@ -5,19 +5,33 @@ export default function BrandPreviewCard({
   logoPreview,
   existingLogo,
 }) {
-  const displaName = values.display_name?.trim();
+  const displayName = values.display_name?.trim();
   const brandName = values.brand_name?.trim();
   const description = values.short_description?.trim();
   const whatsapp = values.whatsapp_number?.trim();
-  const district = values.district;
   const portfolioLink = values.portfolio_link?.trim();
-  const divisionLabel = DIVISION_OPTIONS.find(
-    (d) => d.value === values.division,
-  )?.label;
-  const locationLine = [district, divisionLabel].filter(Boolean).join(", ");
+  const officeAddress = values.office_address?.trim();
+
+  const selectedDivisions = Array.isArray(values.division)
+    ? values.division
+    : [];
+
+  const divisionLabels = selectedDivisions
+    .map(
+      (division) =>
+        DIVISION_OPTIONS.find((item) => item.value === division)?.label,
+    )
+    .filter(Boolean);
+
+  const locationLine = divisionLabels.join(", ");
+
   const initial = brandName ? brandName.charAt(0).toUpperCase() : "?";
+
   const logoSrc = logoPreview || existingLogo;
-  const isComplete = Boolean(brandName && whatsapp && district);
+
+  const isComplete = Boolean(
+    brandName && whatsapp && selectedDivisions.length > 0,
+  );
 
   return (
     <div className="grid gap-3">
@@ -29,7 +43,7 @@ export default function BrandPreviewCard({
 
       {/* Outer frame */}
       <div
-        className="relative border p-075"
+        className="relative border p-0.5"
         style={{
           clipPath:
             "polygon(0 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%)",
@@ -41,6 +55,7 @@ export default function BrandPreviewCard({
           <div className="flex items-start justify-between gap-4">
             <div className="relative shrink-0">
               <div className="" aria-hidden="true" />
+
               {logoSrc ? (
                 <img
                   src={logoSrc}
@@ -68,20 +83,22 @@ export default function BrandPreviewCard({
           {/* Name */}
           <h3
             className={`mt-5 font-serif text-[28px] italic leading-[1.1] tracking-tight ${
-              displaName ? "text-foreground" : "text-muted-foreground"
+              displayName ? "text-foreground" : "text-muted-foreground"
             }`}
           >
-            {displaName || "Your brand name"}
+            {displayName || "Your brand name"}
           </h3>
 
-          {/* Data rows with leader dots, passport-style */}
+          {/* Data rows */}
           <div className="mt-5 grid gap-2.5 border-t pt-4">
             <div className="flex items-baseline gap-2">
               <span className="shrink-0 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
-                Location
+                Service Areas
               </span>
+
               <span className="h-0 flex-1 border-b border-dotted border-muted-foreground/50" />
-              <span className="text-sm text-foreground">
+
+              <span className="max-w-[65%] text-right text-sm text-foreground">
                 {locationLine || "—"}
               </span>
             </div>
@@ -90,33 +107,49 @@ export default function BrandPreviewCard({
               <span className="shrink-0 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
                 Contact
               </span>
+
               <span className="h-0 flex-1 border-b border-dotted border-muted-foreground/50" />
+
               <span className="font-mono text-sm text-foreground">
                 {whatsapp || "—"}
               </span>
             </div>
+
+            {officeAddress && (
+              <div className="flex items-baseline gap-2">
+                <span className="shrink-0 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                  Office
+                </span>
+
+                <span className="h-0 flex-1 border-b border-dotted border-muted-foreground/50" />
+
+                <span className="max-w-[65%] text-right text-sm text-foreground">
+                  {officeAddress}
+                </span>
+              </div>
+            )}
+
+            {portfolioLink && (
+              <div className="flex items-baseline gap-2">
+                <span className="shrink-0 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                  Portfolio
+                </span>
+
+                <span className="h-0 flex-1 border-b border-dotted border-muted-foreground/50" />
+
+                <a
+                  href={portfolioLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="max-w-45 truncate text-sm text-foreground underline"
+                >
+                  View Portfolio
+                </a>
+              </div>
+            )}
           </div>
 
-          {portfolioLink && (
-            <div className="flex items-baseline gap-2">
-              <span className="shrink-0 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
-                Portfolio
-              </span>
-
-              <span className="h-0 flex-1 border-b border-dotted border-muted-foreground/50" />
-
-              <a
-                href={portfolioLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="max-w-45 truncate text-sm text-foreground underline"
-              >
-                View Portfolio
-              </a>
-            </div>
-          )}
-
-          {/* Description as a stamped note */}
+          {/* Description */}
           <div className="relative mt-5 border-t pt-4">
             <p
               className={`text-sm leading-relaxed ${

@@ -1,7 +1,12 @@
 import { Link } from "react-router-dom";
 
+import { DIVISION_OPTIONS } from "@/store/features/eventPlanner/bangladeshLocations";
+
 const getSafeImageUrl = (url) => {
-  if (!url) return "";
+  if (!url) {
+    return "";
+  }
+
   return url.startsWith("http://") ? url.replace("http://", "https://") : url;
 };
 
@@ -22,63 +27,117 @@ const formatServiceName = (value = "") => {
     .replace(/\b\w/g, (char) => char.toUpperCase());
 };
 
+const getDivisionLabel = (value) => {
+  return (
+    DIVISION_OPTIONS.find((division) => division.value === value)?.label ||
+    formatServiceName(value)
+  );
+};
+
+const getDivisionLabels = (divisions) => {
+  if (!Array.isArray(divisions) || divisions.length === 0) {
+    return "Service area not specified";
+  }
+
+  if (divisions.includes("whole_bangladesh")) {
+    return "Whole Bangladesh";
+  }
+
+  return divisions.map((division) => getDivisionLabel(division)).join(", ");
+};
+
 const BrandCard = ({ brand }) => {
   const logoUrl = getSafeImageUrl(brand?.logo_url);
-  const sellerImage = getSafeImageUrl(brand?.seller_info.profile_image_url);
-  const resolvedBrandSlug = brand?.slug || "";
+
+  const sellerImage = getSafeImageUrl(brand?.seller_info?.profile_image_url);
+
+  const displayName =
+    brand?.display_name?.trim() || brand?.brand_name?.trim() || "Unnamed Brand";
+
+  const sellerName = brand?.seller_info?.full_name?.trim() || "Seller";
+
+  const resolvedBrandSlug = brand?.slug?.trim() || "";
+
+  const officeAddress = brand?.office_address?.trim() || "";
+
+  const divisionText = getDivisionLabels(brand?.division);
 
   const services = Array.isArray(brand?.services) ? brand.services : [];
-  const serviceCount = brand?.total_services ?? services.length;
+
+  const serviceCount = Number.isFinite(Number(brand?.total_services))
+    ? Number(brand.total_services)
+    : services.length;
+
   const visibleServices = services.slice(0, 3);
+
+  const brandDetailPath = resolvedBrandSlug
+    ? `/event-planner/brands/${encodeURIComponent(resolvedBrandSlug)}`
+    : null;
 
   return (
     <article className="flex h-full flex-col border border-border bg-background p-5 transition hover:border-primary">
+      {/* Brand */}
       <div className="flex items-start gap-4">
         {logoUrl ? (
           <img
             src={logoUrl}
-            alt={brand?.brand_name || "Brand logo"}
+            alt={`${displayName} logo`}
             className="h-16 w-16 shrink-0 border border-border object-cover"
             loading="lazy"
           />
         ) : (
           <div className="flex h-16 w-16 shrink-0 items-center justify-center border border-border bg-muted text-lg font-semibold text-foreground">
-            {getInitials(brand?.display_name)}
+            {getInitials(displayName) || "?"}
           </div>
         )}
 
         <div className="min-w-0 flex-1">
           <h2
             className="truncate text-xl font-semibold text-foreground"
-            title={brand?.display_name}
+            title={displayName}
           >
-            {brand?.display_name || "Unnamed Brand"}
+            {displayName}
           </h2>
 
-          <p className="mt-2 line-clamp-2 text-sm leading-6 font-semibold text-muted-foreground">
-            <span className="capitalize">{brand.division}</span>,{" "}
-            {brand.district}
+          <p
+            className="mt-2 line-clamp-2 text-sm leading-6 font-medium text-muted-foreground"
+            title={divisionText}
+          >
+            {divisionText}
           </p>
+
+          {officeAddress && (
+            <p
+              className="mt-1 line-clamp-1 text-xs text-muted-foreground"
+              title={officeAddress}
+            >
+              {officeAddress}
+            </p>
+          )}
         </div>
       </div>
 
+      {/* Seller */}
       <div className="mt-5 flex items-center gap-3 border-t border-border pt-4">
         {sellerImage ? (
           <img
             src={sellerImage}
-            alt={brand?.seller_name || "Seller"}
+            alt={sellerName}
             className="h-10 w-10 shrink-0 border border-border object-cover object-top"
             loading="lazy"
           />
         ) : (
           <div className="flex h-10 w-10 shrink-0 items-center justify-center border border-border bg-muted text-xs font-semibold text-foreground">
-            {getInitials(brand?.seller_name || brand?.brand_name)}
+            {getInitials(sellerName) || "?"}
           </div>
         )}
 
         <div className="min-w-0">
-          <p className="truncate text-sm font-medium text-foreground">
-            {brand?.seller_info.full_name || "Seller"}
+          <p
+            className="truncate text-sm font-medium text-foreground"
+            title={sellerName}
+          >
+            {sellerName}
           </p>
 
           <p className="text-xs text-muted-foreground">
@@ -87,28 +146,33 @@ const BrandCard = ({ brand }) => {
         </div>
       </div>
 
+      {/* Services */}
       <div className="my-5 flex-1">
         <div className="grid grid-cols-2 gap-2">
           {visibleServices.length > 0 ? (
             visibleServices.map((service) => {
-              const serviceName = service?.slug || service?.service_name || "";
+              const serviceName = service?.service_name || "";
+
+              const serviceSlug = service?.slug || serviceName;
 
               const detailPath =
-                resolvedBrandSlug && service?.id && serviceName
+                resolvedBrandSlug && service?.id && serviceSlug
                   ? `/event-planner/brands/${encodeURIComponent(
                       resolvedBrandSlug,
                     )}/services/${encodeURIComponent(
                       service.id,
-                    )}/${encodeURIComponent(serviceName)}`
+                    )}/${encodeURIComponent(serviceSlug)}`
                   : null;
+
+              const label = formatServiceName(serviceName || serviceSlug);
 
               if (!detailPath) {
                 return (
                   <span
-                    key={service?.id || serviceName}
+                    key={service?.id || serviceSlug}
                     className="border border-border px-3 py-1 text-xs font-medium text-muted-foreground"
                   >
-                    {formatServiceName(serviceName)}
+                    {label}
                   </span>
                 );
               }
@@ -119,7 +183,7 @@ const BrandCard = ({ brand }) => {
                   to={detailPath}
                   className="border border-border px-3 py-1 text-xs font-medium text-foreground transition hover:border-primary hover:bg-muted"
                 >
-                  {formatServiceName(service.service_name)}
+                  {label}
                 </Link>
               );
             })
@@ -129,20 +193,31 @@ const BrandCard = ({ brand }) => {
             </span>
           )}
 
-          {serviceCount > 3 ? (
+          {serviceCount > 3 && (
             <span className="border border-border px-3 py-1 text-xs font-medium text-muted-foreground">
               +{serviceCount - 3} more
             </span>
-          ) : null}
+          )}
         </div>
       </div>
 
-      <Link
-        to={`/event-planner/brands/${brand?.slug}`}
-        className="mt-auto flex w-full items-center justify-center bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
-      >
-        View Details
-      </Link>
+      {/* Brand details */}
+      {brandDetailPath ? (
+        <Link
+          to={brandDetailPath}
+          className="mt-auto flex w-full items-center justify-center bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
+        >
+          View Details
+        </Link>
+      ) : (
+        <button
+          type="button"
+          disabled
+          className="mt-auto flex w-full cursor-not-allowed items-center justify-center bg-muted px-4 py-3 text-sm font-semibold text-muted-foreground"
+        >
+          View Details
+        </button>
+      )}
     </article>
   );
 };

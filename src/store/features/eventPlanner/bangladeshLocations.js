@@ -1,79 +1,46 @@
-export const DIVISION_DISTRICTS = {
-  dhaka: [
-    "Dhaka",
-    "Faridpur",
-    "Gazipur",
-    "Gopalganj",
-    "Kishoreganj",
-    "Madaripur",
-    "Manikganj",
-    "Munshiganj",
-    "Narayanganj",
-    "Narsingdi",
-    "Rajbari",
-    "Shariatpur",
-    "Tangail",
-  ],
-  chattogram: [
-    "Bandarban",
-    "Brahmanbaria",
-    "Chandpur",
-    "Chattogram",
-    "Cumilla",
-    "Cox's Bazar",
-    "Feni",
-    "Khagrachhari",
-    "Lakshmipur",
-    "Noakhali",
-    "Rangamati",
-  ],
-  khulna: [
-    "Bagerhat",
-    "Chuadanga",
-    "Jashore",
-    "Jhenaidah",
-    "Khulna",
-    "Kushtia",
-    "Magura",
-    "Meherpur",
-    "Narail",
-    "Satkhira",
-  ],
-  rajshahi: [
-    "Bogura",
-    "Chapainawabganj",
-    "Joypurhat",
-    "Naogaon",
-    "Natore",
-    "Pabna",
-    "Rajshahi",
-    "Sirajganj",
-  ],
-  rangpur: [
-    "Dinajpur",
-    "Gaibandha",
-    "Kurigram",
-    "Lalmonirhat",
-    "Nilphamari",
-    "Panchagarh",
-    "Rangpur",
-    "Thakurgaon",
-  ],
-  barishal: [
-    "Barguna",
-    "Barishal",
-    "Bhola",
-    "Jhalokathi",
-    "Patuakhali",
-    "Pirojpur",
-  ],
-  sylhet: ["Habiganj", "Moulvibazar", "Sunamganj", "Sylhet"],
-  mymensingh: ["Jamalpur", "Mymensingh", "Netrokona", "Sherpur"],
-};
+export const DIVISION_OPTIONS = [
+  {
+    value: "whole_bangladesh",
+    label: "Whole Bangladesh",
+  },
+  {
+    value: "dhaka",
+    label: "Dhaka",
+  },
+  {
+    value: "chattogram",
+    label: "Chattogram",
+  },
+  {
+    value: "khulna",
+    label: "Khulna",
+  },
+  {
+    value: "rajshahi",
+    label: "Rajshahi",
+  },
+  {
+    value: "rangpur",
+    label: "Rangpur",
+  },
+  {
+    value: "barishal",
+    label: "Barishal",
+  },
+  {
+    value: "sylhet",
+    label: "Sylhet",
+  },
+  {
+    value: "mymensingh",
+    label: "Mymensingh",
+  },
+];
 
-export const DIVISION_OPTIONS = Object.keys(DIVISION_DISTRICTS).map(
-  (division) => ({
-    value: division,
-    label: division.charAt(0).toUpperCase() + division.slice(1),
-  }),
+export const DIVISION_VALUES = DIVISION_OPTIONS.map(
+  (division) => division.value,
+);
+
+export const DIVISION_LABELS = Object.fromEntries(
+  DIVISION_OPTIONS.map(({ value, label }) => [value, label]),
 );

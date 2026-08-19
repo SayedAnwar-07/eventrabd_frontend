@@ -197,9 +197,10 @@ const InvoiceDocument = ({
     invoice?.seller?.email || hire?.seller?.email || hire?.brand?.email || "";
 
   const sellerWhatsApp =
-    invoice?.seller?.contact_number ||
-    invoice?.seller_contact_snapshot ||
+    invoice?.brand?.whatsapp_number ||
     hire?.brand?.whatsapp_number ||
+    invoice?.seller_contact_snapshot ||
+    invoice?.seller?.contact_number ||
     hire?.seller?.contact_number ||
     "";
 
@@ -517,6 +518,7 @@ const InvoiceDocument = ({
               normalizedCustomerWhatsApp={normalizedCustomerWhatsApp}
               venueName={venueName}
               venueAddress={venueAddress}
+              bookingSlots={bookingSlots}
               eventDate={eventDate}
               formatDate={formatDate}
             />

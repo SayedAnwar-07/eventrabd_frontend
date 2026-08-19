@@ -1,26 +1,54 @@
 import { Mail, MapPin, MessageCircle, Phone } from "lucide-react";
 
+import { DIVISION_OPTIONS } from "@/store/features/eventPlanner/bangladeshLocations";
+
 import { formatWhatsAppNumber } from "../../utils/Formatters";
 
-const capitalize = (str) =>
-  str ? str.charAt(0).toUpperCase() + str.slice(1) : "";
+const getDivisionLabels = (divisions) => {
+  if (!Array.isArray(divisions) || divisions.length === 0) {
+    return "";
+  }
+
+  if (divisions.includes("whole_bangladesh")) {
+    return "Whole Bangladesh";
+  }
+
+  return divisions
+    .map(
+      (value) =>
+        DIVISION_OPTIONS.find((division) => division.value === value)?.label ||
+        value,
+    )
+    .join(", ");
+};
 
 const ContactRow = ({ icon: Icon, label, value, href }) => {
-  if (!value) return null;
+  if (!value) {
+    return null;
+  }
 
   const content = (
     <div className="flex items-start gap-3 text-sm">
       <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted">
         <Icon className="h-4 w-4 text-muted-foreground" />
       </div>
+
       <div className="min-w-0">
         <p className="text-xs text-muted-foreground">{label}</p>
-        <p className="truncate font-medium text-foreground">{value}</p>
+
+        <p
+          className="wrap-break-word font-medium text-foreground"
+          title={value}
+        >
+          {value}
+        </p>
       </div>
     </div>
   );
 
-  if (!href) return content;
+  if (!href) {
+    return content;
+  }
 
   return (
     <a
@@ -35,11 +63,17 @@ const ContactRow = ({ icon: Icon, label, value, href }) => {
 };
 
 const BrandSidebarPanel = ({ brand }) => {
-  const seller = brand.seller_info;
-  const whatsappNumber = formatWhatsAppNumber(brand.whatsapp_number);
-  const location = [capitalize(brand.district), capitalize(brand.division)]
-    .filter(Boolean)
-    .join(", ");
+  if (!brand) {
+    return null;
+  }
+
+  const seller = brand?.seller_info;
+
+  const whatsappNumber = formatWhatsAppNumber(brand?.whatsapp_number);
+
+  const serviceAreas = getDivisionLabels(brand?.division);
+
+  const officeAddress = brand?.office_address?.trim() || "";
 
   return (
     <aside className="overflow-hidden rounded-md border border-border bg-card shadow-sm">
@@ -47,44 +81,62 @@ const BrandSidebarPanel = ({ brand }) => {
       {seller && (
         <div className="border-b border-border p-5">
           <div className="flex items-center gap-3">
-            {seller.profile_image_url ? (
+            {seller?.profile_image_url ? (
               <img
                 src={seller.profile_image_url}
-                alt={seller.full_name}
-                className="h-12 w-12 rounded-full object-cover ring-2 ring-border"
+                alt={seller?.full_name || "Seller"}
+                className="h-12 w-12 shrink-0 rounded-full object-cover object-top ring-2 ring-border"
+                loading="lazy"
               />
             ) : (
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted text-sm font-medium text-muted-foreground">
-                {seller.full_name?.[0] || "?"}
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-medium text-muted-foreground">
+                {seller?.full_name?.trim()?.charAt(0)?.toUpperCase() || "?"}
               </div>
             )}
 
             <div className="min-w-0">
-              <p className="truncate font-semibold text-foreground">
-                {seller.full_name}
+              <p
+                className="truncate font-semibold text-foreground"
+                title={seller?.full_name}
+              >
+                {seller?.full_name || "Seller"}
               </p>
-              {location && (
-                <p className="flex items-center gap-1 text-sm text-muted-foreground">
-                  <MapPin className="h-3.5 w-3.5" />
-                  {location}
+
+              {serviceAreas && (
+                <p
+                  className="mt-1 flex items-start gap-1 text-sm text-muted-foreground"
+                  title={serviceAreas}
+                >
+                  <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+
+                  <span className="line-clamp-2">{serviceAreas}</span>
                 </p>
               )}
             </div>
           </div>
 
           <div className="mt-5 space-y-3">
+            {officeAddress && (
+              <ContactRow
+                icon={MapPin}
+                label="Office Address"
+                value={officeAddress}
+              />
+            )}
+
             <ContactRow
               icon={Mail}
               label="Email"
-              value={seller.email}
-              href={seller.email ? `mailto:${seller.email}` : undefined}
+              value={seller?.email}
+              href={seller?.email ? `mailto:${seller.email}` : undefined}
             />
+
             <ContactRow
               icon={Phone}
               label="Phone"
-              value={seller.contact_number}
+              value={seller?.contact_number}
               href={
-                seller.contact_number
+                seller?.contact_number
                   ? `tel:${seller.contact_number}`
                   : undefined
               }
@@ -95,7 +147,7 @@ const BrandSidebarPanel = ({ brand }) => {
 
       {/* WhatsApp CTA */}
       {whatsappNumber && (
-        <div className="p-5 pb-4">
+        <div className="p-5">
           <a
             href={`https://wa.me/${whatsappNumber}`}
             target="_blank"
