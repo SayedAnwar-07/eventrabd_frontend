@@ -4,8 +4,6 @@ export const getInitialProfileValues = (user) => ({
   bio: user?.bio || "",
   contact_number: user?.contact_number || "",
   whatsapp_number: user?.whatsapp_number || "",
-  office_address: user?.office_address || "",
-  service_area: user?.service_area || "",
 });
 
 export const getUsernameRemainingDays = (usernameLastChanged) => {

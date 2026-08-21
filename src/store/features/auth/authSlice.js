@@ -1,7 +1,8 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import api from "@/store/constant/api";
-import getApiErrorPayload from "@/store/constant/getApiErrorPayload";
+// import getApiErrorPayload from "@/store/constant/getApiErrorPayload";
 import { connectWebSocket } from "@/websocket/websocketClient";
+import getApiErrorMessage from "@/store/constant/getApiErrorMessage";
 
 // ── Local storage helpers ─────────────────────────────────────────────────────
 const fromStorage = (key) => {
@@ -70,7 +71,7 @@ export const registerUser = createAsyncThunk(
 
       return data;
     } catch (error) {
-      return rejectWithValue(getApiErrorPayload(error));
+      return rejectWithValue(getApiErrorMessage(error));
     }
   },
 );
@@ -83,7 +84,7 @@ export const verifyOtp = createAsyncThunk(
 
       return data;
     } catch (error) {
-      return rejectWithValue(getApiErrorPayload(error));
+      return rejectWithValue(getApiErrorMessage(error));
     }
   },
 );
@@ -96,7 +97,7 @@ export const loginUser = createAsyncThunk(
 
       return data;
     } catch (error) {
-      return rejectWithValue(getApiErrorPayload(error));
+      return rejectWithValue(getApiErrorMessage(error));
     }
   },
 );
@@ -110,7 +111,7 @@ export const getMyProfile = createAsyncThunk(
 
       return data;
     } catch (error) {
-      return rejectWithValue(getApiErrorPayload(error));
+      return rejectWithValue(getApiErrorMessage(error));
     }
   },
 );
@@ -131,7 +132,7 @@ export const updateProfile = createAsyncThunk(
 
       return data;
     } catch (error) {
-      return rejectWithValue(getApiErrorPayload(error));
+      return rejectWithValue(getApiErrorMessage(error));
     }
   },
 );
@@ -144,7 +145,7 @@ export const forgotPassword = createAsyncThunk(
 
       return data;
     } catch (error) {
-      return rejectWithValue(getApiErrorPayload(error));
+      return rejectWithValue(getApiErrorMessage(error));
     }
   },
 );
@@ -157,7 +158,7 @@ export const resetPassword = createAsyncThunk(
 
       return data;
     } catch (error) {
-      return rejectWithValue(getApiErrorPayload(error));
+      return rejectWithValue(getApiErrorMessage(error));
     }
   },
 );

@@ -13,6 +13,7 @@ export const EVENT_TYPE_OPTIONS = [
   { value: "reception", label: "Reception" },
   { value: "anniversary", label: "Anniversary" },
   { value: "birthday", label: "Birthday" },
+  { value: "others", label: "Others" },
 ];
 
 export const createEmptySlot = () => ({

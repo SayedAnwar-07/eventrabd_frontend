@@ -157,18 +157,6 @@ const SellerForm = () => {
                 </p>
               </div>
 
-              <div className="space-y-2 sm:col-span-2">
-                <Label>Service Area</Label>
-                <Input
-                  placeholder="Only city name"
-                  {...register("service_area")}
-                  className="h-11"
-                />
-                <p className="min-h-4 text-xs font-medium text-red-500">
-                  {validationErrors.service_area}
-                </p>
-              </div>
-
               <div className="space-y-2">
                 <Label htmlFor="contact-number">Contact Number</Label>
 

@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { BriefcaseBusiness, KeyRound, Phone, UserRound } from "lucide-react";
+import { KeyRound, Phone, UserRound } from "lucide-react";
 
 const tabs = [
   {
@@ -11,11 +11,6 @@ const tabs = [
     id: "contact",
     label: "Contact Details",
     icon: Phone,
-  },
-  {
-    id: "professional",
-    label: "Professional Info",
-    icon: BriefcaseBusiness,
   },
 ];
 

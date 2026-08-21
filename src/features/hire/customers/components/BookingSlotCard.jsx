@@ -12,6 +12,7 @@ const EVENT_TYPE_LABELS = {
   reception: "Reception",
   anniversary: "Anniversary",
   birthday: "Birthday",
+  others: "Others",
 };
 
 const formatEventType = (eventType) => {

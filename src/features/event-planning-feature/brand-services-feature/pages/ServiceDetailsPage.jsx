@@ -23,6 +23,7 @@ import HireSellerSheet from "@/features/hire/components/HireRequestSheet";
 
 import ServiceReviews from "@/features/review/components/ServiceReviews";
 import PackagesDetails from "@/features/packages/components/PackagesDetails";
+import { Pencil, Trash2 } from "lucide-react";
 
 const formatServiceName = (name = "") =>
   name.replaceAll("_", " ").replace(/\b\w/g, (char) => char.toUpperCase());
@@ -172,8 +173,9 @@ const ServiceDetailsPage = () => {
                   trigger={
                     <button
                       type="button"
-                      className="flex-1 rounded-md border border-border bg-background py-3 text-sm font-semibold text-foreground transition-colors hover:bg-muted"
+                      className="inline-flex w-full items-center justify-center gap-2 rounded-md border border-border px-4 py-2 text-sm font-medium text-foreground transition hover:border-foreground"
                     >
+                      <Pencil className="h-3.5 w-3.5" />
                       Edit
                     </button>
                   }
@@ -190,8 +192,9 @@ const ServiceDetailsPage = () => {
                   trigger={
                     <button
                       type="button"
-                      className="flex-1 rounded-md bg-destructive py-3 text-sm font-semibold text-destructive-foreground transition-opacity hover:opacity-90"
+                      className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
                     >
+                      <Trash2 className="h-4 w-4" />
                       Delete
                     </button>
                   }

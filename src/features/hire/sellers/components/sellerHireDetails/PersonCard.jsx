@@ -1,26 +1,5 @@
 import { MapPin, StickyNote } from "lucide-react";
 import { FaWhatsapp } from "react-icons/fa";
-
-import { DIVISION_OPTIONS } from "@/store/features/eventPlanner/bangladeshLocations";
-
-const getDivisionLabels = (divisions) => {
-  if (!Array.isArray(divisions) || divisions.length === 0) {
-    return "";
-  }
-
-  if (divisions.includes("whole_bangladesh")) {
-    return "Whole Bangladesh";
-  }
-
-  return divisions
-    .map(
-      (value) =>
-        DIVISION_OPTIONS.find((division) => division.value === value)?.label ||
-        value,
-    )
-    .join(", ");
-};
-
 const getWhatsAppNumber = (value) => {
   const digits = String(value || "").replace(/\D/g, "");
 
@@ -51,8 +30,6 @@ export default function PersonCard({
   const whatsappNumber = getWhatsAppNumber(whatsapp);
 
   const personName = person?.full_name?.trim() || "Not available";
-
-  const divisionText = getDivisionLabels(location?.division);
 
   const officeAddress = location?.office_address?.trim() || "";
 
@@ -113,19 +90,12 @@ export default function PersonCard({
               </div>
             )}
 
-            {divisionText && (
-              <div className="flex items-start gap-2 text-xs text-gray-500 dark:text-gray-400">
-                <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-gray-400 dark:text-gray-500" />
-
-                <span>{divisionText}</span>
-              </div>
-            )}
 
             {officeAddress && (
               <div className="flex items-start gap-2 text-xs text-gray-500 dark:text-gray-400">
                 <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-gray-400 dark:text-gray-500" />
 
-                <span className="break-words">{officeAddress}</span>
+                <span className="wrap-break-word">{officeAddress}</span>
               </div>
             )}
           </div>

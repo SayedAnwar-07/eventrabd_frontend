@@ -99,7 +99,9 @@ export const selectServiceTypeFilter = (state) =>
 
 export const selectSearchFilter = (state) => selectFilters(state).search;
 
-export const selectBrandSlugFilter = (state) => selectFilters(state).brandSlug;
+export const selectSellerFilter = (state) => selectFilters(state).sellerId;
+
+export const selectBrandFilter = (state) => selectFilters(state).brandId;
 
 export const selectCurrentPageFilter = (state) =>
   selectFilters(state).currentPage;
@@ -200,3 +202,31 @@ export const selectError = createSelector(
   ],
   (...errors) => errors.find(Boolean) || null,
 );
+
+// Seller autocomplete
+export const selectSellerSuggestions = (state) =>
+  selectEventServicesState(state).sellerSuggestions.data;
+
+export const selectSellerSuggestionsLoading = (state) =>
+  selectEventServicesState(state).sellerSuggestions.loading;
+
+export const selectSellerSuggestionsError = (state) =>
+  selectEventServicesState(state).sellerSuggestions.error;
+
+// Brand autocomplete
+export const selectBrandSuggestions = (state) =>
+  selectEventServicesState(state).brandSuggestions.data;
+
+export const selectBrandSuggestionsLoading = (state) =>
+  selectEventServicesState(state).brandSuggestions.loading;
+
+export const selectBrandSuggestionsError = (state) =>
+  selectEventServicesState(state).brandSuggestions.error;
+
+// Selected seller
+export const selectSelectedSeller = (state) =>
+  selectEventServicesState(state).selectedSeller;
+
+// Selected brand
+export const selectSelectedBrand = (state) =>
+  selectEventServicesState(state).selectedBrand;

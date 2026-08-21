@@ -19,7 +19,6 @@ import { Separator } from "@/components/ui/separator";
 import ProfileEditSidebar from "../components/ProfileEditSidebar";
 import BasicInformationFields from "../components/BasicInformationFields";
 import ContactDetailsFields from "../components/ContactDetailsFields";
-import ProfessionalInfoFields from "../components/ProfessionalInfoFields";
 import ProfileFormActions from "../components/ProfileFormActions";
 
 import {
@@ -174,7 +173,7 @@ const UpdateProfile = () => {
               </h1>
 
               <p className="mt-1 text-muted-foreground">
-                Update your personal and professional information.
+                Update your personal and contact information.
               </p>
             </div>
 
@@ -223,10 +222,6 @@ const UpdateProfile = () => {
 
                 {activeTab === "contact" && (
                   <ContactDetailsFields control={control} />
-                )}
-
-                {activeTab === "professional" && (
-                  <ProfessionalInfoFields control={control} />
                 )}
 
                 <ProfileFormActions

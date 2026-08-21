@@ -39,19 +39,33 @@ const BrandHeader = ({ brand, onEdit }) => {
 
   return (
     <header className="pb-8">
-      {/* Breadcrumb + actions */}
-      <div className="mb-6 flex items-center justify-between">
+      {/* Breadcrumb + Actions */}
+      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <BrandBreadcrumb brandName={brand?.display_name || brand?.brand_name} />
 
         {brand?.is_owner && (
-          <div className="flex shrink-0 items-center gap-3">
+          <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={onEdit}
-              className="inline-flex items-center gap-2 rounded-md border border-border px-4 py-2 text-sm font-medium text-foreground transition hover:border-foreground"
+              className="
+          inline-flex
+          h-10
+          items-center
+          gap-2
+          rounded-lg
+          border
+          border-border
+          bg-background
+          px-4
+          text-sm
+          font-medium
+          transition
+          hover:bg-muted
+        "
             >
-              <Pencil className="h-3.5 w-3.5" />
-              Edit Brand
+              <Pencil className="h-4 w-4" />
+              Edit
             </button>
 
             <BrandDeleteDialog brand={brand} />

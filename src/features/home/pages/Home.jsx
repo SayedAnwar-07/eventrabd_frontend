@@ -15,6 +15,8 @@ import BrandCard from "@/features/event-planning-feature/brands-feature/componen
 
 import GlobalErrorMessage from "@/components/common/GlobalErrorMessage";
 import PublicServiceCard from "@/features/event-planning-feature/brand-services-feature/components/PublicServiceCard";
+import SellerSearch from "@/features/event-planning-feature/brand-services-feature/components/search/SellerSearch";
+import BrandSearch from "@/features/event-planning-feature/brand-services-feature/components/search/BrandSearch";
 
 const Home = () => {
   const dispatch = useDispatch();
@@ -41,6 +43,11 @@ const Home = () => {
   return (
     <main className="min-h-screen">
       <div className="mx-auto max-w-7xl space-y-16">
+        <section className="flex gap-4">
+          <SellerSearch />
+
+          <BrandSearch />
+        </section>
         {/* Services */}
         <section>
           <div className="mb-8">
