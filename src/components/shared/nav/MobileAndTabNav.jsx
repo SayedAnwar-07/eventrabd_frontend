@@ -210,8 +210,8 @@ export default function MobileAndTabNav({
           />
 
           <AppNavLink
-            to="/contact"
-            label="Contact"
+            to="/services"
+            label="Services"
             icon={<MessageCircle className="h-5 w-5 shrink-0" />}
           />
 

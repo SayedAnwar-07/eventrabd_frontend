@@ -23,6 +23,10 @@ const NAV_ITEMS = [
     to: "/",
   },
   {
+    label: "Services",
+    to: "/services",
+  },
+  {
     label: "Contact",
     to: "/contact",
   },

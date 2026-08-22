@@ -126,7 +126,7 @@ const ServiceDetailsPage = () => {
 
   return (
     <main className="min-h-screen bg-background text-foreground">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-400 px-4 sm:px-6 lg:px-8">
         <ServiceBreadcrumb
           brandSlug={brandSlug}
           brandName={service.brand?.display_name}

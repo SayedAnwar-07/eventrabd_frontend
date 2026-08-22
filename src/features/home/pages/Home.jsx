@@ -42,10 +42,9 @@ const Home = () => {
 
   return (
     <main className="min-h-screen">
-      <div className="mx-auto max-w-7xl space-y-16">
-        <section className="flex gap-4">
+      <div className="mx-auto max-w-400 space-y-16">
+        <section className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <SellerSearch />
-
           <BrandSearch />
         </section>
         {/* Services */}

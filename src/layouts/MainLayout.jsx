@@ -10,14 +10,14 @@ const MainLayout = () => {
 
         {/* Main Content */}
         <main className="pt-20">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
+          <div className="mx-auto max-w-400 px-4 sm:px-6 lg:px-8 py-6">
             <Outlet />
           </div>
         </main>
 
         {/* Footer */}
         <footer className="border-t bg-background py-6 mt-10">
-          <div className="mx-auto max-w-7xl px-4 text-center text-sm text-muted-foreground">
+          <div className="mx-auto max-w-400 px-4 text-center text-sm text-muted-foreground">
             © {new Date().getFullYear()} EventraBD. All rights reserved.
           </div>
         </footer>

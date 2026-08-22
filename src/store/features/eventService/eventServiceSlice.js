@@ -441,6 +441,8 @@ const initialState = {
 
     search: null,
 
+    division: null,
+
     sellerId: null,
 
     brandId: null,
@@ -489,6 +491,14 @@ const eventServiceSlice = createSlice({
       state.filters.search = action.payload;
 
       state.filters.currentPage = 1;
+    },
+
+    setDivisionFilter(state, action) {
+      state.filters.division = action.payload;
+
+      state.filters.currentPage = 1;
+
+      state.services.data = [];
     },
 
     setSellerFilter(state, action) {
@@ -936,6 +946,7 @@ const eventServiceSlice = createSlice({
 export const {
   // marketplace filters
   setServiceTypeFilter,
+  setDivisionFilter,
   setSearchFilter,
   setSellerFilter,
   setBrandFilter,

@@ -38,6 +38,21 @@ export const selectServicesWithPagination = createSelector(
 
 export const selectPublicServices = selectAllServices;
 
+export const selectDivisionOptions = createSelector(
+  [selectAllServices],
+  (services) => {
+    const divisions = {};
+
+    services.forEach((service) => {
+      service.brand?.division?.forEach((division) => {
+        divisions[division] = (divisions[division] || 0) + 1;
+      });
+    });
+
+    return divisions;
+  },
+);
+
 export const selectPublicServicesLoading = selectServicesLoading;
 
 export const selectPublicServicesError = selectServicesError;
@@ -99,14 +114,9 @@ export const selectServiceTypeFilter = (state) =>
 
 export const selectSearchFilter = (state) => selectFilters(state).search;
 
+export const selectDivisionFilter = (state) => selectFilters(state).division;
+
 export const selectSellerFilter = (state) => selectFilters(state).sellerId;
-
-export const selectBrandFilter = (state) => selectFilters(state).brandId;
-
-export const selectCurrentPageFilter = (state) =>
-  selectFilters(state).currentPage;
-
-export const selectPageSizeFilter = (state) => selectFilters(state).pageSize;
 
 // ── Operation ────────────────────────────────────────
 

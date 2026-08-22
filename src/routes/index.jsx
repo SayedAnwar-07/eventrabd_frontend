@@ -35,6 +35,7 @@ import SellerHireDetailsPage from "@/features/hire/sellers/pages/SellerHireDetai
 import NotificationsPage from "@/features/notfications/pages/NotificationsPage";
 import MyReportsPage from "@/features/report/pages/MyReportsPage";
 import ReportDetailsPage from "@/features/report/pages/ReportDetailsPage";
+import ServicesPage from "@/features/event-planning-feature/brand-services-feature/pages/ServicesPage";
 
 // hire pages
 
@@ -83,6 +84,12 @@ const router = createBrowserRouter([
       {
         path: "verify-otp",
         element: <Verified />,
+      },
+
+      // services
+      {
+        path: "services",
+        element: <ServicesPage />,
       },
 
       // =========================
