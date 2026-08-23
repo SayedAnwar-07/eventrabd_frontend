@@ -1,4 +1,4 @@
-import { Layers, MapPin, Pencil } from "lucide-react";
+import { BriefcaseBusiness, Layers, MapPin, Pencil } from "lucide-react";
 import { useSelector } from "react-redux";
 
 import { DIVISION_OPTIONS } from "@/store/features/eventPlanner/bangladeshLocations";
@@ -7,35 +7,16 @@ import BrandDeleteDialog from "../BrandDeleteDialog";
 import BrandSidebarPanel from "./Brandsidebarpanel";
 import BrandBreadcrumb from "./BrandBreadcrumb";
 
-const getDivisionLabels = (divisions) => {
-  if (!Array.isArray(divisions) || divisions.length === 0) {
-    return "Service area not set";
-  }
-
-  if (divisions.includes("whole_bangladesh")) {
-    return "Whole Bangladesh";
-  }
-
-  return divisions
-    .map(
-      (value) =>
-        DIVISION_OPTIONS.find((item) => item.value === value)?.label || value,
-    )
-    .join(", ");
-};
-
 const BrandHeader = ({ brand, onEdit }) => {
   const { publicBrandDetails } = useSelector((state) => state.eventPlanner);
 
   const services = Array.isArray(brand?.services) ? brand.services : [];
 
-  const servicesCount = services.length;
-
   const portfolioLink = brand?.portfolio_link?.trim() || "";
 
   const officeAddress = brand?.office_address?.trim() || "";
 
-  const serviceArea = getDivisionLabels(brand?.division);
+  const serviceAreas = brand?.division || [];
 
   return (
     <header className="pb-8">
@@ -48,21 +29,7 @@ const BrandHeader = ({ brand, onEdit }) => {
             <button
               type="button"
               onClick={onEdit}
-              className="
-          inline-flex
-          h-10
-          items-center
-          gap-2
-          rounded-lg
-          border
-          border-border
-          bg-background
-          px-4
-          text-sm
-          font-medium
-          transition
-          hover:bg-muted
-        "
+              className="inline-flex h-10 items-center gap-2 rounded-lg border border-border bg-background px-4 text-sm font-medium transition hover:bg-muted"
             >
               <Pencil className="h-4 w-4" />
               Edit
@@ -73,7 +40,7 @@ const BrandHeader = ({ brand, onEdit }) => {
         )}
       </div>
 
-      <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
+      <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0 flex-1">
           {/* Brand identity */}
           <div className="flex items-center gap-4">
@@ -98,34 +65,49 @@ const BrandHeader = ({ brand, onEdit }) => {
               </h1>
 
               <dl className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
-                {/* Service areas */}
-                <div className="flex items-start gap-1.5">
-                  <MapPin className="mt-0.5 h-4 w-4 shrink-0" />
+                {/* Office address */}
+                <div className="flex max-w-2xl items-start gap-2 text-sm text-muted-foreground">
+                  <BriefcaseBusiness className="mt-0.5 h-4 w-4 shrink-0" />
 
-                  <span>{serviceArea}</span>
-                </div>
-
-                {/* Services */}
-                <div className="flex items-center gap-1.5">
-                  <Layers className="h-4 w-4" />
-
-                  <span>
-                    {servicesCount}{" "}
-                    {servicesCount === 1 ? "service" : "services"}
-                  </span>
+                  <div>
+                    <span className="font-medium text-foreground">Office:</span>{" "}
+                    {officeAddress || "No office yet"}
+                  </div>
                 </div>
               </dl>
             </div>
           </div>
 
-          {/* Office address */}
-          {officeAddress && (
-            <div className="mt-4 flex max-w-2xl items-start gap-2 text-sm text-muted-foreground">
-              <MapPin className="mt-0.5 h-4 w-4 shrink-0" />
+          {/* Service areas */}
+          {serviceAreas.length > 0 && (
+            <div className="mt-5 flex items-start gap-3">
+              <MapPin className="mt-1 h-4 w-4 shrink-0 text-muted-foreground" />
 
-              <div>
-                <span className="font-medium text-foreground">Office:</span>{" "}
-                {officeAddress}
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-sm font-medium text-foreground">
+                  Service Area:
+                </span>
+
+                {serviceAreas.includes("whole_bangladesh") ? (
+                  <span className="rounded-md border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+                    Whole Bangladesh
+                  </span>
+                ) : (
+                  serviceAreas.map((division) => {
+                    const label =
+                      DIVISION_OPTIONS.find((item) => item.value === division)
+                        ?.label || division;
+
+                    return (
+                      <span
+                        key={division}
+                        className="rounded-md border border-border bg-muted/50 px-3 py-1 text-xs font-medium text-foreground transition hover:bg-muted"
+                      >
+                        {label}
+                      </span>
+                    );
+                  })
+                )}
               </div>
             </div>
           )}
@@ -148,8 +130,11 @@ const BrandHeader = ({ brand, onEdit }) => {
           )}
         </div>
 
-        <div className="shrink-0">
-          <BrandSidebarPanel brand={publicBrandDetails || brand} />
+        <div className="w-full lg:w-85 shrink-0">
+          <BrandSidebarPanel
+            brand={publicBrandDetails || brand}
+            services={services}
+          />
         </div>
       </div>
     </header>

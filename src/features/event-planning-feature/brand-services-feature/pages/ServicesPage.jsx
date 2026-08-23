@@ -8,6 +8,7 @@ import {
   selectPublicServicesLoading,
   selectPublicServicesError,
   selectDivisionFilter,
+  selectServiceTypeFilter,
 } from "@/store/features/eventService/eventServiceSelector";
 
 import PublicServiceCard from "../components/PublicServiceCard";
@@ -31,15 +32,20 @@ const ServicesPage = () => {
 
   const division = useSelector(selectDivisionFilter);
 
+  const serviceType = useSelector(selectServiceTypeFilter);
+
   useEffect(() => {
     dispatch(
       fetchPublicServices({
         page: 1,
         pageSize: 12,
+
         division: division || "",
+
+        serviceType: serviceType || "",
       }),
     );
-  }, [dispatch, division]);
+  }, [dispatch, division, serviceType]);
 
   return (
     <main className="min-h-screen">
@@ -54,10 +60,10 @@ const ServicesPage = () => {
 
         {/* Main Layout */}
 
-        <div className="grid gap-8 lg:grid-cols-6">
+        <div className="grid gap-8 lg:grid-cols-5">
           {/* Left Filters */}
 
-          <aside className="lg:col-span-1">
+          <aside className="lg:col-span-1 min-w-0">
             <div className="sticky top-24 rounded-lg border p-4">
               <div className="hidden lg:block">
                 <ServiceFilters />
@@ -71,7 +77,7 @@ const ServicesPage = () => {
 
           {/* Right Services */}
 
-          <section className="lg:col-span-5">
+          <section className="lg:col-span-4">
             <div className="mb-8">
               <h1 className="text-3xl font-bold">Explore Event Services</h1>
 

@@ -1,8 +1,12 @@
 import { useState } from "react";
 import {
+  Camera,
+  Building2,
   BriefcaseBusiness,
   ChevronLeft,
   ChevronRight,
+  Clapperboard,
+  Lightbulb,
   Star,
 } from "lucide-react";
 
@@ -13,6 +17,20 @@ const GALLERY_ONLY_SERVICE_TYPES = [
 ];
 
 const COVER_PHOTO_ONLY_SERVICE_TYPES = ["videography", "sound_lighting"];
+
+const SERVICE_ICONS = {
+  photography: Camera,
+  videography: Clapperboard,
+  stage_designer: Building2,
+  sound_lighting: Lightbulb,
+  event_hall: Building2,
+};
+
+const ServiceTypeIcon = ({ serviceName }) => {
+  const Icon = SERVICE_ICONS[serviceName] || BriefcaseBusiness;
+
+  return <Icon className="h-3.5 w-3.5 shrink-0" />;
+};
 
 const formatServiceName = (value = "") => {
   return value
@@ -63,6 +81,8 @@ const getCoverPhotoImage = (service) => {
 const PublicServiceImage = ({ service }) => {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
 
+  const [dragStart, setDragStart] = useState(null);
+
   const serviceName = service?.service_name || "";
 
   const isGalleryOnlyService = GALLERY_ONLY_SERVICE_TYPES.includes(serviceName);
@@ -98,10 +118,6 @@ const PublicServiceImage = ({ service }) => {
     setActiveImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
   };
 
-  // Swipe / Mouse drag
-
-  const [dragStart, setDragStart] = useState(null);
-
   const handleDragStart = (clientX) => {
     if (!hasMultipleImages) return;
 
@@ -128,7 +144,7 @@ const PublicServiceImage = ({ service }) => {
 
   return (
     <div
-      className="relative aspect-4/2.75 w-full overflow-hidden bg-muted cursor-grab select-none active:cursor-grabbing"
+      className="relative aspect-4/2.75 w-full cursor-grab select-none overflow-hidden bg-muted active:cursor-grabbing"
       onMouseDown={(e) => handleDragStart(e.clientX)}
       onMouseUp={(e) => handleDragEnd(e.clientX)}
       onTouchStart={(e) => handleDragStart(e.touches[0].clientX)}
@@ -151,7 +167,6 @@ const PublicServiceImage = ({ service }) => {
       <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-black/20 via-transparent to-black/5" />
 
       {/* Price */}
-
       <div className="absolute left-3 top-3 rounded-md bg-background/95 px-3 py-2 shadow-md backdrop-blur-md">
         <p className="text-base font-bold leading-none text-foreground">
           ৳ {Number(service?.shift_charge || 0).toLocaleString()}
@@ -164,7 +179,6 @@ const PublicServiceImage = ({ service }) => {
       </div>
 
       {/* Rating */}
-
       <div className="absolute right-3 top-3 rounded-md border bg-background/90 px-3 py-2 shadow-md backdrop-blur-md">
         <div className="flex items-center gap-1.5">
           <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
@@ -178,17 +192,15 @@ const PublicServiceImage = ({ service }) => {
       </div>
 
       {/* Service Name */}
-
       <div className="absolute bottom-3 left-3 rounded-md border bg-background/90 px-3 py-2 shadow-md backdrop-blur-md">
         <div className="flex items-center gap-1.5">
-          <BriefcaseBusiness className="h-3.5 w-3.5 shrink-0" />
+          <ServiceTypeIcon serviceName={serviceName} />
 
           <span className="truncate text-xs font-semibold">{serviceTitle}</span>
         </div>
       </div>
 
       {/* Previous */}
-
       {hasMultipleImages && (
         <button
           type="button"
@@ -200,7 +212,6 @@ const PublicServiceImage = ({ service }) => {
       )}
 
       {/* Next */}
-
       {hasMultipleImages && (
         <button
           type="button"
@@ -212,7 +223,6 @@ const PublicServiceImage = ({ service }) => {
       )}
 
       {/* Dots */}
-
       {hasMultipleImages && (
         <div className="absolute bottom-2 left-1/2 flex -translate-x-1/2 gap-1">
           {images.map((image, index) => (

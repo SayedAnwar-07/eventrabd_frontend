@@ -12,7 +12,7 @@ import {
 } from "@/store/features/eventService/eventServiceSelector";
 
 import ServiceDelete from "../components/ServiceDelete";
-import EventServiceSheet from "../components/event-service-sheet/EventServiceSheet";
+import EventServiceSheet from "../components/services-create-update/EventServiceSheet";
 
 import ServiceBreadcrumb from "../components/ServiceDetails/ServiceBreadcrumb";
 import ServiceGalleryCarousel from "../components/ServiceDetails/ServiceGalleryCarousel";

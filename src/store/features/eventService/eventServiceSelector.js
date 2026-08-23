@@ -118,6 +118,31 @@ export const selectDivisionFilter = (state) => selectFilters(state).division;
 
 export const selectSellerFilter = (state) => selectFilters(state).sellerId;
 
+// ── Service Type Options ─────────────────────────────
+
+export const selectServiceTypeOptions = () => [
+  {
+    value: "photography",
+    label: "Photography",
+  },
+  {
+    value: "videography",
+    label: "Videography",
+  },
+  {
+    value: "stage_designer",
+    label: "Stage Designer",
+  },
+  {
+    value: "sound_lighting",
+    label: "Sound System and Lighting",
+  },
+  {
+    value: "event_hall",
+    label: "Event Hall",
+  },
+];
+
 // ── Operation ────────────────────────────────────────
 
 export const selectOperationState = (state) =>

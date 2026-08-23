@@ -6,7 +6,8 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 
-import ServiceFilters from "./ServiceFilters";
+import ServiceAreaFilters from "./ServiceAreaFilters";
+import ServiceTypeFilters from "./ServiceTypeFilters";
 
 const MobileFilterSheet = () => {
   return (
@@ -20,8 +21,10 @@ const MobileFilterSheet = () => {
           <SheetTitle>Filter Services</SheetTitle>
         </SheetHeader>
 
-        <div className="mt-6 px-4">
-          <ServiceFilters />
+        <div className="mt-6 px-4 space-y-8">
+          <ServiceTypeFilters />
+
+          <ServiceAreaFilters />
         </div>
       </SheetContent>
     </Sheet>

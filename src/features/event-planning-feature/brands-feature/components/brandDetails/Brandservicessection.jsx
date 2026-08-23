@@ -1,5 +1,5 @@
 import ServiceCard from "@/features/event-planning-feature/brand-services-feature/components/ServiceCard";
-import EventServiceSheet from "@/features/event-planning-feature/brand-services-feature/components/event-service-sheet/EventServiceSheet";
+import EventServiceSheet from "@/features/event-planning-feature/brand-services-feature/components/services-create-update/EventServiceSheet";
 
 const BrandServicesSection = ({ brand, onServiceCreated }) => {
   const services = brand.services || [];

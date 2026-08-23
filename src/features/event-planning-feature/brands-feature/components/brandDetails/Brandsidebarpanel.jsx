@@ -1,4 +1,4 @@
-import { Mail, MapPin, MessageCircle, Phone } from "lucide-react";
+import { Layers, Mail, MapPin, MessageCircle, Phone } from "lucide-react";
 
 import { DIVISION_OPTIONS } from "@/store/features/eventPlanner/bangladeshLocations";
 
@@ -62,7 +62,7 @@ const ContactRow = ({ icon: Icon, label, value, href }) => {
   );
 };
 
-const BrandSidebarPanel = ({ brand }) => {
+const BrandSidebarPanel = ({ brand, services = [] }) => {
   if (!brand) {
     return null;
   }
@@ -71,7 +71,7 @@ const BrandSidebarPanel = ({ brand }) => {
 
   const whatsappNumber = formatWhatsAppNumber(brand?.whatsapp_number);
 
-  const serviceAreas = getDivisionLabels(brand?.division);
+  const servicesCount = Array.isArray(services) ? services.length : 0;
 
   const officeAddress = brand?.office_address?.trim() || "";
 
@@ -101,17 +101,14 @@ const BrandSidebarPanel = ({ brand }) => {
               >
                 {seller?.full_name || "Seller"}
               </p>
+              {/* Services */}
+              <div className="flex items-center gap-1.5">
+                <Layers className="h-4 w-4" />
 
-              {serviceAreas && (
-                <p
-                  className="mt-1 flex items-start gap-1 text-sm text-muted-foreground"
-                  title={serviceAreas}
-                >
-                  <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-
-                  <span className="line-clamp-2">{serviceAreas}</span>
-                </p>
-              )}
+                <span>
+                  {servicesCount} {servicesCount === 1 ? "service" : "services"}
+                </span>
+              </div>
             </div>
           </div>
 
