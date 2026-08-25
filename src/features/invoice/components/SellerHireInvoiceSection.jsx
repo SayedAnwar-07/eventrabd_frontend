@@ -207,7 +207,9 @@ const SellerHireInvoiceSection = ({ hire }) => {
               />
             ) : null}
 
-            {!customerDecisionSubmitted && existingInvoice.can_edit ? (
+            {!customerAgreed &&
+            !customerDisagreed &&
+            existingInvoice.can_edit ? (
               <EditInvoiceDialog invoice={existingInvoice} hire={hire} />
             ) : null}
 
@@ -249,7 +251,13 @@ const SellerHireInvoiceSection = ({ hire }) => {
   }
 
   if (canCreateInvoice) {
-    return <CreateInvoiceSection key={hireId} hire={hire} />;
+    return (
+      <CreateInvoiceSection
+        key={hireId}
+        hire={hire}
+        bookingRows={hire.booking_slots}
+      />
+    );
   }
 
   return (

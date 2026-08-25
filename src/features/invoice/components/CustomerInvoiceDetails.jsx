@@ -9,6 +9,7 @@ import {
   clearInvoiceError,
   clearInvoiceSuccessMessage,
   fetchInvoices,
+  fetchInvoiceDetails,
   selectInvoiceDecisionLoading,
   selectInvoiceError,
   selectInvoiceLoading,
@@ -126,6 +127,12 @@ const CustomerInvoiceDetails = ({ hire }) => {
           customerAgreed,
         }),
       ).unwrap();
+
+      // Refresh latest invoice data
+      await dispatch(fetchInvoiceDetails(invoice.id));
+
+      // Also refresh invoice list
+      await dispatch(fetchInvoices());
     } finally {
       setSubmittingDecision(null);
     }

@@ -1,14 +1,7 @@
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import {
-  CalendarDays,
-  CircleDollarSign,
-  FilePenLine,
-  ListChecks,
-  Plus,
-  Save,
-  Trash2,
-} from "lucide-react";
+
+import { FilePenLine, Save } from "lucide-react";
 
 import {
   Dialog,
@@ -19,6 +12,10 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 
+import InvoiceFormFields from "./InvoiceFormFields";
+import TermsConditions from "./TermsConditions";
+import InvoicePreview from "./InvoicePreview";
+
 import {
   clearInvoiceError,
   clearInvoiceSuccessMessage,
@@ -26,6 +23,13 @@ import {
   selectInvoiceUpdateLoading,
   updateInvoice,
 } from "@/store/features/invoice/invoiceSlice";
+
+import { getLocalToday } from "../utils/date";
+
+import { toDecimalString } from "../utils/currency";
+
+import { getErrorMessage } from "../utils/validation";
+import InvoiceSlotShifts from "./InvoiceSlotShifts";
 
 const MAX_TERMS_CONDITIONS = 3;
 const MAX_TERM_LENGTH = 300;
@@ -37,16 +41,6 @@ const normalizeTermsConditions = (value) => {
   }
 
   return value.slice(0, MAX_TERMS_CONDITIONS).map((term) => String(term ?? ""));
-};
-
-const getLocalToday = () => {
-  const today = new Date();
-
-  const year = today.getFullYear();
-  const month = String(today.getMonth() + 1).padStart(2, "0");
-  const day = String(today.getDate()).padStart(2, "0");
-
-  return `${year}-${month}-${day}`;
 };
 
 const buildInitialSlotShifts = (breakdown = []) => {
@@ -81,240 +75,13 @@ const getInitialFormData = (invoice, breakdown = []) => ({
   terms_conditions: normalizeTermsConditions(invoice?.terms_conditions),
 });
 
-const toDecimalString = (value) => {
-  if (value === "" || value === null || value === undefined) {
-    return "0.00";
-  }
-
-  const amount = Number(value);
-
-  return Number.isFinite(amount) ? amount.toFixed(2) : "0.00";
-};
-
-const formatMoney = (value) => {
-  const amount = Number(value);
-
-  if (!Number.isFinite(amount)) {
-    return "৳0.00";
-  }
-
-  return `৳${amount.toLocaleString("en-US", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
-};
-
-const formatEventType = (value) => {
-  if (!value) {
-    return "Event";
-  }
-
-  if (value === "akhd_walima") {
-    return "Akhd/Walima";
-  }
-
-  return String(value)
-    .replaceAll("_", " ")
-    .replace(/\b\w/g, (character) => character.toUpperCase());
-};
-
-const formatHireSlotDate = (slot) => {
-  const rawDate = slot?.starts_at || slot?.date || slot?.booking_date;
-
-  if (!rawDate) {
-    return "Booked date";
-  }
-
-  const parsedDate = new Date(rawDate);
-
-  if (Number.isNaN(parsedDate.getTime())) {
-    return String(rawDate);
-  }
-
-  return parsedDate.toLocaleDateString("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
-};
-
-/*
- * Invoice service_summary.breakdown is the authoritative source for invoice
- * booking title, unit price, shift count and amount.
- * Hire slots are used only as a display fallback for event/date information.
- */
-const buildHireSlotMap = (hire) => {
-  const slotMap = new Map();
-
-  const bookingItems = Array.isArray(hire?.booking_items)
-    ? hire.booking_items
-    : [];
-
-  bookingItems.forEach((item) => {
-    const itemSlots = Array.isArray(item?.booking_slots)
-      ? item.booking_slots
-      : [];
-
-    itemSlots.forEach((slot) => {
-      if (slot?.id) {
-        slotMap.set(String(slot.id), slot);
-      }
-    });
-  });
-
-  const topLevelSlots = Array.isArray(hire?.booking_slots)
-    ? hire.booking_slots
-    : [];
-
-  topLevelSlots.forEach((slot) => {
-    if (!slot?.id) {
-      return;
-    }
-
-    const existing = slotMap.get(String(slot.id));
-
-    slotMap.set(String(slot.id), {
-      ...(existing || {}),
-      ...slot,
-    });
-  });
-
-  return slotMap;
-};
-
-const getBreakdownDate = (entry, hireSlot) => {
-  if (entry?.date) {
-    return String(entry.date);
-  }
-
-  return formatHireSlotDate(hireSlot);
-};
-
-const getInvoiceBookingTitle = (invoice, breakdown) => {
-  const uniqueTitles = [
-    ...new Set(
-      breakdown
-        .map((entry) => entry?.booking_title)
-        .filter((title) => Boolean(title)),
-    ),
-  ];
-
-  if (uniqueTitles.length === 1) {
-    return uniqueTitles[0];
-  }
-
-  if (uniqueTitles.length > 1) {
-    const serviceName =
-      invoice?.service?.service_display_name ||
-      invoice?.service?.service_name ||
-      invoice?.service?.name ||
-      invoice?.service_name_snapshot ||
-      "Service";
-
-    return `${serviceName} (${uniqueTitles.length} booking options)`;
-  }
-
-  return (
-    invoice?.service_name_snapshot ||
-    invoice?.service?.service_display_name ||
-    invoice?.service?.service_name ||
-    invoice?.service?.name ||
-    ""
-  );
-};
-
-const getErrorMessage = (error) => {
-  if (!error) {
-    return "";
-  }
-
-  if (typeof error === "string") {
-    return error;
-  }
-
-  if (typeof error?.detail === "string") {
-    return error.detail;
-  }
-
-  if (typeof error?.message === "string") {
-    return error.message;
-  }
-
-  return "Unable to update the invoice.";
-};
-
-const FormField = ({
-  id,
-  label,
-  icon: Icon,
-  error,
-  optionalText,
-  children,
-}) => {
-  return (
-    <div>
-      <label
-        htmlFor={id}
-        className="flex items-center gap-2 text-sm font-semibold text-gray-800"
-      >
-        {Icon ? <Icon className="h-4 w-4 text-[#b60018]" /> : null}
-
-        <span>{label}</span>
-
-        {optionalText ? (
-          <span className="text-xs font-normal text-gray-500">
-            {optionalText}
-          </span>
-        ) : null}
-      </label>
-
-      {children}
-
-      {error ? <p className="mt-1.5 text-sm text-red-600">{error}</p> : null}
-    </div>
-  );
-};
-
-const PreviewItem = ({ label, value, emphasized = false }) => {
-  return (
-    <div
-      className={
-        emphasized
-          ? "rounded-xl bg-[#b60018] p-4 text-white"
-          : "rounded-xl border border-gray-200 bg-white p-4"
-      }
-    >
-      <p
-        className={`text-[10px] font-bold uppercase tracking-[0.12em] ${
-          emphasized ? "text-red-100" : "text-gray-500"
-        }`}
-      >
-        {label}
-      </p>
-
-      <p
-        className={`mt-1 ${
-          emphasized ? "text-lg font-bold" : "font-semibold text-gray-950"
-        }`}
-      >
-        {formatMoney(value)}
-      </p>
-    </div>
-  );
-};
-
-const EditInvoiceDialog = ({ invoice, hire }) => {
+const EditInvoiceDialog = ({ invoice }) => {
   const dispatch = useDispatch();
 
   const updateLoading = useSelector(selectInvoiceUpdateLoading);
+
   const apiError = useSelector(selectInvoiceError);
 
-  const hireSlotMap = buildHireSlotMap(hire);
-
-  /*
-   * Do NOT filter service_summary.breakdown through current Hire slots.
-   * The Invoice response is the historical/backend source of truth.
-   */
   const breakdown = Array.isArray(invoice?.service_summary?.breakdown)
     ? invoice.service_summary.breakdown.filter((entry) =>
         Boolean(entry?.booking_slot_id),
@@ -333,25 +100,11 @@ const EditInvoiceDialog = ({ invoice, hire }) => {
 
   const today = getLocalToday();
 
-  const shiftHourPerSlot = Number(
-    invoice?.service_summary?.shift_hour_per_slot || 0,
-  );
-
-  const totalShiftCount = breakdown.reduce((sum, entry) => {
-    const value = Number(formData.slot_shifts[entry.booking_slot_id]);
-
-    return sum + (Number.isFinite(value) ? value : 0);
-  }, 0);
-
-  const totalShiftHours = shiftHourPerSlot * totalShiftCount;
-
   const additionalChargeAmount =
     formData.additional_charge === "" ? 0 : Number(formData.additional_charge);
 
   const hasAdditionalCharge =
     Number.isFinite(additionalChargeAmount) && additionalChargeAmount > 0;
-
-  const bookingTitle = getInvoiceBookingTitle(invoice, breakdown);
 
   const handleOpenChange = (nextOpen) => {
     if (updateLoading) {
@@ -382,6 +135,7 @@ const EditInvoiceDialog = ({ invoice, hire }) => {
     setValidationErrors((currentErrors) => ({
       ...currentErrors,
       [name]: null,
+
       ...(name === "additional_charge"
         ? {
             additional_charge_reason: null,
@@ -419,6 +173,7 @@ const EditInvoiceDialog = ({ invoice, hire }) => {
 
       return {
         ...currentErrors,
+
         slot_shifts: currentSlotErrors,
       };
     });
@@ -446,6 +201,7 @@ const EditInvoiceDialog = ({ invoice, hire }) => {
 
     setValidationErrors((currentErrors) => ({
       ...currentErrors,
+
       terms_conditions: null,
     }));
 
@@ -474,6 +230,7 @@ const EditInvoiceDialog = ({ invoice, hire }) => {
 
       return {
         ...currentErrors,
+
         terms_conditions: currentTermErrors,
       };
     });
@@ -498,18 +255,15 @@ const EditInvoiceDialog = ({ invoice, hire }) => {
       ),
     }));
 
-    setValidationErrors((currentErrors) => {
-      const currentTermErrors = Array.isArray(currentErrors.terms_conditions)
+    setValidationErrors((currentErrors) => ({
+      ...currentErrors,
+
+      terms_conditions: Array.isArray(currentErrors.terms_conditions)
         ? currentErrors.terms_conditions.filter(
             (_, termIndex) => termIndex !== index,
           )
-        : null;
-
-      return {
-        ...currentErrors,
-        terms_conditions: currentTermErrors,
-      };
-    });
+        : null,
+    }));
 
     setLocalMessage("");
 
@@ -522,6 +276,7 @@ const EditInvoiceDialog = ({ invoice, hire }) => {
     const errors = {};
 
     const currentDiscountPrice = Number(formData.discount_price);
+
     const currentAdvancePayment = Number(formData.advance_payment);
 
     const currentAdditionalCharge =
@@ -570,6 +325,7 @@ const EditInvoiceDialog = ({ invoice, hire }) => {
 
       breakdown.forEach((entry) => {
         const rawValue = formData.slot_shifts[entry.booking_slot_id];
+
         const shiftValue = Number(rawValue);
 
         if (
@@ -599,11 +355,7 @@ const EditInvoiceDialog = ({ invoice, hire }) => {
       currentAdditionalChargeReason.length > MAX_ADDITIONAL_CHARGE_REASON_LENGTH
     ) {
       errors.additional_charge_reason = `Additional charge reason cannot contain more than ${MAX_ADDITIONAL_CHARGE_REASON_LENGTH} characters.`;
-    } else if (
-      Number.isFinite(currentAdditionalCharge) &&
-      currentAdditionalCharge > 0 &&
-      !currentAdditionalChargeReason
-    ) {
+    } else if (currentAdditionalCharge > 0 && !currentAdditionalChargeReason) {
       errors.additional_charge_reason =
         "Additional charge reason is required when additional charge is greater than zero.";
     }
@@ -624,18 +376,10 @@ const EditInvoiceDialog = ({ invoice, hire }) => {
       errors.advance_payment = "Advance payment cannot be negative.";
     }
 
-    /*
-     * The backend validates:
-     * discount <= recalculated service_price + additional_charge
-     * advance <= recalculated total
-     * because changing slot_shifts can change service_price.
-     */
-
     setValidationErrors(errors);
 
     return Object.keys(errors).length === 0;
   };
-
   const getChangedSlotShifts = () => {
     const nextSlotShifts = breakdown.map((entry) => ({
       booking_slot: entry.booking_slot_id,
@@ -644,6 +388,7 @@ const EditInvoiceDialog = ({ invoice, hire }) => {
 
     const currentSlotShifts = breakdown.map((entry) => ({
       booking_slot: entry.booking_slot_id,
+
       shift_count: Number(entry.shift_count),
     }));
 
@@ -656,20 +401,15 @@ const EditInvoiceDialog = ({ invoice, hire }) => {
   const getChangedFields = () => {
     const changedFields = {};
 
-    const nextAdditionalCharge = toDecimalString(formData.additional_charge);
-    const currentAdditionalCharge = toDecimalString(invoice?.additional_charge);
-
-    const nextDiscountPrice = toDecimalString(formData.discount_price);
-    const currentDiscountPrice = toDecimalString(invoice?.discount_price);
-
-    const nextAdvancePayment = toDecimalString(formData.advance_payment);
-    const currentAdvancePayment = toDecimalString(invoice?.advance_payment);
-
     const changedSlotShifts = getChangedSlotShifts();
 
     if (changedSlotShifts) {
       changedFields.slot_shifts = changedSlotShifts;
     }
+
+    const nextAdditionalCharge = toDecimalString(formData.additional_charge);
+
+    const currentAdditionalCharge = toDecimalString(invoice?.additional_charge);
 
     if (nextAdditionalCharge !== currentAdditionalCharge) {
       changedFields.additional_charge = nextAdditionalCharge;
@@ -685,9 +425,17 @@ const EditInvoiceDialog = ({ invoice, hire }) => {
       changedFields.additional_charge_reason = nextAdditionalChargeReason;
     }
 
+    const nextDiscountPrice = toDecimalString(formData.discount_price);
+
+    const currentDiscountPrice = toDecimalString(invoice?.discount_price);
+
     if (nextDiscountPrice !== currentDiscountPrice) {
       changedFields.discount_price = nextDiscountPrice;
     }
+
+    const nextAdvancePayment = toDecimalString(formData.advance_payment);
+
+    const currentAdvancePayment = toDecimalString(invoice?.advance_payment);
 
     if (nextAdvancePayment !== currentAdvancePayment) {
       changedFields.advance_payment = nextAdvancePayment;
@@ -698,6 +446,7 @@ const EditInvoiceDialog = ({ invoice, hire }) => {
     }
 
     const nextSellerNote = formData.seller_note.trim();
+
     const currentSellerNote = String(invoice?.seller_note || "").trim();
 
     if (nextSellerNote !== currentSellerNote) {
@@ -728,15 +477,18 @@ const EditInvoiceDialog = ({ invoice, hire }) => {
     setLocalMessage("");
 
     dispatch(clearInvoiceError());
+
     dispatch(clearInvoiceSuccessMessage());
 
     if (!invoice?.id) {
       setLocalMessage("Invoice ID is missing.");
+
       return;
     }
 
     if (!invoice?.can_edit) {
       setLocalMessage("This invoice can no longer be edited.");
+
       return;
     }
 
@@ -748,6 +500,7 @@ const EditInvoiceDialog = ({ invoice, hire }) => {
 
     if (Object.keys(changedFields).length === 0) {
       setLocalMessage("No invoice changes were detected.");
+
       return;
     }
 
@@ -759,26 +512,29 @@ const EditInvoiceDialog = ({ invoice, hire }) => {
         }),
       ).unwrap();
 
-      /*
-       * Backend response remains authoritative for:
-       * service_summary.breakdown
-       * service_price
-       * sub_total
-       * additional_charge
-       * discount_price
-       * total
-       * advance_payment
-       * due_payment
-       * payment_status
-       */
-
       setOpen(false);
+
       setValidationErrors({});
+
       setLocalMessage("");
     } catch {
-      // Existing Redux/global API error handling stores the backend error.
+      // Redux handles API error
     }
   };
+
+  const calculatePreviewPrice = () => {
+    return breakdown.reduce((total, entry) => {
+      const shiftCount =
+        Number(formData.slot_shifts[entry.booking_slot_id]) || 1;
+
+      const unitPrice = Number(entry.unit_price || 0);
+
+      return total + unitPrice * shiftCount;
+    }, 0);
+  };
+
+  const previewBasePrice =
+    calculatePreviewPrice() || Number(invoice?.total_booking_price || 0);
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -786,7 +542,7 @@ const EditInvoiceDialog = ({ invoice, hire }) => {
         <button
           type="button"
           disabled={!invoice?.can_edit}
-          className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[#b60018] px-6 text-sm font-semibold text-white transition hover:bg-[#960014] disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-500"
+          className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[#b60018] px-6 text-sm font-semibold text-white transition hover:bg-[#960014] disabled:bg-gray-300"
         >
           <FilePenLine className="h-4 w-4" />
           Edit Invoice
@@ -795,480 +551,80 @@ const EditInvoiceDialog = ({ invoice, hire }) => {
 
       <DialogContent className="max-h-[92vh] overflow-y-auto border-gray-200 bg-white p-0 sm:max-w-3xl">
         <DialogHeader className="border-b border-gray-200 px-6 py-5 text-left sm:px-8">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-red-50">
-            <FilePenLine className="h-5 w-5 text-[#b60018]" />
-          </div>
-
-          <DialogTitle className="pt-2 text-xl text-gray-950">
+          <DialogTitle className="text-xl text-gray-950">
             Edit Invoice
           </DialogTitle>
 
-          <DialogDescription className="leading-6 text-gray-600">
+          <DialogDescription>
             Update payment information for{" "}
-            <span className="font-semibold text-gray-900">
-              {invoice?.invoice_number || "this invoice"}
-            </span>
-            .
-            {bookingTitle ? (
-              <>
-                {" "}
-                Booking:{" "}
-                <span className="font-semibold text-gray-900">
-                  {bookingTitle}
-                </span>
-                .
-              </>
-            ) : null}{" "}
-            Only changed fields will be submitted.
+            <span className="font-semibold">{invoice?.invoice_number}</span>
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="px-6 py-6 sm:px-8">
+        <form onSubmit={handleSubmit} className="space-y-6 px-6 py-6 sm:px-8">
           {apiError ? (
-            <div
-              role="alert"
-              className="mb-5 border-l-2 border-red-600 bg-red-50 px-4 py-3 text-sm text-red-700"
-            >
+            <div className="border-l-2 border-red-600 bg-red-50 px-4 py-3 text-sm text-red-700">
               {getErrorMessage(apiError)}
             </div>
           ) : null}
 
           {localMessage ? (
-            <div
-              role="status"
-              className="mb-5 border-l-2 border-amber-600 bg-amber-50 px-4 py-3 text-sm text-amber-800"
-            >
+            <div className="border-l-2 border-amber-600 bg-amber-50 px-4 py-3 text-sm text-amber-800">
               {localMessage}
             </div>
           ) : null}
 
-          {validationErrors.slot_shifts_general ? (
-            <div
-              role="alert"
-              className="mb-5 border-l-2 border-red-600 bg-red-50 px-4 py-3 text-sm text-red-700"
-            >
-              {validationErrors.slot_shifts_general}
-            </div>
-          ) : null}
+          <InvoiceSlotShifts
+            bookingRows={breakdown}
+            slotShifts={formData.slot_shifts}
+            errors={validationErrors}
+            loading={updateLoading}
+            onChange={handleSlotShiftChange}
+          />
 
-          {/* Backend Invoice breakdown -> per-booking-slot shift counts */}
-          <div>
-            <div className="flex items-center gap-2">
-              <CalendarDays className="h-4 w-4 text-[#b60018]" />
+          <InvoiceFormFields
+            formData={formData}
+            validationErrors={validationErrors}
+            loading={updateLoading}
+            today={today}
+            hasAdditionalCharge={hasAdditionalCharge}
+            onChange={handleChange}
+          />
 
-              <h3 className="text-sm font-semibold text-gray-800">
-                Shift Count per Booked Event
-              </h3>
-            </div>
+          <TermsConditions
+            terms={formData.terms_conditions}
+            errors={validationErrors.terms_conditions}
+            loading={updateLoading}
+            onAdd={handleAddTerm}
+            onChange={handleTermChange}
+            onRemove={handleRemoveTerm}
+          />
 
-            <p className="mt-1 text-xs leading-5 text-gray-500">
-              Each row comes from the backend Invoice service summary, so a
-              multi-package Hire keeps the correct booking title and unit price.
-              Changing shifts makes the backend recalculate service_price.
-            </p>
+          <InvoicePreview
+            backendOnly={false}
+            basePrice={previewBasePrice}
+            additionalCharge={formData.additional_charge}
+            discount={formData.discount_price}
+            total={
+              previewBasePrice +
+              Number(formData.additional_charge || 0) -
+              Number(formData.discount_price || 0)
+            }
+            advance={formData.advance_payment}
+            duePayment={
+              previewBasePrice +
+              Number(formData.additional_charge || 0) -
+              Number(formData.discount_price || 0) -
+              Number(formData.advance_payment || 0)
+            }
+          />
 
-            <div className="mt-4 space-y-3">
-              {breakdown.map((entry) => {
-                const hireSlot = hireSlotMap.get(String(entry.booking_slot_id));
-
-                const eventLabel = formatEventType(
-                  entry?.event_type || hireSlot?.event_type,
-                );
-
-                const eventDate = getBreakdownDate(entry, hireSlot);
-
-                const slotError =
-                  validationErrors.slot_shifts?.[entry.booking_slot_id];
-
-                return (
-                  <div
-                    key={entry.booking_slot_id}
-                    className="flex flex-col gap-3 rounded-xl border border-gray-200 bg-gray-50 p-3 sm:flex-row sm:items-center sm:justify-between"
-                  >
-                    <div className="flex min-w-0 items-center gap-3">
-                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-red-50">
-                        <CalendarDays className="h-4 w-4 text-[#b60018]" />
-                      </div>
-
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold text-gray-950">
-                          {entry?.booking_title || "Booking"}
-                        </p>
-
-                        <p className="mt-0.5 text-xs text-gray-600">
-                          {eventLabel} · {eventDate}
-                        </p>
-
-                        <p className="mt-1 text-xs font-medium text-[#b60018]">
-                          {formatMoney(entry?.unit_price)} per shift
-                        </p>
-
-                        <p className="mt-0.5 text-[11px] text-gray-500">
-                          Current backend amount: {formatMoney(entry?.amount)}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="sm:w-40">
-                      <label
-                        htmlFor={`invoice-slot-shift-${invoice?.id}-${entry.booking_slot_id}`}
-                        className="sr-only"
-                      >
-                        Shift count for {entry?.booking_title || eventLabel} on{" "}
-                        {eventDate}
-                      </label>
-
-                      <input
-                        id={`invoice-slot-shift-${invoice?.id}-${entry.booking_slot_id}`}
-                        type="number"
-                        min="1"
-                        step="1"
-                        inputMode="numeric"
-                        value={
-                          formData.slot_shifts[entry.booking_slot_id] ?? ""
-                        }
-                        onChange={(event) =>
-                          handleSlotShiftChange(
-                            entry.booking_slot_id,
-                            event.target.value,
-                          )
-                        }
-                        disabled={updateLoading}
-                        aria-invalid={Boolean(slotError)}
-                        className={`h-10 w-full rounded-lg border bg-white px-3 text-sm text-gray-950 outline-none transition disabled:cursor-not-allowed disabled:bg-gray-100 disabled:opacity-60 ${
-                          slotError
-                            ? "border-red-400 focus:border-red-600 focus:ring-2 focus:ring-red-100"
-                            : "border-gray-300 focus:border-[#b60018] focus:ring-2 focus:ring-red-100"
-                        }`}
-                      />
-
-                      {slotError ? (
-                        <p className="mt-1 text-xs text-red-600">{slotError}</p>
-                      ) : null}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            <p className="mt-3 text-xs text-gray-500">
-              {totalShiftCount} Total Shift
-              {totalShiftCount === 1 ? "" : "s"} · {shiftHourPerSlot} Hours ×{" "}
-              {totalShiftCount} Shifts = {totalShiftHours} Hours
-            </p>
-          </div>
-
-          <div className="mt-5 grid gap-5 md:grid-cols-2">
-            <FormField
-              id={`invoice-due-date-${invoice?.id}`}
-              label="Due Payment Date"
-              icon={CalendarDays}
-              error={validationErrors.due_payment_last_date}
-            >
-              <input
-                id={`invoice-due-date-${invoice?.id}`}
-                name="due_payment_last_date"
-                type="date"
-                min={today}
-                value={formData.due_payment_last_date}
-                onChange={handleChange}
-                disabled={updateLoading}
-                aria-invalid={Boolean(validationErrors.due_payment_last_date)}
-                className="mt-2 h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none transition focus:border-[#b60018] focus:ring-2 focus:ring-red-100 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:opacity-60"
-              />
-            </FormField>
-
-            <FormField
-              id={`invoice-additional-charge-${invoice?.id}`}
-              label="Additional Charge"
-              icon={CircleDollarSign}
-              error={validationErrors.additional_charge}
-              optionalText="Optional"
-            >
-              <input
-                id={`invoice-additional-charge-${invoice?.id}`}
-                name="additional_charge"
-                type="number"
-                min="0"
-                step="0.01"
-                inputMode="decimal"
-                value={formData.additional_charge}
-                onChange={handleChange}
-                disabled={updateLoading}
-                aria-invalid={Boolean(validationErrors.additional_charge)}
-                className="mt-2 h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none transition focus:border-[#b60018] focus:ring-2 focus:ring-red-100 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:opacity-60"
-              />
-            </FormField>
-
-            <FormField
-              id={`invoice-discount-${invoice?.id}`}
-              label="Discount Price"
-              icon={CircleDollarSign}
-              error={validationErrors.discount_price}
-            >
-              <input
-                id={`invoice-discount-${invoice?.id}`}
-                name="discount_price"
-                type="number"
-                min="0"
-                step="0.01"
-                inputMode="decimal"
-                value={formData.discount_price}
-                onChange={handleChange}
-                disabled={updateLoading}
-                aria-invalid={Boolean(validationErrors.discount_price)}
-                className="mt-2 h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none transition focus:border-[#b60018] focus:ring-2 focus:ring-red-100 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:opacity-60"
-              />
-            </FormField>
-
-            <FormField
-              id={`invoice-advance-${invoice?.id}`}
-              label="Advance Payment"
-              icon={CircleDollarSign}
-              error={validationErrors.advance_payment}
-            >
-              <input
-                id={`invoice-advance-${invoice?.id}`}
-                name="advance_payment"
-                type="number"
-                min="0"
-                step="0.01"
-                inputMode="decimal"
-                value={formData.advance_payment}
-                onChange={handleChange}
-                disabled={updateLoading}
-                aria-invalid={Boolean(validationErrors.advance_payment)}
-                className="mt-2 h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none transition focus:border-[#b60018] focus:ring-2 focus:ring-red-100 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:opacity-60"
-              />
-            </FormField>
-          </div>
-
-          <div className="mt-5">
-            <FormField
-              id={`invoice-additional-charge-reason-${invoice?.id}`}
-              label="Additional Charge Reason"
-              error={validationErrors.additional_charge_reason}
-              optionalText={hasAdditionalCharge ? "Required" : "Optional"}
-            >
-              <textarea
-                id={`invoice-additional-charge-reason-${invoice?.id}`}
-                name="additional_charge_reason"
-                rows={3}
-                maxLength={MAX_ADDITIONAL_CHARGE_REASON_LENGTH}
-                value={formData.additional_charge_reason}
-                onChange={handleChange}
-                disabled={updateLoading}
-                required={hasAdditionalCharge}
-                aria-invalid={Boolean(
-                  validationErrors.additional_charge_reason,
-                )}
-                placeholder={
-                  hasAdditionalCharge
-                    ? "Explain why this additional charge is being added."
-                    : "Optional reason for the additional charge."
-                }
-                className="mt-2 w-full resize-y rounded-lg border border-gray-300 bg-white px-3 py-3 text-sm text-gray-950 outline-none transition focus:border-[#b60018] focus:ring-2 focus:ring-red-100 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:opacity-60"
-              />
-
-              <div className="mt-1 flex justify-end">
-                <p className="text-[11px] text-gray-400">
-                  {formData.additional_charge_reason.length}/
-                  {MAX_ADDITIONAL_CHARGE_REASON_LENGTH}
-                </p>
-              </div>
-            </FormField>
-          </div>
-
-          <div className="mt-5">
-            <label
-              htmlFor={`invoice-seller-note-${invoice?.id}`}
-              className="text-sm font-semibold text-gray-800"
-            >
-              Seller Note
-            </label>
-
-            <textarea
-              id={`invoice-seller-note-${invoice?.id}`}
-              name="seller_note"
-              rows={4}
-              maxLength={1000}
-              value={formData.seller_note}
-              onChange={handleChange}
-              disabled={updateLoading}
-              placeholder="Add payment instructions or invoice information."
-              className="mt-2 w-full resize-y rounded-lg border border-gray-300 bg-white px-3 py-3 text-sm text-gray-950 outline-none transition focus:border-[#b60018] focus:ring-2 focus:ring-red-100 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:opacity-60"
-            />
-          </div>
-
-          <div className="mt-5">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <div className="flex items-center gap-2">
-                  <ListChecks className="h-4 w-4 text-[#b60018]" />
-
-                  <h3 className="text-sm font-semibold text-gray-800">
-                    Terms & Conditions
-                  </h3>
-
-                  <span className="text-xs font-normal text-gray-500">
-                    Optional
-                  </span>
-                </div>
-
-                <p className="mt-1 text-xs leading-5 text-gray-500">
-                  Add up to {MAX_TERMS_CONDITIONS} invoice terms.
-                </p>
-              </div>
-
-              <button
-                type="button"
-                onClick={handleAddTerm}
-                disabled={
-                  updateLoading ||
-                  formData.terms_conditions.length >= MAX_TERMS_CONDITIONS
-                }
-                className="inline-flex h-9 shrink-0 items-center justify-center gap-2 rounded-lg border border-[#b60018] bg-white px-4 text-xs font-semibold text-[#b60018] transition hover:bg-red-50 disabled:cursor-not-allowed disabled:border-gray-300 disabled:text-gray-400 disabled:hover:bg-white"
-              >
-                <Plus className="h-4 w-4" />
-                Add Term
-              </button>
-            </div>
-
-            {formData.terms_conditions.length > 0 ? (
-              <div className="mt-4 space-y-3">
-                {formData.terms_conditions.map((term, index) => {
-                  const termError = Array.isArray(
-                    validationErrors.terms_conditions,
-                  )
-                    ? validationErrors.terms_conditions[index]
-                    : null;
-
-                  return (
-                    <div
-                      key={`invoice-term-${invoice?.id}-${index}`}
-                      className="rounded-xl border border-gray-200 bg-gray-50 p-3"
-                    >
-                      <div className="flex items-start gap-3">
-                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-red-50 text-xs font-bold text-[#b60018]">
-                          {index + 1}
-                        </div>
-
-                        <div className="min-w-0 flex-1">
-                          <label
-                            htmlFor={`invoice-term-${invoice?.id}-${index}`}
-                            className="sr-only"
-                          >
-                            Term {index + 1}
-                          </label>
-
-                          <textarea
-                            id={`invoice-term-${invoice?.id}-${index}`}
-                            rows={2}
-                            maxLength={MAX_TERM_LENGTH}
-                            value={term}
-                            onChange={(event) =>
-                              handleTermChange(index, event.target.value)
-                            }
-                            disabled={updateLoading}
-                            aria-invalid={Boolean(termError)}
-                            placeholder={`Enter term ${index + 1}`}
-                            className={`w-full resize-y rounded-lg border bg-white px-3 py-2.5 text-sm text-gray-950 outline-none transition disabled:cursor-not-allowed disabled:bg-gray-100 disabled:opacity-60 ${
-                              termError
-                                ? "border-red-400 focus:border-red-600 focus:ring-2 focus:ring-red-100"
-                                : "border-gray-300 focus:border-[#b60018] focus:ring-2 focus:ring-red-100"
-                            }`}
-                          />
-
-                          <div className="mt-1 flex items-start justify-between gap-3">
-                            <div>
-                              {termError ? (
-                                <p className="text-xs text-red-600">
-                                  {termError}
-                                </p>
-                              ) : null}
-                            </div>
-
-                            <p className="shrink-0 text-[11px] text-gray-400">
-                              {term.length}/{MAX_TERM_LENGTH}
-                            </p>
-                          </div>
-                        </div>
-
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveTerm(index)}
-                          disabled={updateLoading}
-                          aria-label={`Remove term ${index + 1}`}
-                          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 transition hover:border-red-200 hover:bg-red-50 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="mt-4 rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-5 text-center">
-                <p className="text-sm text-gray-500">
-                  No terms and conditions added.
-                </p>
-
-                <p className="mt-1 text-xs text-gray-400">
-                  This field is optional.
-                </p>
-              </div>
-            )}
-
-            <div className="mt-2 flex justify-end">
-              <p className="text-xs text-gray-500">
-                {formData.terms_conditions.length}/{MAX_TERMS_CONDITIONS} terms
-                added
-              </p>
-            </div>
-          </div>
-
-          <div className="mt-6 rounded-2xl border border-gray-200 bg-gray-50 p-4 sm:p-5">
-            <div>
-              <h3 className="font-semibold text-gray-950">
-                Current Backend Values
-              </h3>
-
-              <p className="mt-1 text-xs leading-5 text-gray-500">
-                These are the currently saved Invoice values returned by the
-                backend. After saving, the backend recalculates and returns the
-                updated service price, totals, due payment and payment status.
-              </p>
-            </div>
-
-            <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
-              <PreviewItem label="Base Price" value={invoice?.service_price} />
-
-              <PreviewItem
-                label="Additional Charge"
-                value={invoice?.additional_charge}
-              />
-
-              <PreviewItem label="Discount" value={invoice?.discount_price} />
-
-              <PreviewItem label="Total" value={invoice?.total} />
-
-              <PreviewItem label="Advance" value={invoice?.advance_payment} />
-
-              <PreviewItem
-                label="Due Payment"
-                value={invoice?.due_payment}
-                emphasized
-              />
-            </div>
-          </div>
-
-          <div className="mt-7 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+          <div className="flex justify-end gap-3">
             <button
               type="button"
               disabled={updateLoading}
               onClick={() => handleOpenChange(false)}
-              className="h-11 rounded-lg border border-gray-300 bg-white px-6 text-sm font-semibold text-gray-800 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+              className="h-11 rounded-lg border border-gray-300 px-6 text-sm font-semibold text-gray-700"
             >
               Cancel
             </button>
@@ -1276,7 +632,7 @@ const EditInvoiceDialog = ({ invoice, hire }) => {
             <button
               type="submit"
               disabled={updateLoading || !invoice?.can_edit}
-              className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[#b60018] px-6 text-sm font-semibold text-white transition hover:bg-[#960014] disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex h-11 items-center gap-2 rounded-lg bg-[#b60018] px-6 text-sm font-semibold text-white"
             >
               <Save className="h-4 w-4" />
 
