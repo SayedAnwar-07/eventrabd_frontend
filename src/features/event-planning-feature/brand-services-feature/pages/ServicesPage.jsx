@@ -1,7 +1,15 @@
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useSearchParams } from "react-router-dom";
 
-import { fetchPublicServices } from "@/store/features/eventService/eventServiceSlice";
+import {
+  fetchPublicServices,
+  setSellerFilter,
+  setBrandFilter,
+  setServiceTypeFilter,
+  setDivisionFilter,
+  setSearchFilter,
+} from "@/store/features/eventService/eventServiceSlice";
 
 import {
   selectPublicServices,
@@ -9,6 +17,9 @@ import {
   selectPublicServicesError,
   selectDivisionFilter,
   selectServiceTypeFilter,
+  selectSellerFilter,
+  selectBrandFilter,
+  selectSearchFilter,
 } from "@/store/features/eventService/eventServiceSelector";
 
 import PublicServiceCard from "../components/PublicServiceCard";
@@ -24,6 +35,8 @@ import GlobalErrorMessage from "@/components/common/GlobalErrorMessage";
 const ServicesPage = () => {
   const dispatch = useDispatch();
 
+  const [searchParams, setSearchParams] = useSearchParams();
+
   const services = useSelector(selectPublicServices);
 
   const loading = useSelector(selectPublicServicesLoading);
@@ -34,18 +47,97 @@ const ServicesPage = () => {
 
   const serviceType = useSelector(selectServiceTypeFilter);
 
+  const sellerId = useSelector(selectSellerFilter);
+
+  const brandId = useSelector(selectBrandFilter);
+
+  const search = useSelector(selectSearchFilter);
+
+  // ===============================
+  // Restore filters from URL
+  // ===============================
+
   useEffect(() => {
+    const seller = searchParams.get("seller_id");
+
+    const brand = searchParams.get("brand_id");
+
+    const type = searchParams.get("service_type");
+
+    const div = searchParams.get("division");
+
+    const text = searchParams.get("search");
+
+    if (seller) {
+      dispatch(setSellerFilter(Number(seller)));
+    }
+
+    if (brand) {
+      dispatch(setBrandFilter(Number(brand)));
+    }
+
+    if (type) {
+      dispatch(setServiceTypeFilter(type));
+    }
+
+    if (div) {
+      dispatch(setDivisionFilter(div));
+    }
+
+    if (text) {
+      dispatch(setSearchFilter(text));
+    }
+  }, [dispatch]);
+
+  // ===============================
+  // Fetch services + update URL
+  // ===============================
+
+  useEffect(() => {
+    const params = new URLSearchParams();
+
+    if (sellerId) {
+      params.set("seller_id", sellerId);
+    }
+
+    if (brandId) {
+      params.set("brand_id", brandId);
+    }
+
+    if (serviceType) {
+      params.set("service_type", serviceType);
+    }
+
+    if (division) {
+      params.set("division", division);
+    }
+
+    if (search) {
+      params.set("search", search);
+    }
+
+    setSearchParams(params, {
+      replace: true,
+    });
+
     dispatch(
       fetchPublicServices({
         page: 1,
+
         pageSize: 12,
 
-        division: division || "",
+        sellerId,
 
-        serviceType: serviceType || "",
+        brandId,
+
+        serviceType,
+
+        division,
+
+        search,
       }),
     );
-  }, [dispatch, division, serviceType]);
+  }, [dispatch, sellerId, brandId, serviceType, division, search]);
 
   return (
     <main className="min-h-screen">
@@ -58,12 +150,12 @@ const ServicesPage = () => {
           <BrandSearch />
         </section>
 
-        {/* Main Layout */}
+        {/* Layout */}
 
         <div className="grid gap-8 lg:grid-cols-5">
-          {/* Left Filters */}
+          {/* Filters */}
 
-          <aside className="lg:col-span-1 min-w-0">
+          <aside className="min-w-0 lg:col-span-1">
             <div className="sticky top-24 rounded-lg border p-4">
               <div className="hidden lg:block">
                 <ServiceFilters />
@@ -75,7 +167,7 @@ const ServicesPage = () => {
             </div>
           </aside>
 
-          {/* Right Services */}
+          {/* Services */}
 
           <section className="lg:col-span-4">
             <div className="mb-8">

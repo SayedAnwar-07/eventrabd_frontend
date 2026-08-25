@@ -36,6 +36,7 @@ import NotificationsPage from "@/features/notfications/pages/NotificationsPage";
 import MyReportsPage from "@/features/report/pages/MyReportsPage";
 import ReportDetailsPage from "@/features/report/pages/ReportDetailsPage";
 import ServicesPage from "@/features/event-planning-feature/brand-services-feature/pages/ServicesPage";
+import ContactPage from "@/pages/contact/ContactPage";
 
 // hire pages
 
@@ -90,6 +91,11 @@ const router = createBrowserRouter([
       {
         path: "services",
         element: <ServicesPage />,
+      },
+
+      {
+        path: "contact",
+        element: <ContactPage />,
       },
 
       // =========================

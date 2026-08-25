@@ -1,17 +1,7 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import api from "@/store/constant/api";
-// import getApiErrorPayload from "@/store/constant/getApiErrorPayload";
 import { connectWebSocket } from "@/websocket/websocketClient";
 import getApiErrorMessage from "@/store/constant/getApiErrorMessage";
-
-// ── Local storage helpers ─────────────────────────────────────────────────────
-const fromStorage = (key) => {
-  try {
-    return localStorage.getItem(key) ?? null;
-  } catch {
-    return null;
-  }
-};
 
 const getStoredUser = () => {
   try {
@@ -23,16 +13,13 @@ const getStoredUser = () => {
   }
 };
 
-const saveSession = (access, user) => {
+const saveSession = (user) => {
   try {
-    localStorage.setItem("accessToken", access);
-
     localStorage.setItem("user", JSON.stringify(user));
 
-    // Remove old insecure refresh-token storage.
     localStorage.removeItem("refreshToken");
-  } catch {
-    // Ignore browser storage errors.
+  } catch (error) {
+    console.warn("Unable to save user session:", error);
   }
 };
 
@@ -46,19 +33,18 @@ const saveUser = (user) => {
 
 const clearSession = () => {
   try {
-    localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");
     localStorage.removeItem("user");
-  } catch {
-    // Ignore browser storage errors.
+  } catch (error) {
+    console.warn("Unable to clear session:", error);
   }
 };
 
 // Remove any refresh token saved by the previous implementation.
 try {
   localStorage.removeItem("refreshToken");
-} catch {
-  // Ignore browser storage errors.
+} catch (error) {
+  console.warn("Unable to remove old refresh token:", error);
 }
 
 // ── Authentication thunks ─────────────────────────────────────────────────────
@@ -108,6 +94,19 @@ export const getMyProfile = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const { data } = await api.get("/users/me/");
+
+      return data;
+    } catch (error) {
+      return rejectWithValue(getApiErrorMessage(error));
+    }
+  },
+);
+
+export const restoreSession = createAsyncThunk(
+  "auth/restoreSession",
+  async (_, { rejectWithValue }) => {
+    try {
+      const { data } = await api.post("/users/token/refresh/", {});
 
       return data;
     } catch (error) {
@@ -166,7 +165,7 @@ export const resetPassword = createAsyncThunk(
 // Refresh token automatically comes from the HttpOnly cookie.
 export const logoutUser = createAsyncThunk("auth/logout", async () => {
   try {
-    await api.post("/users/logout/", {});
+    await api.post("/users/amar-admin/logout/", {});
   } catch {
     // Clear frontend session regardless.
   }
@@ -176,7 +175,7 @@ export const logoutUser = createAsyncThunk("auth/logout", async () => {
 // If expired, api.js refreshes it automatically first.
 export const logoutAll = createAsyncThunk("auth/logoutAll", async () => {
   try {
-    await api.post("/users/logout/all/", {});
+    await api.post("/users/amar-admin/logout/all/", {});
   } catch {
     // Clear frontend session regardless.
   }
@@ -184,18 +183,18 @@ export const logoutAll = createAsyncThunk("auth/logoutAll", async () => {
 
 // ── Initial state ─────────────────────────────────────────────────────────────
 
-const initialAccessToken = fromStorage("accessToken");
+const initialAccessToken = null;
 
 const initialState = {
   user: getStoredUser(),
 
   accessToken: initialAccessToken,
 
-  // Kept only for compatibility with existing components.
-  // The real refresh token is now an HttpOnly cookie.
   refreshToken: null,
 
   isAuthenticated: Boolean(initialAccessToken),
+
+  authInitialized: false,
 
   loading: false,
   error: null,
@@ -228,6 +227,8 @@ const setLoggedOut = (state) => {
   state.refreshToken = null;
 
   state.isAuthenticated = false;
+
+  state.authInitialized = true;
 
   state.loading = false;
   state.error = null;
@@ -263,17 +264,8 @@ const authSlice = createSlice({
       const accessToken = action.payload;
 
       state.accessToken = accessToken;
-      state.isAuthenticated = Boolean(accessToken);
 
-      try {
-        if (accessToken) {
-          localStorage.setItem("accessToken", accessToken);
-        } else {
-          localStorage.removeItem("accessToken");
-        }
-      } catch {
-        // Ignore browser storage errors.
-      }
+      state.isAuthenticated = Boolean(accessToken);
     },
   },
 
@@ -304,7 +296,7 @@ const authSlice = createSlice({
 
         state.isAuthenticated = true;
 
-        saveSession(access, user);
+        saveSession(user);
         connectWebSocket(access);
       })
 
@@ -328,9 +320,30 @@ const authSlice = createSlice({
 
         state.isAuthenticated = true;
 
-        saveSession(access, user);
+        saveSession(user);
 
         connectWebSocket(access);
+      })
+
+      .addCase(restoreSession.fulfilled, (state, action) => {
+        const access = action.payload.access;
+
+        state.accessToken = access;
+
+        state.isAuthenticated = true;
+
+        state.authInitialized = true;
+
+        connectWebSocket(access);
+      })
+      .addCase(restoreSession.rejected, (state) => {
+        state.accessToken = null;
+
+        state.isAuthenticated = false;
+
+        state.user = null;
+
+        state.authInitialized = true;
       })
 
       // ── Get own profile
@@ -339,7 +352,7 @@ const authSlice = createSlice({
       .addCase(getMyProfile.fulfilled, (state, action) => {
         state.loading = false;
         state.user = action.payload;
-
+        state.isAuthenticated = true;
         saveUser(action.payload);
       })
 

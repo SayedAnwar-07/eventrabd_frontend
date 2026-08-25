@@ -117,6 +117,7 @@ export const selectSearchFilter = (state) => selectFilters(state).search;
 export const selectDivisionFilter = (state) => selectFilters(state).division;
 
 export const selectSellerFilter = (state) => selectFilters(state).sellerId;
+export const selectBrandFilter = (state) => selectFilters(state).brandId;
 
 // ── Service Type Options ─────────────────────────────
 

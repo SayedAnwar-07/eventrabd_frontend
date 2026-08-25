@@ -9,18 +9,15 @@ import { Provider } from "react-redux";
 import { store } from "./store/store";
 
 import { startNotificationListener } from "./websocket/notificationListener";
+import AuthInitializer from "./features/auth/AuthInitializer";
 
-import { connectWebSocket } from "./websocket/websocketClient";
-
+// Start realtime notification listener
 startNotificationListener();
-const accessToken = localStorage.getItem("accessToken");
-
-if (accessToken) {
-  connectWebSocket(accessToken);
-}
 
 createRoot(document.getElementById("root")).render(
   <Provider store={store}>
-    <MainRoutes />
+    <AuthInitializer>
+      <MainRoutes />
+    </AuthInitializer>
   </Provider>,
 );

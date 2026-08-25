@@ -3,8 +3,8 @@ import { useDispatch, useSelector } from "react-redux";
 
 import {
   fetchSellerSuggestions,
-  fetchPublicServices,
   setSelectedSeller,
+  setSellerFilter,
   clearSellerSearch,
 } from "@/store/features/eventService/eventServiceSlice";
 
@@ -24,8 +24,6 @@ const SellerSearch = () => {
 
   const [open, setOpen] = useState(false);
 
-  // debounce
-
   useEffect(() => {
     if (!query.trim()) {
       return;
@@ -43,12 +41,7 @@ const SellerSearch = () => {
   const handleSelect = (seller) => {
     dispatch(setSelectedSeller(seller));
 
-    dispatch(
-      fetchPublicServices({
-        page: 1,
-        seller_id: seller.id,
-      }),
-    );
+    dispatch(setSellerFilter(seller.id));
 
     setQuery(seller.full_name);
 
@@ -59,12 +52,6 @@ const SellerSearch = () => {
     setQuery("");
 
     dispatch(clearSellerSearch());
-
-    dispatch(
-      fetchPublicServices({
-        page: 1,
-      }),
-    );
   };
 
   return (
@@ -75,9 +62,9 @@ const SellerSearch = () => {
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search seller..."
           className="
-            h-10 w-full rounded-md border
-            bg-background px-3 text-sm
-            outline-none
+          h-10 w-full rounded-md border
+          bg-background px-3 text-sm
+          outline-none
           "
         />
 
@@ -86,7 +73,7 @@ const SellerSearch = () => {
             type="button"
             onClick={handleClear}
             className="
-              rounded-md border px-3 text-sm
+            rounded-md border px-3 text-sm
             "
           >
             Clear
@@ -97,9 +84,9 @@ const SellerSearch = () => {
       {open && suggestions.length > 0 && (
         <div
           className="
-            absolute z-50 mt-2 w-full
-            rounded-md border bg-background
-            shadow-md
+          absolute z-50 mt-2 w-full
+          rounded-md border bg-background
+          shadow-md
           "
         >
           {loading && (
@@ -112,9 +99,9 @@ const SellerSearch = () => {
               type="button"
               onClick={() => handleSelect(seller)}
               className="
-                block w-full px-3 py-2
-                text-left text-sm
-                hover:bg-muted
+              block w-full px-3 py-2
+              text-left text-sm
+              hover:bg-muted
               "
             >
               {seller.full_name}

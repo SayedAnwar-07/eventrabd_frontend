@@ -63,8 +63,8 @@ export const fetchPublicServices = createAsyncThunk(
       division = "",
 
       // NEW
-      seller_id = "",
-      brand_id = "",
+      sellerId = null,
+      brandId = null,
     } = {},
 
     { rejectWithValue },
@@ -93,18 +93,12 @@ export const fetchPublicServices = createAsyncThunk(
         params.division = normalizedDivision;
       }
 
-      // Seller filtering
-
-      if (seller_id) {
-        params.seller_id = seller_id;
+      if (sellerId) {
+        params.seller_id = sellerId;
       }
-
-      // Brand filtering
-
-      if (brand_id) {
-        params.brand_id = brand_id;
+      if (brandId) {
+        params.brand_id = brandId;
       }
-
       const response = await api.get("/event-services/services/", {
         params,
       });
@@ -541,16 +535,19 @@ const eventServiceSlice = createSlice({
       state.sellerSuggestions.data = [];
 
       state.filters.sellerId = null;
-    },
 
+      state.filters.currentPage = 1;
+    },
+    
     clearBrandSearch(state) {
       state.selectedBrand = null;
 
       state.brandSuggestions.data = [];
 
       state.filters.brandId = null;
-    },
 
+      state.filters.currentPage = 1;
+    },
     // =====================================================
     // BRAND SERVICES FILTER
     // =====================================================

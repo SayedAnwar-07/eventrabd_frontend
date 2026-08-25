@@ -36,8 +36,6 @@ export default function Navbar() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  // const { theme, setTheme } = useTheme();
-
   const { user } = useSelector((state) => state.auth);
 
   const { myBrandDetails, myBrand } = useSelector(
@@ -48,36 +46,46 @@ export default function Navbar() {
 
   const canReceiveNotifications = user?.role === "customer" || isSeller;
 
+  // Normalize brand response
   const sellerBrand = Array.isArray(myBrandDetails?.results)
-    ? myBrandDetails.results.find((brand) => brand?.is_owner === true) || null
+    ? myBrandDetails.results.find(
+        (brand) => brand?.slug === user?.brand_slug || brand?.is_owner === true,
+      ) || myBrandDetails.results[0]
     : myBrandDetails?.id && myBrandDetails?.slug
       ? myBrandDetails
       : null;
 
+  // Fetch seller brand after refresh
   useEffect(() => {
-    if (!isSeller) return;
+    if (!isSeller) {
+      return;
+    }
 
-    if (myBrandDetails || myBrand.loading) {
+    if (myBrand.loading) {
+      return;
+    }
+
+    if (sellerBrand) {
       return;
     }
 
     dispatch(fetchMyBrand());
-  }, [dispatch, isSeller, myBrandDetails, myBrand.loading]);
+  }, [dispatch, isSeller, sellerBrand, myBrand.loading]);
 
   // Notification count
   useEffect(() => {
-    if (!canReceiveNotifications) return;
+    if (!canReceiveNotifications) {
+      return;
+    }
 
     dispatch(fetchNotificationCount());
   }, [dispatch, user?.id, canReceiveNotifications]);
 
-  // const handleThemeToggle = () => {
-  //   setTheme(theme === "light" ? "dark" : "light");
-  // };
-
   const handleLogout = () => {
     dispatch(clearNotifications());
+
     dispatch(clearMyBrandDetails());
+
     dispatch(logoutUser());
 
     navigate("/", {
@@ -96,6 +104,7 @@ export default function Navbar() {
 
     if (destination.type === "hire" && user?.role === "seller") {
       navigate(`/seller/hire-requests/${destination.id}`);
+
       return;
     }
 
@@ -106,12 +115,12 @@ export default function Navbar() {
 
   const navProps = {
     user,
+
     navItems: NAV_ITEMS,
 
     sellerBrand,
-    sellerBrandLoading: isSeller && !sellerBrand && myBrand.loading,
 
-    // onThemeToggle: handleThemeToggle,
+    sellerBrandLoading: isSeller && !sellerBrand && myBrand.loading,
 
     onLogout: handleLogout,
 

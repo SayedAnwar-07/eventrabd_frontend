@@ -27,8 +27,6 @@ export const connectWebSocket = (accessToken) => {
     try {
       const data = JSON.parse(event.data);
 
-      console.log("Realtime event:", data);
-
       window.dispatchEvent(
         new CustomEvent("notification_received", {
           detail: data,

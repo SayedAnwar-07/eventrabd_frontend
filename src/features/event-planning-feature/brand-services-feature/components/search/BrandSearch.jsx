@@ -3,8 +3,8 @@ import { useDispatch, useSelector } from "react-redux";
 
 import {
   fetchBrandSuggestions,
-  fetchPublicServices,
   setSelectedBrand,
+  setBrandFilter,
   clearBrandSearch,
 } from "@/store/features/eventService/eventServiceSlice";
 
@@ -41,12 +41,7 @@ const BrandSearch = () => {
   const handleSelect = (brand) => {
     dispatch(setSelectedBrand(brand));
 
-    dispatch(
-      fetchPublicServices({
-        page: 1,
-        brand_id: brand.id,
-      }),
-    );
+    dispatch(setBrandFilter(brand.id));
 
     setQuery(brand.display_name);
 
@@ -57,12 +52,6 @@ const BrandSearch = () => {
     setQuery("");
 
     dispatch(clearBrandSearch());
-
-    dispatch(
-      fetchPublicServices({
-        page: 1,
-      }),
-    );
   };
 
   return (
@@ -73,10 +62,10 @@ const BrandSearch = () => {
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search brand..."
           className="
-            h-10 w-full rounded-md border
-            bg-background px-3 text-sm
-            outline-none
-          "
+h-10 w-full rounded-md border
+bg-background px-3 text-sm
+outline-none
+"
         />
 
         {query && (
@@ -84,8 +73,8 @@ const BrandSearch = () => {
             type="button"
             onClick={handleClear}
             className="
-              rounded-md border px-3 text-sm
-            "
+rounded-md border px-3 text-sm
+"
           >
             Clear
           </button>
@@ -95,10 +84,10 @@ const BrandSearch = () => {
       {open && suggestions.length > 0 && (
         <div
           className="
-            absolute z-50 mt-2 w-full
-            rounded-md border bg-background
-            shadow-md
-          "
+absolute z-50 mt-2 w-full
+rounded-md border bg-background
+shadow-md
+"
         >
           {loading && (
             <p className="p-3 text-sm text-muted-foreground">Searching...</p>
@@ -110,10 +99,10 @@ const BrandSearch = () => {
               type="button"
               onClick={() => handleSelect(brand)}
               className="
-                block w-full px-3 py-2
-                text-left text-sm
-                hover:bg-muted
-              "
+block w-full px-3 py-2
+text-left text-sm
+hover:bg-muted
+"
             >
               {brand.display_name}
             </button>

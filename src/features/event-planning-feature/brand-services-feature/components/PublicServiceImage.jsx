@@ -9,6 +9,7 @@ import {
   Lightbulb,
   Star,
 } from "lucide-react";
+import ImageModal from "./ImageModal";
 
 const GALLERY_ONLY_SERVICE_TYPES = [
   "photography",
@@ -80,7 +81,7 @@ const getCoverPhotoImage = (service) => {
 
 const PublicServiceImage = ({ service }) => {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
-
+  const [modalImage, setModalImage] = useState(null);
   const [dragStart, setDragStart] = useState(null);
 
   const serviceName = service?.service_name || "";
@@ -154,7 +155,8 @@ const PublicServiceImage = ({ service }) => {
         <img
           src={activeImage.url}
           alt={`${serviceTitle} ${safeIndex + 1}`}
-          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+          onClick={() => setModalImage(activeImage.url)}
+          className="h-full w-full cursor-pointer object-cover transition-transform duration-500 group-hover:scale-[1.02]"
           loading="lazy"
           decoding="async"
         />
@@ -167,19 +169,19 @@ const PublicServiceImage = ({ service }) => {
       <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-black/20 via-transparent to-black/5" />
 
       {/* Price */}
-      <div className="absolute left-3 top-3 rounded-md bg-background/95 px-3 py-2 shadow-md backdrop-blur-md">
+      <div className="absolute right-3 bottom-3 rounded-md bg-background/95 px-3 py-2 shadow-md backdrop-blur-md">
         <p className="text-base font-bold leading-none text-foreground">
           ৳ {Number(service?.shift_charge || 0).toLocaleString()}
         </p>
 
-        <span className="text-sm">
+        {/* <span className="text-sm">
           {service?.shift_hour} Hour
           {Number(service?.shift_hour) > 1 ? "s" : ""}
-        </span>
+        </span> */}
       </div>
 
       {/* Rating */}
-      <div className="absolute right-3 top-3 rounded-md border bg-background/90 px-3 py-2 shadow-md backdrop-blur-md">
+      {/* <div className="absolute right-3 top-3 rounded-md border bg-background/90 px-3 py-2 shadow-md backdrop-blur-md">
         <div className="flex items-center gap-1.5">
           <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
 
@@ -189,7 +191,7 @@ const PublicServiceImage = ({ service }) => {
 
           <span className="text-[10px]">({service?.review_count ?? 0})</span>
         </div>
-      </div>
+      </div> */}
 
       {/* Service Name */}
       <div className="absolute bottom-3 left-3 rounded-md border bg-background/90 px-3 py-2 shadow-md backdrop-blur-md">
@@ -237,6 +239,11 @@ const PublicServiceImage = ({ service }) => {
           ))}
         </div>
       )}
+      <ImageModal
+        image={modalImage}
+        open={!!modalImage}
+        onClose={() => setModalImage(null)}
+      />
     </div>
   );
 };

@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
-import { FileText, MapPin, Send } from "lucide-react";
+import { FileText, MapPin, Send, Star } from "lucide-react";
+import { useSelector } from "react-redux";
 
 const formatLocation = (division) => {
   if (!Array.isArray(division) || division.length === 0) {
@@ -16,8 +17,9 @@ const formatLocation = (division) => {
 const PublicServiceInfo = ({ service }) => {
   const brand = service?.brand || {};
   const seller = service?.seller || {};
+  const { user } = useSelector((state) => state.auth);
 
-  const isOwner = brand?.is_owner === true;
+  const isOwner = brand?.is_owner === true || brand?.slug === user?.brand_slug;
 
   const brandSlug = brand?.slug || "";
 
@@ -95,9 +97,22 @@ const PublicServiceInfo = ({ service }) => {
           {/* Seller Info */}
 
           <div className="min-w-0 flex-1 overflow-hidden">
-            <p className="truncate text-sm font-semibold text-foreground">
-              {seller?.full_name || "Unknown Seller"}
-            </p>
+            <div className="flex justify-between">
+              <p className="truncate text-sm font-semibold text-foreground">
+                {seller?.full_name || "Unknown Seller"}
+              </p>
+              <div className="flex items-center gap-1.5">
+                <Star className="h-3.5 w-3.5 fill-yellow-500 text-yellow-500" />
+
+                <span className="text-xs font-bold">
+                  {Number(service?.rating || 0).toFixed(1)}
+                </span>
+
+                <span className="text-[10px]">
+                  ({service?.review_count ?? 0})
+                </span>
+              </div>
+            </div>
 
             {location.length > 0 && (
               <div className="text-xs text-muted-foreground">
@@ -132,7 +147,6 @@ const PublicServiceInfo = ({ service }) => {
           to={detailPath}
           className="flex flex-1 items-center justify-center gap-2 rounded-md border border-primary bg-background px-3 py-2.5 text-xs font-semibold text-primary transition-all hover:bg-primary/5"
         >
-          <FileText className="h-4 w-4" />
           View Details
         </Link>
 
@@ -144,7 +158,6 @@ const PublicServiceInfo = ({ service }) => {
             }}
             className="flex flex-1 items-center justify-center gap-2 rounded-md bg-primary px-3 py-2.5 text-xs font-semibold text-primary-foreground shadow-sm transition-all hover:bg-primary/90"
           >
-            <Send className="h-4 w-4" />
             Hire Now
           </Link>
         )}
