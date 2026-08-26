@@ -14,7 +14,6 @@ import {
 
 import InvoiceFormFields from "./InvoiceFormFields";
 import TermsConditions from "./TermsConditions";
-import InvoicePreview from "./InvoicePreview";
 
 import {
   clearInvoiceError,
@@ -527,14 +526,35 @@ const EditInvoiceDialog = ({ invoice }) => {
       const shiftCount =
         Number(formData.slot_shifts[entry.booking_slot_id]) || 1;
 
-      const unitPrice = Number(entry.unit_price || 0);
+      const unitPrice =
+        entry?.unit_price === null ||
+        entry?.unit_price === undefined ||
+        entry?.unit_price === ""
+          ? 0
+          : Number(entry.unit_price);
+
+      if (!Number.isFinite(unitPrice)) {
+        return total;
+      }
 
       return total + unitPrice * shiftCount;
     }, 0);
   };
 
+  const calculatedBasePrice = calculatePreviewPrice();
+
   const previewBasePrice =
-    calculatePreviewPrice() || Number(invoice?.total_booking_price || 0);
+    calculatedBasePrice > 0
+      ? calculatedBasePrice
+      : Number(invoice?.total_booking_price || 0);
+
+  const previewTotal =
+    previewBasePrice +
+    Number(formData.additional_charge || 0) -
+    Number(formData.discount_price || 0);
+
+  const previewDuePayment =
+    previewTotal - Number(formData.advance_payment || 0);
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -589,6 +609,9 @@ const EditInvoiceDialog = ({ invoice }) => {
             today={today}
             hasAdditionalCharge={hasAdditionalCharge}
             onChange={handleChange}
+            basePrice={previewBasePrice}
+            total={previewTotal}
+            duePayment={previewDuePayment}
           />
 
           <TermsConditions
@@ -598,25 +621,6 @@ const EditInvoiceDialog = ({ invoice }) => {
             onAdd={handleAddTerm}
             onChange={handleTermChange}
             onRemove={handleRemoveTerm}
-          />
-
-          <InvoicePreview
-            backendOnly={false}
-            basePrice={previewBasePrice}
-            additionalCharge={formData.additional_charge}
-            discount={formData.discount_price}
-            total={
-              previewBasePrice +
-              Number(formData.additional_charge || 0) -
-              Number(formData.discount_price || 0)
-            }
-            advance={formData.advance_payment}
-            duePayment={
-              previewBasePrice +
-              Number(formData.additional_charge || 0) -
-              Number(formData.discount_price || 0) -
-              Number(formData.advance_payment || 0)
-            }
           />
 
           <div className="flex justify-end gap-3">

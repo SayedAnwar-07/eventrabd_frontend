@@ -15,10 +15,7 @@ export const startNotificationListener = () => {
 
     store.dispatch(fetchNotificationCount());
 
-    if (
-      notification?.notification_type === "INVOICE_UPDATED" ||
-      notification?.invoice
-    ) {
+    if (notification?.notification_type === "invoice_updated") {
       store.dispatch(fetchInvoices());
     }
   });

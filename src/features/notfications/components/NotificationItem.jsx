@@ -66,16 +66,34 @@ const getSourceMeta = (notification) => {
     return [customerName, serviceName, ratingLabel].filter(Boolean).join(" · ");
   }
 
-  const invoiceNumber = notification?.invoice?.invoice_number;
+const invoiceNumber = notification?.invoice?.invoice_number;
 
-  const total = notification?.invoice?.total;
+const total = notification?.invoice?.total;
 
-  if (invoiceNumber && total !== null && total !== undefined) {
-    return `${invoiceNumber} · ${formatNotificationCurrency(total)}`;
-  }
+const customerName = notification?.data?.customer_name;
 
-  return invoiceNumber || "";
-};
+const decision = notification?.data?.decision;
+
+
+if (customerName && decision) {
+  return [
+    customerName,
+    decision === "agreed"
+      ? "Invoice accepted"
+      : "Invoice rejected",
+  ]
+    .filter(Boolean)
+    .join(" · ");
+}
+
+
+if (invoiceNumber && total !== null && total !== undefined) {
+  return `${invoiceNumber} · ${formatNotificationCurrency(total)}`;
+}
+
+
+return invoiceNumber || "";
+}
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
@@ -97,10 +115,13 @@ export default function NotificationItem({
 
   const sourceMeta = getSourceMeta(notification);
 
-  const changedFields =
-    notification.notification_type === NOTIFICATION_TYPES.INVOICE_UPDATED
-      ? getChangedFieldLabels(notification.data?.changed_fields)
-      : [];
+const changedFields =
+  notification.notification_type === NOTIFICATION_TYPES.INVOICE_UPDATED &&
+  Array.isArray(notification.data?.changed_fields)
+    ? getChangedFieldLabels(
+        notification.data.changed_fields
+      )
+    : [];
 
   const visibleChangedFields = changedFields.slice(0, 2);
 
