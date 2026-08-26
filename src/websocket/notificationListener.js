@@ -7,7 +7,15 @@ import {
 
 import { fetchInvoices } from "@/store/features/invoice/invoiceSlice";
 
+let listenerStarted = false;
+
 export const startNotificationListener = () => {
+  if (listenerStarted) {
+    return;
+  }
+
+  listenerStarted = true;
+
   window.addEventListener("notification_received", (event) => {
     const notification = event.detail;
 

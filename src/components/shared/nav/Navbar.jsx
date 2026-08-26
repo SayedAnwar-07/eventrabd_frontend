@@ -36,7 +36,9 @@ export default function Navbar() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const { user } = useSelector((state) => state.auth);
+  const { user, isAuthenticated, authInitialized } = useSelector(
+    (state) => state.auth,
+  );
 
   const { myBrandDetails, myBrand } = useSelector(
     (state) => state.eventPlanner,
@@ -46,51 +48,67 @@ export default function Navbar() {
 
   const canReceiveNotifications = user?.role === "customer" || isSeller;
 
-  // Normalize brand response
+  // Current seller brand
   const sellerBrand = Array.isArray(myBrandDetails?.results)
-    ? myBrandDetails.results.find(
+    ? (myBrandDetails.results.find(
         (brand) => brand?.slug === user?.brand_slug || brand?.is_owner === true,
-      ) || myBrandDetails.results[0]
+      ) ??
+      myBrandDetails.results[0] ??
+      null)
     : myBrandDetails?.id && myBrandDetails?.slug
       ? myBrandDetails
       : null;
 
-  // Fetch seller brand after refresh
+  // Fetch brand after auth restore
   useEffect(() => {
-    if (!isSeller) {
-      return;
-    }
-
-    if (myBrand.loading) {
-      return;
-    }
-
-    if (sellerBrand) {
+    if (
+      !authInitialized ||
+      !isAuthenticated ||
+      !isSeller ||
+      myBrand.loading ||
+      sellerBrand
+    ) {
       return;
     }
 
     dispatch(fetchMyBrand());
-  }, [dispatch, isSeller, sellerBrand, myBrand.loading]);
+  }, [
+    dispatch,
+    authInitialized,
+    isAuthenticated,
+    isSeller,
+    myBrand.loading,
+    sellerBrand,
+  ]);
 
-  // Notification count
+  // Fetch notification count after auth restore
   useEffect(() => {
-    if (!canReceiveNotifications) {
+    if (!authInitialized || !isAuthenticated || !canReceiveNotifications) {
       return;
     }
 
     dispatch(fetchNotificationCount());
-  }, [dispatch, user?.id, canReceiveNotifications]);
+  }, [
+    dispatch,
+    authInitialized,
+    isAuthenticated,
+    user?.id,
+    canReceiveNotifications,
+  ]);
 
-  const handleLogout = () => {
+  // Logout
+  const handleLogout = async () => {
+    // Clear UI state immediately
     dispatch(clearNotifications());
-
     dispatch(clearMyBrandDetails());
 
-    dispatch(logoutUser());
-
-    navigate("/", {
-      replace: true,
-    });
+    try {
+      await dispatch(logoutUser()).unwrap();
+    } finally {
+      navigate("/login/", {
+        replace: true,
+      });
+    }
   };
 
   const handleViewNotifications = () => {
@@ -115,12 +133,16 @@ export default function Navbar() {
 
   const navProps = {
     user,
-
     navItems: NAV_ITEMS,
 
     sellerBrand,
 
-    sellerBrandLoading: isSeller && !sellerBrand && myBrand.loading,
+    sellerBrandLoading:
+      authInitialized &&
+      isAuthenticated &&
+      isSeller &&
+      !sellerBrand &&
+      myBrand.loading,
 
     onLogout: handleLogout,
 

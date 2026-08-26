@@ -1,8 +1,11 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import api from "@/store/constant/api";
+
+import api, { clearAuthStorage, saveAccessToken } from "@/store/constant/api";
+
 import { connectWebSocket } from "@/websocket/websocketClient";
 import getApiErrorMessage from "@/store/constant/getApiErrorMessage";
 
+// Get stored user only
 const getStoredUser = () => {
   try {
     const rawUser = localStorage.getItem("user");
@@ -13,44 +16,37 @@ const getStoredUser = () => {
   }
 };
 
-const saveSession = (user) => {
+// Save user only
+const saveUser = (user) => {
   try {
     localStorage.setItem("user", JSON.stringify(user));
 
+    // Remove old implementation
     localStorage.removeItem("refreshToken");
   } catch (error) {
     console.warn("Unable to save user session:", error);
   }
 };
 
-const saveUser = (user) => {
-  try {
-    localStorage.setItem("user", JSON.stringify(user));
-  } catch {
-    // Ignore browser storage errors.
-  }
-};
-
+// Clear local user data
 const clearSession = () => {
-  try {
-    localStorage.removeItem("refreshToken");
-    localStorage.removeItem("user");
-  } catch (error) {
-    console.warn("Unable to clear session:", error);
-  }
+  clearAuthStorage();
 };
 
-// Remove any refresh token saved by the previous implementation.
+// Remove old refresh token
 try {
   localStorage.removeItem("refreshToken");
 } catch (error) {
   console.warn("Unable to remove old refresh token:", error);
 }
 
-// ── Authentication thunks ─────────────────────────────────────────────────────
+// =========================================================
+// Register
+// =========================================================
 
 export const registerUser = createAsyncThunk(
   "auth/register",
+
   async (userData, { rejectWithValue }) => {
     try {
       const { data } = await api.post("/users/register/", userData);
@@ -62,12 +58,26 @@ export const registerUser = createAsyncThunk(
   },
 );
 
+// =========================================================
+// Verify OTP
+// =========================================================
+
 export const verifyOtp = createAsyncThunk(
   "auth/verifyOtp",
+
   async (otpData, { rejectWithValue }) => {
     try {
       const { data } = await api.post("/users/verify-otp/", otpData);
 
+      const access = data?.access;
+
+      if (!access) {
+        throw new Error("Access token missing from verify response.");
+      }
+
+      // Sync Axios runtime token
+      saveAccessToken(access);
+
       return data;
     } catch (error) {
       return rejectWithValue(getApiErrorMessage(error));
@@ -75,12 +85,26 @@ export const verifyOtp = createAsyncThunk(
   },
 );
 
+// =========================================================
+// Login
+// =========================================================
+
 export const loginUser = createAsyncThunk(
   "auth/login",
+
   async (loginData, { rejectWithValue }) => {
     try {
       const { data } = await api.post("/users/login/", loginData);
 
+      const access = data?.access;
+
+      if (!access) {
+        throw new Error("Access token missing from login response.");
+      }
+
+      // Sync Axios runtime token
+      saveAccessToken(access);
+
       return data;
     } catch (error) {
       return rejectWithValue(getApiErrorMessage(error));
@@ -88,9 +112,42 @@ export const loginUser = createAsyncThunk(
   },
 );
 
-// Private authenticated profile only.
+// =========================================================
+// Restore session
+// =========================================================
+
+export const restoreSession = createAsyncThunk(
+  "auth/restoreSession",
+
+  async (_, { rejectWithValue }) => {
+    try {
+      const { data } = await api.post("/users/token/refresh/", {});
+
+      const access = data?.access;
+
+      if (!access) {
+        throw new Error("Access token missing from refresh response.");
+      }
+
+      // Restore Axios runtime token
+      saveAccessToken(access);
+
+      return data;
+    } catch (error) {
+      clearAuthStorage();
+
+      return rejectWithValue(getApiErrorMessage(error));
+    }
+  },
+);
+
+// =========================================================
+// My profile
+// =========================================================
+
 export const getMyProfile = createAsyncThunk(
   "auth/getMyProfile",
+
   async (_, { rejectWithValue }) => {
     try {
       const { data } = await api.get("/users/me/");
@@ -102,32 +159,16 @@ export const getMyProfile = createAsyncThunk(
   },
 );
 
-export const restoreSession = createAsyncThunk(
-  "auth/restoreSession",
-  async (_, { rejectWithValue }) => {
-    try {
-      const { data } = await api.post("/users/token/refresh/", {});
-
-      return data;
-    } catch (error) {
-      return rejectWithValue(getApiErrorMessage(error));
-    }
-  },
-);
+// =========================================================
+// Update profile
+// =========================================================
 
 export const updateProfile = createAsyncThunk(
   "auth/updateProfile",
+
   async ({ slug, updateData }, { rejectWithValue }) => {
     try {
-      const isFormData = updateData instanceof FormData;
-
-      const { data } = await api.patch(`/users/${slug}/settings/`, updateData, {
-        headers: isFormData
-          ? {
-              "Content-Type": "multipart/form-data",
-            }
-          : {},
-      });
+      const { data } = await api.patch(`/users/${slug}/settings/`, updateData);
 
       return data;
     } catch (error) {
@@ -136,8 +177,13 @@ export const updateProfile = createAsyncThunk(
   },
 );
 
+// =========================================================
+// Forgot password
+// =========================================================
+
 export const forgotPassword = createAsyncThunk(
   "auth/forgotPassword",
+
   async (emailData, { rejectWithValue }) => {
     try {
       const { data } = await api.post("/users/forgot-password/", emailData);
@@ -149,8 +195,13 @@ export const forgotPassword = createAsyncThunk(
   },
 );
 
+// =========================================================
+// Reset password
+// =========================================================
+
 export const resetPassword = createAsyncThunk(
   "auth/resetPassword",
+
   async (passwordData, { rejectWithValue }) => {
     try {
       const { data } = await api.post("/users/reset-password/", passwordData);
@@ -162,37 +213,53 @@ export const resetPassword = createAsyncThunk(
   },
 );
 
-// Refresh token automatically comes from the HttpOnly cookie.
-export const logoutUser = createAsyncThunk("auth/logout", async () => {
-  try {
-    await api.post("/users/amar-admin/logout/", {});
-  } catch {
-    // Clear frontend session regardless.
-  }
-});
+// =========================================================
+// Logout current device
+// =========================================================
 
-// Requires the current access token.
-// If expired, api.js refreshes it automatically first.
-export const logoutAll = createAsyncThunk("auth/logoutAll", async () => {
-  try {
-    await api.post("/users/amar-admin/logout/all/", {});
-  } catch {
-    // Clear frontend session regardless.
-  }
-});
+export const logoutUser = createAsyncThunk(
+  "auth/logout",
 
-// ── Initial state ─────────────────────────────────────────────────────────────
+  async () => {
+    try {
+      await api.post("/users/logout/", {});
+    } finally {
+      clearAuthStorage();
+    }
+  },
+);
 
-const initialAccessToken = null;
+// =========================================================
+// Logout all devices
+// =========================================================
+
+export const logoutAll = createAsyncThunk(
+  "auth/logoutAll",
+
+  async () => {
+    try {
+      await api.post("/users/logout/all/", {});
+    } finally {
+      clearAuthStorage();
+    }
+  },
+);
+
+// =========================================================
+// Initial state
+// =========================================================
 
 const initialState = {
   user: getStoredUser(),
 
-  accessToken: initialAccessToken,
+  // Redux mirror only
+  accessToken: null,
 
+  // Refresh token is HttpOnly cookie only
   refreshToken: null,
 
-  isAuthenticated: Boolean(initialAccessToken),
+  // Must restore first after reload
+  isAuthenticated: false,
 
   authInitialized: false,
 
@@ -204,7 +271,9 @@ const initialState = {
   resetSuccess: false,
 };
 
-// ── Shared reducer helpers ────────────────────────────────────────────────────
+// =========================================================
+// Shared reducers
+// =========================================================
 
 const setPending = (state) => {
   state.loading = true;
@@ -227,7 +296,6 @@ const setLoggedOut = (state) => {
   state.refreshToken = null;
 
   state.isAuthenticated = false;
-
   state.authInitialized = true;
 
   state.loading = false;
@@ -240,7 +308,9 @@ const setLoggedOut = (state) => {
   clearSession();
 };
 
-// ── Slice ─────────────────────────────────────────────────────────────────────
+// =========================================================
+// Slice
+// =========================================================
 
 const authSlice = createSlice({
   name: "auth",
@@ -260,19 +330,22 @@ const authSlice = createSlice({
       state.resetSuccess = false;
     },
 
+    // Use only when runtime token is also synced
     setAccessToken: (state, action) => {
-      const accessToken = action.payload;
+      const access = action.payload;
 
-      state.accessToken = accessToken;
+      saveAccessToken(access);
 
-      state.isAuthenticated = Boolean(accessToken);
+      state.accessToken = access ?? null;
+
+      state.isAuthenticated = Boolean(access);
     },
   },
 
   extraReducers: (builder) => {
     builder
 
-      // ── Register
+      // Register
       .addCase(registerUser.pending, setPending)
       .addCase(registerUser.rejected, setRejected)
       .addCase(registerUser.fulfilled, (state) => {
@@ -280,9 +353,13 @@ const authSlice = createSlice({
         state.success = true;
       })
 
-      // ── Verify OTP
+      // Verify OTP
       .addCase(verifyOtp.pending, setPending)
-      .addCase(verifyOtp.rejected, setRejected)
+      .addCase(verifyOtp.rejected, (state, action) => {
+        setRejected(state, action);
+
+        state.isAuthenticated = false;
+      })
       .addCase(verifyOtp.fulfilled, (state, action) => {
         const { access, user } = action.payload;
 
@@ -296,11 +373,14 @@ const authSlice = createSlice({
 
         state.isAuthenticated = true;
 
-        saveSession(user);
+        state.authInitialized = true;
+
+        saveUser(user);
+
         connectWebSocket(access);
       })
 
-      // ── Login
+      // Login
       .addCase(loginUser.pending, setPending)
       .addCase(loginUser.rejected, (state, action) => {
         setRejected(state, action);
@@ -320,56 +400,93 @@ const authSlice = createSlice({
 
         state.isAuthenticated = true;
 
-        saveSession(user);
+        state.authInitialized = true;
+
+        saveUser(user);
 
         connectWebSocket(access);
       })
 
+      // Restore session
+      .addCase(restoreSession.pending, (state) => {
+        state.error = null;
+      })
       .addCase(restoreSession.fulfilled, (state, action) => {
-        const access = action.payload.access;
+        const access = action.payload?.access;
 
         state.accessToken = access;
 
         state.isAuthenticated = true;
 
-        state.authInitialized = true;
+        // Profile still needs to be verified.
+        state.authInitialized = false;
+
+        state.error = null;
 
         connectWebSocket(access);
       })
       .addCase(restoreSession.rejected, (state) => {
+        state.user = null;
+
         state.accessToken = null;
+
+        state.refreshToken = null;
 
         state.isAuthenticated = false;
 
-        state.user = null;
-
         state.authInitialized = true;
+
+        state.loading = false;
       })
 
-      // ── Get own profile
-      .addCase(getMyProfile.pending, setPending)
-      .addCase(getMyProfile.rejected, setRejected)
+      // Get profile
+      .addCase(getMyProfile.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(getMyProfile.rejected, (state, action) => {
+        state.loading = false;
+
+        state.user = null;
+
+        state.accessToken = null;
+
+        state.refreshToken = null;
+
+        state.isAuthenticated = false;
+
+        state.authInitialized = true;
+
+        state.error = action.payload ?? {
+          message: "Unable to restore user profile.",
+        };
+
+        clearSession();
+      })
       .addCase(getMyProfile.fulfilled, (state, action) => {
         state.loading = false;
         state.user = action.payload;
         state.isAuthenticated = true;
+        state.authInitialized = true;
+        state.error = null;
         saveUser(action.payload);
       })
 
-      // ── Update profile
+      // Update profile
       .addCase(updateProfile.pending, setPending)
       .addCase(updateProfile.rejected, setRejected)
       .addCase(updateProfile.fulfilled, (state, action) => {
-        const updatedUser = action.payload.user ?? action.payload;
+        const updatedUser = action.payload?.user ?? action.payload;
 
         state.loading = false;
         state.success = true;
+
         state.user = updatedUser;
 
         saveUser(updatedUser);
       })
 
-      // ── Forgot password
+      // Forgot password
       .addCase(forgotPassword.pending, setPending)
       .addCase(forgotPassword.rejected, setRejected)
       .addCase(forgotPassword.fulfilled, (state, action) => {
@@ -377,8 +494,11 @@ const authSlice = createSlice({
 
         if (action.payload?.success === false) {
           state.success = false;
+
           state.forgotSuccess = false;
+
           state.error = action.payload;
+
           return;
         }
 
@@ -386,7 +506,7 @@ const authSlice = createSlice({
         state.forgotSuccess = true;
       })
 
-      // ── Reset password
+      // Reset password
       .addCase(resetPassword.pending, setPending)
       .addCase(resetPassword.rejected, setRejected)
       .addCase(resetPassword.fulfilled, (state) => {
@@ -395,7 +515,7 @@ const authSlice = createSlice({
         state.resetSuccess = true;
       })
 
-      // ── Logout current device
+      // Logout
       .addCase(logoutUser.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -403,7 +523,7 @@ const authSlice = createSlice({
       .addCase(logoutUser.fulfilled, setLoggedOut)
       .addCase(logoutUser.rejected, setLoggedOut)
 
-      // ── Logout all devices
+      // Logout all
       .addCase(logoutAll.pending, (state) => {
         state.loading = true;
         state.error = null;

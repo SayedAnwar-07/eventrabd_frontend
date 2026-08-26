@@ -51,10 +51,10 @@ export default function SellerBrandNav({
   // Mobile / Tablet loading
   if (loading && !hasBrand) {
     return (
-      <div className="flex min-w-0 flex-col items-center justify-center gap-1 px-1 py-2 text-muted-foreground">
-        <Building2 className="h-5 w-5" />
+      <div className="flex min-w-0 flex-col items-center justify-center gap-1 px-1 py-2 text-white">
+        <Building2 className="h-5 w-5 shrink-0" />
 
-        <span className="text-[10px] font-medium">Brand</span>
+        <span className="text-[10px] font-medium text-white">Brand</span>
       </div>
     );
   }
@@ -66,10 +66,10 @@ export default function SellerBrandNav({
       className={({ isActive }) =>
         [
           "flex min-w-0 flex-col items-center justify-center",
-          "gap-1 px-1 py-2 transition-colors",
+          "gap-1 px-1 py-2 text-white transition-colors",
           isActive
-            ? "text-primary"
-            : "text-muted-foreground active:text-foreground",
+            ? "bg-white/15 text-white"
+            : "text-white hover:bg-white/10 hover:text-white active:bg-white/15 active:text-white",
         ].join(" ")
       }
     >
@@ -78,8 +78,9 @@ export default function SellerBrandNav({
       ) : (
         <Plus className="h-5 w-5 shrink-0" />
       )}
+
       <span
-        className="max-w-16 truncate text-[10px] font-medium"
+        className="max-w-16 truncate text-[10px] font-medium text-white"
         title={hasBrand ? brandLabel : "Create Brand"}
       >
         {hasBrand ? brandLabel : "Create Brand"}

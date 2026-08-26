@@ -5,7 +5,7 @@ import {
   Home,
   LogIn,
   LogOut,
-  MessageCircle,
+  Sparkles,
   // Moon,
   // Sun,
   UserPlus,
@@ -13,8 +13,6 @@ import {
 } from "lucide-react";
 
 import { Link, NavLink } from "react-router-dom";
-
-import { Button } from "@/components/ui/button";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
@@ -51,16 +49,18 @@ const AppNavLink = ({ to, icon, label, end = false }) => {
       className={({ isActive }) =>
         [
           "flex min-w-0 flex-col items-center justify-center",
-          "gap-1 px-1 py-2 transition-colors",
+          "gap-1 px-1 py-2 text-white transition-colors",
           isActive
-            ? "text-primary"
-            : "text-muted-foreground active:text-foreground",
+            ? "bg-white/15 text-white"
+            : "text-white hover:bg-white/10 hover:text-white active:bg-white/15",
         ].join(" ")
       }
     >
       {icon}
 
-      <span className="max-w-19 truncate text-[10px] font-medium">{label}</span>
+      <span className="max-w-19 truncate text-[10px] font-medium text-white">
+        {label}
+      </span>
     </NavLink>
   );
 };
@@ -85,7 +85,7 @@ export default function MobileAndTabNav({
   return (
     <div className="lg:hidden">
       {/* TOP APP BAR */}
-      <header className="fixed inset-x-0 top-0 z-50 border-b border-border/70 bg-background/90 backdrop-blur-xl">
+      <header className="fixed inset-x-0 top-0 z-50 border-b border-border bg-background shadow-sm">
         <div className="flex h-14 items-center justify-between px-3 sm:px-5">
           {/* Logo */}
           <Link
@@ -194,7 +194,7 @@ export default function MobileAndTabNav({
       </header>
 
       {/* BOTTOM APP NAVIGATION */}
-      <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-border/70 bg-background/95 backdrop-blur-xl">
+      <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-[#ae0212] bg-[#ae0212] text-white shadow-[0_-4px_16px_rgba(0,0,0,0.08)]">
         <div
           className={[
             "grid min-h-16",
@@ -206,13 +206,13 @@ export default function MobileAndTabNav({
             to="/"
             end
             label="Home"
-            icon={<Home className="h-5 w-5 shrink-0" />}
+            icon={<Home className="h-5 w-5 shrink-0 text-white" />}
           />
 
           <AppNavLink
             to="/services"
             label="Services"
-            icon={<MessageCircle className="h-5 w-5 shrink-0" />}
+            icon={<Sparkles className="h-5 w-5 shrink-0 text-white" />}
           />
 
           {/* Guest */}
@@ -221,13 +221,13 @@ export default function MobileAndTabNav({
               <AppNavLink
                 to="/login"
                 label="Login"
-                icon={<LogIn className="h-5 w-5 shrink-0" />}
+                icon={<LogIn className="h-5 w-5 shrink-0 text-white" />}
               />
 
               <AppNavLink
                 to="/register"
                 label="Sign Up"
-                icon={<UserPlus className="h-5 w-5 shrink-0" />}
+                icon={<UserPlus className="h-5 w-5 shrink-0 text-white" />}
               />
             </>
           )}
@@ -238,19 +238,19 @@ export default function MobileAndTabNav({
               <AppNavLink
                 to="/customer/hire-requests"
                 label="Orders"
-                icon={<CalendarDays className="h-5 w-5 shrink-0" />}
+                icon={<CalendarDays className="h-5 w-5 shrink-0 text-white" />}
               />
 
               <AppNavLink
                 to="/customer/reports"
                 label="Reports"
-                icon={<FileWarning className="h-5 w-5 shrink-0" />}
+                icon={<FileWarning className="h-5 w-5 shrink-0 text-white" />}
               />
 
               <AppNavLink
                 to={`/profile/${user.slug}`}
                 label="Profile"
-                icon={<UserRound className="h-5 w-5 shrink-0" />}
+                icon={<UserRound className="h-5 w-5 shrink-0 text-white" />}
               />
             </>
           )}
@@ -261,19 +261,23 @@ export default function MobileAndTabNav({
               <AppNavLink
                 to="/seller/hire-requests"
                 label="Requests"
-                icon={<BriefcaseBusiness className="h-5 w-5 shrink-0" />}
+                icon={
+                  <BriefcaseBusiness className="h-5 w-5 shrink-0 text-white" />
+                }
               />
 
-              <SellerBrandNav
-                brand={sellerBrand}
-                loading={sellerBrandLoading}
-                variant="app"
-              />
+              <div className="text-white">
+                <SellerBrandNav
+                  brand={sellerBrand}
+                  loading={sellerBrandLoading}
+                  variant="app"
+                />
+              </div>
 
               <AppNavLink
                 to={`/profile/${user.slug}`}
                 label="Profile"
-                icon={<UserRound className="h-5 w-5 shrink-0" />}
+                icon={<UserRound className="h-5 w-5 shrink-0 text-white" />}
               />
             </>
           )}

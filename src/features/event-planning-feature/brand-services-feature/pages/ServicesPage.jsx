@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useSearchParams } from "react-router-dom";
 
@@ -37,63 +37,54 @@ const ServicesPage = () => {
 
   const [searchParams, setSearchParams] = useSearchParams();
 
+  const [filtersRestored, setFiltersRestored] = useState(false);
+
   const services = useSelector(selectPublicServices);
-
   const loading = useSelector(selectPublicServicesLoading);
-
   const error = useSelector(selectPublicServicesError);
 
   const division = useSelector(selectDivisionFilter);
-
   const serviceType = useSelector(selectServiceTypeFilter);
-
   const sellerId = useSelector(selectSellerFilter);
-
   const brandId = useSelector(selectBrandFilter);
-
   const search = useSelector(selectSearchFilter);
 
-  // ===============================
-  // Restore filters from URL
-  // ===============================
+  // =====================================================
+  // Restore filters from URL first
+  // =====================================================
 
   useEffect(() => {
     const seller = searchParams.get("seller_id");
-
     const brand = searchParams.get("brand_id");
-
     const type = searchParams.get("service_type");
-
     const div = searchParams.get("division");
-
     const text = searchParams.get("search");
 
-    if (seller) {
-      dispatch(setSellerFilter(Number(seller)));
-    }
+    dispatch(setSellerFilter(seller ? seller : null));
 
-    if (brand) {
-      dispatch(setBrandFilter(Number(brand)));
-    }
+    dispatch(setBrandFilter(brand ? brand : null));
 
-    if (type) {
-      dispatch(setServiceTypeFilter(type));
-    }
+    dispatch(setServiceTypeFilter(type || null));
 
-    if (div) {
-      dispatch(setDivisionFilter(div));
-    }
+    dispatch(setDivisionFilter(div || null));
 
-    if (text) {
-      dispatch(setSearchFilter(text));
-    }
+    dispatch(setSearchFilter(text || null));
+
+    setFiltersRestored(true);
+
+    // Only restore once when page mounts.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch]);
 
-  // ===============================
-  // Fetch services + update URL
-  // ===============================
+  // =====================================================
+  // Fetch only after URL filters have been restored
+  // =====================================================
 
   useEffect(() => {
+    if (!filtersRestored) {
+      return;
+    }
+
     const params = new URLSearchParams();
 
     if (sellerId) {
@@ -116,47 +107,49 @@ const ServicesPage = () => {
       params.set("search", search);
     }
 
-    setSearchParams(params, {
-      replace: true,
-    });
+    const currentParams = searchParams.toString();
+    const nextParams = params.toString();
+
+    if (currentParams !== nextParams) {
+      setSearchParams(params, {
+        replace: true,
+      });
+    }
 
     dispatch(
       fetchPublicServices({
         page: 1,
-
         pageSize: 12,
-
         sellerId,
-
         brandId,
-
         serviceType,
-
         division,
-
         search,
       }),
     );
-  }, [dispatch, sellerId, brandId, serviceType, division, search]);
+  }, [
+    dispatch,
+    filtersRestored,
+    sellerId,
+    brandId,
+    serviceType,
+    division,
+    search,
+    searchParams,
+    setSearchParams,
+  ]);
 
   return (
     <main className="min-h-screen">
       <div className="mx-auto max-w-400">
-        {/* Search */}
-
         <section className="mb-8 grid gap-4 md:grid-cols-2">
           <SellerSearch />
-
           <BrandSearch />
         </section>
 
-        {/* Layout */}
-
         <div className="grid gap-8 lg:grid-cols-5">
-          {/* Filters */}
-
           <aside className="min-w-0 lg:col-span-1">
-            <div className="sticky top-24 rounded-lg border p-4">
+            <div className="sticky top-24">
               <div className="hidden lg:block">
                 <ServiceFilters />
               </div>
@@ -166,8 +159,6 @@ const ServicesPage = () => {
               </div>
             </div>
           </aside>
-
-          {/* Services */}
 
           <section className="lg:col-span-4">
             <div className="mb-8">

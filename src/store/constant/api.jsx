@@ -12,78 +12,104 @@ const api = axios.create({
   withCredentials: true,
 });
 
-// Auth client (no interceptor)
+// Auth client without interceptors
 const authClient = axios.create({
   baseURL,
   withCredentials: true,
 });
 
-// Runtime state
+// Runtime auth state
+let accessToken = null;
 let csrfToken = null;
+
 let csrfRequestPromise = null;
 let refreshRequestPromise = null;
 
-// Access token only in memory
-let accessToken = null;
+// Access token helpers
+export const getAccessToken = () => accessToken;
 
-const getAccessToken = () => accessToken;
-
-const saveAccessToken = (token) => {
-  accessToken = token;
+export const saveAccessToken = (token) => {
+  accessToken = typeof token === "string" && token.trim() ? token : null;
 };
 
-const clearAuthStorage = () => {
+export const clearAccessToken = () => {
   accessToken = null;
-
-  localStorage.removeItem("user");
 };
 
-// Remove old refresh token storage
+// Clear frontend auth data
+export const clearAuthStorage = () => {
+  clearAccessToken();
+
+  try {
+    localStorage.removeItem("user");
+    localStorage.removeItem("refreshToken");
+  } catch (error) {
+    console.warn("Unable to clear auth storage:", error);
+  }
+};
+
+// Remove old stored refresh token
 try {
   localStorage.removeItem("refreshToken");
 } catch (error) {
-  console.warn("Unable to clear old refresh token:", error);
+  console.warn("Unable to remove old refresh token:", error);
 }
 
-// Redirect helper
+// Redirect to login
 const redirectToLogin = () => {
-  if (window.location.pathname !== "/login") {
+  if (typeof window !== "undefined" && window.location.pathname !== "/login") {
     window.location.replace("/login");
   }
 };
 
-// HTTP methods
+// HTTP helpers
 const SAFE_METHODS = new Set(["get", "head", "options"]);
 
 const isUnsafeMethod = (method = "get") => {
-  return !SAFE_METHODS.has(method.toLowerCase());
+  return !SAFE_METHODS.has(String(method).toLowerCase());
 };
 
 // Header helpers
-const removeContentType = (headers) => {
+const setHeader = (headers, name, value) => {
   if (!headers) return;
 
-  if (typeof headers.delete === "function") {
-    headers.delete("Content-Type");
-
-    return;
-  }
-
-  delete headers["Content-Type"];
-};
-
-const setHeader = (headers, name, value) => {
   if (typeof headers.set === "function") {
     headers.set(name, value);
-
     return;
   }
 
   headers[name] = value;
 };
 
-// CSRF token
-const requestCsrfToken = async (forceRefresh = false) => {
+const removeHeader = (headers, name) => {
+  if (!headers) return;
+
+  if (typeof headers.delete === "function") {
+    headers.delete(name);
+    return;
+  }
+
+  delete headers[name];
+  delete headers[name.toLowerCase()];
+};
+
+// Fetch CSRF token
+const fetchCsrfToken = async () => {
+  const { data } = await authClient.get("/users/csrf/");
+
+  const token = data?.csrfToken;
+
+  if (typeof token !== "string" || !token.trim()) {
+    throw new Error("CSRF token missing.");
+  }
+
+  csrfToken = token;
+
+  return token;
+};
+
+// Get cached or fresh CSRF
+export const requestCsrfToken = async (forceRefresh = false) => {
   if (csrfToken && !forceRefresh) {
     return csrfToken;
   }
@@ -92,33 +118,28 @@ const requestCsrfToken = async (forceRefresh = false) => {
     return csrfRequestPromise;
   }
 
-  csrfRequestPromise = authClient
-    .get("/users/csrf/")
-    .then((response) => {
-      const token = response.data?.csrfToken;
+  if (forceRefresh) {
+    csrfToken = null;
+  }
 
-      if (!token) {
-        throw new Error("CSRF token missing");
-      }
+  csrfRequestPromise = fetchCsrfToken();
 
-      csrfToken = token;
-
-      return token;
-    })
-    .finally(() => {
-      csrfRequestPromise = null;
-    });
-
-  return csrfRequestPromise;
+  try {
+    return await csrfRequestPromise;
+  } finally {
+    csrfRequestPromise = null;
+  }
 };
 
-// CLIENT refresh token
+export const clearCsrfToken = () => {
+  csrfToken = null;
+};
+
+// Refresh request
 const performRefreshRequest = (csrf) => {
   return authClient.post(
     "/users/token/refresh/",
-
     {},
-
     {
       headers: {
         "X-CSRFToken": csrf,
@@ -127,7 +148,8 @@ const performRefreshRequest = (csrf) => {
   );
 };
 
-const refreshAccessToken = async () => {
+// Refresh access token
+export const refreshAccessToken = async () => {
   let csrf = await requestCsrfToken();
 
   let response;
@@ -139,7 +161,8 @@ const refreshAccessToken = async () => {
       throw error;
     }
 
-    csrfToken = null;
+    // Retry once with fresh CSRF
+    clearCsrfToken();
 
     csrf = await requestCsrfToken(true);
 
@@ -148,8 +171,8 @@ const refreshAccessToken = async () => {
 
   const newToken = response.data?.access;
 
-  if (!newToken) {
-    throw new Error("Access token missing");
+  if (typeof newToken !== "string" || !newToken.trim()) {
+    throw new Error("Access token missing.");
   }
 
   saveAccessToken(newToken);
@@ -157,59 +180,88 @@ const refreshAccessToken = async () => {
   return newToken;
 };
 
-// Attach token + csrf
-api.interceptors.request.use(async (config) => {
-  config.headers = config.headers ?? {};
+// Request interceptor
+api.interceptors.request.use(
+  async (config) => {
+    config.headers = config.headers ?? {};
 
-  const token = getAccessToken();
+    const token = getAccessToken();
 
-  if (token && !config.headers.Authorization) {
-    setHeader(config.headers, "Authorization", `Bearer ${token}`);
-  }
+    // Add access token
+    if (token && !config.headers.Authorization) {
+      setHeader(config.headers, "Authorization", `Bearer ${token}`);
+    }
 
-  if (isUnsafeMethod(config.method) && !config._skipCsrf) {
-    const csrf = await requestCsrfToken();
+    // Add CSRF for unsafe methods
+    if (isUnsafeMethod(config.method) && !config._skipCsrf) {
+      const csrf = await requestCsrfToken();
 
-    setHeader(config.headers, "X-CSRFToken", csrf);
-  }
+      setHeader(config.headers, "X-CSRFToken", csrf);
+    }
 
-  const isFormData = config.data instanceof FormData;
+    // Handle FormData correctly
+    const isFormData =
+      typeof FormData !== "undefined" && config.data instanceof FormData;
 
-  if (isFormData) {
-    removeContentType(config.headers);
-  } else if (config.data !== undefined && config.data !== null) {
-    setHeader(config.headers, "Content-Type", "application/json");
-  }
+    if (isFormData) {
+      removeHeader(config.headers, "Content-Type");
+    } else if (config.data !== undefined && config.data !== null) {
+      setHeader(config.headers, "Content-Type", "application/json");
+    }
 
-  return config;
-});
+    return config;
+  },
+  (error) => Promise.reject(error),
+);
 
-// Paths without refresh
+// Do not auto-refresh these paths
 const REFRESH_EXCLUDED_PATHS = [
   "/users/csrf/",
-
   "/users/login/",
-
   "/users/amar-admin/login/",
-
   "/users/register/",
-
   "/users/verify-otp/",
-
   "/users/forgot-password/",
-
   "/users/reset-password/",
-
+  "/users/amar-admin/forgot-password/",
+  "/users/amar-admin/reset-password/",
   "/users/token/refresh/",
-
   "/users/amar-admin/token/refresh/",
 ];
 
-const shouldSkipRefresh = (url = "") => {
-  return REFRESH_EXCLUDED_PATHS.some((path) => url.includes(path));
+// Get pathname safely
+const getRequestPath = (url = "") => {
+  try {
+    const parsed = new URL(
+      url,
+      baseURL.endsWith("/") ? baseURL : `${baseURL}/`,
+    );
+
+    return parsed.pathname;
+  } catch {
+    return String(url).split("?")[0];
+  }
 };
 
-// Refresh on 401
+// Check refresh exclusion
+const shouldSkipRefresh = (url = "") => {
+  const requestPath = getRequestPath(url);
+
+  return REFRESH_EXCLUDED_PATHS.some((path) => requestPath.endsWith(path));
+};
+
+// One refresh for multiple 401s
+const getFreshAccessToken = async () => {
+  if (!refreshRequestPromise) {
+    refreshRequestPromise = refreshAccessToken().finally(() => {
+      refreshRequestPromise = null;
+    });
+  }
+
+  return refreshRequestPromise;
+};
+
+// Response interceptor
 api.interceptors.response.use(
   (response) => response,
 
@@ -220,47 +272,48 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    if (
-      error.response.status === 403 &&
-      isUnsafeMethod(originalRequest.method)
-    ) {
-      csrfToken = null;
+    const status = error.response.status;
+
+    // Clear stale CSRF cache
+    if (status === 403 && isUnsafeMethod(originalRequest.method)) {
+      clearCsrfToken();
     }
 
-    if (
-      error.response.status !== 401 ||
-      originalRequest._retry ||
-      shouldSkipRefresh(originalRequest.url)
-    ) {
+    // Only 401 triggers refresh
+    if (status !== 401) {
+      return Promise.reject(error);
+    }
+
+    // Skip auth endpoints
+    if (shouldSkipRefresh(originalRequest.url)) {
+      return Promise.reject(error);
+    }
+
+    // Prevent retry loop
+    if (originalRequest._retry) {
       return Promise.reject(error);
     }
 
     originalRequest._retry = true;
 
     try {
-      if (!refreshRequestPromise) {
-        refreshRequestPromise = refreshAccessToken().finally(() => {
-          refreshRequestPromise = null;
-        });
-      }
-
-      const newToken = await refreshRequestPromise;
+      const newToken = await getFreshAccessToken();
 
       originalRequest.headers = originalRequest.headers ?? {};
 
       setHeader(originalRequest.headers, "Authorization", `Bearer ${newToken}`);
 
+      // Retry once
       return api(originalRequest);
-    } catch (error) {
+    } catch (refreshError) {
       clearAuthStorage();
+      clearCsrfToken();
 
       redirectToLogin();
 
-      return Promise.reject(error);
+      return Promise.reject(refreshError);
     }
   },
 );
-
-export { saveAccessToken, clearAuthStorage };
 
 export default api;
