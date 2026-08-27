@@ -72,7 +72,7 @@ const BrandDetailsPage = () => {
           </div>
 
           {/* RIGHT */}
-          <aside className="w-full lg:sticky lg:top-6">
+          <aside className="w-full lg:sticky lg:top-24">
             <BrandSidebarPanel
               brand={publicBrandDetails}
               services={

@@ -15,6 +15,7 @@ import GlobalErrorMessage from "@/components/common/GlobalErrorMessage";
 
 import { getGalleryImageUrl, SERVICE_TYPES } from "./eventServiceFormConfig";
 import useEventServiceSheet from "./useEventServiceSheet";
+import RichTextEditor from "@/components/common/RichTextEditor";
 
 const inputClass =
   "w-full border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/30 disabled:cursor-not-allowed disabled:opacity-60";
@@ -173,13 +174,11 @@ const EventServiceSheet = ({
           <div>
             <label className={labelClass}>Description</label>
 
-            <textarea
+            <RichTextEditor
               name="description"
-              value={form.description}
+              value={form.description || ""}
               onChange={handleChange}
-              rows={4}
-              placeholder="Write service description..."
-              className={inputClass}
+              disabled={loading}
             />
           </div>
 

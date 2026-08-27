@@ -5,6 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import BrandLogoUpload from "./BrandLogoUpload";
 
 import { DIVISION_OPTIONS } from "@/store/features/eventPlanner/bangladeshLocations";
+import RichTextEditor from "@/components/common/RichTextEditor";
 
 const fieldClass =
   "h-auto w-full rounded-none border-0 border-b-2 border-input bg-transparent px-0 pb-2 text-base shadow-none transition-colors focus-visible:border-foreground focus-visible:ring-0";
@@ -288,16 +289,11 @@ export default function BrandFormFields({
         <div className="grid gap-2">
           <FieldLabel htmlFor="short_description">Short description</FieldLabel>
 
-          <Textarea
-            id="short_description"
+          <RichTextEditor
             name="short_description"
             value={values.short_description || ""}
             onChange={onChange}
-            placeholder="Write a short summary about your brand and what makes it special."
-            maxLength={500}
             disabled={loading}
-            aria-invalid={Boolean(errors.short_description)}
-            className="peer min-h-28 resize-none rounded-none border-0 border-b-2 border-input bg-transparent px-0 pb-2 text-base leading-relaxed shadow-none transition-colors focus-visible:border-foreground focus-visible:ring-0"
           />
 
           {renderErrors("short_description")}

@@ -145,10 +145,7 @@ export const buildEventServiceFormData = ({
   if (showShiftHour) {
     formData.append("shift_hour", form.shift_hour);
   }
-
-  if (form.drive_link) {
-    formData.append("drive_link", form.drive_link);
-  }
+  formData.append("drive_link", form.drive_link || "");
 
   if (canUploadCoverPhoto && form.cover_photo) {
     formData.append("cover_photo", form.cover_photo);
