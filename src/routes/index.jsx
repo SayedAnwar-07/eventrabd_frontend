@@ -18,7 +18,7 @@ import PrivateRoute from "./PrivateRoute";
 
 // Profile pages
 import ProfilePage from "@/features/profiles/pages/ProfilePage";
-import UpdateProfile from "@/features/profiles/pages/UpdateProfile";
+import UpdateProfile from "@/features/profiles/components/UpdateProfile";
 
 // Event planner pages
 import CreateBrandPage from "@/features/event-planning-feature/brands-feature/pages/CreateBrandPage";

@@ -3,6 +3,19 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 
+import {
+  Camera,
+  Building2,
+  BriefcaseBusiness,
+  ChevronLeft,
+  ChevronRight,
+  Clapperboard,
+  ExternalLink,
+  Lightbulb,
+} from "lucide-react";
+
+import ImageModal from "@/components/common/ImageModal";
+
 const GALLERY_ONLY_SERVICE_TYPES = [
   "photography",
   "stage_designer",
@@ -10,6 +23,20 @@ const GALLERY_ONLY_SERVICE_TYPES = [
 ];
 
 const COVER_PHOTO_ONLY_SERVICE_TYPES = ["videography", "sound_lighting"];
+
+const SERVICE_ICONS = {
+  photography: Camera,
+  videography: Clapperboard,
+  stage_designer: Building2,
+  sound_lighting: Lightbulb,
+  event_hall: Building2,
+};
+
+const ServiceTypeIcon = ({ serviceName }) => {
+  const Icon = SERVICE_ICONS[serviceName] || BriefcaseBusiness;
+
+  return <Icon className="h-3.5 w-3.5 shrink-0" />;
+};
 
 const formatServiceName = (value = "") => {
   return value
@@ -59,8 +86,11 @@ const getCoverPhotoImage = (service) => {
 
 const ServiceCard = ({ service, brandSlug }) => {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [modalImage, setModalImage] = useState(null);
+  const [dragStart, setDragStart] = useState(null);
 
   const serviceName = service?.service_name || "";
+
   const resolvedBrandSlug = brandSlug || service?.brand?.slug || "";
 
   const isGalleryOnlyService = GALLERY_ONLY_SERVICE_TYPES.includes(serviceName);
@@ -79,6 +109,9 @@ const ServiceCard = ({ service, brandSlug }) => {
 
   const activeImage = hasImages ? images[safeIndex] : null;
 
+  const serviceTitle =
+    service?.service_display_name || formatServiceName(serviceName);
+
   const detailPath =
     resolvedBrandSlug && service?.id && serviceName
       ? `/event-planner/brands/${resolvedBrandSlug}/services/${service.id}/${serviceName}`
@@ -87,142 +120,188 @@ const ServiceCard = ({ service, brandSlug }) => {
   const goPrevious = () => {
     if (!hasMultipleImages) return;
 
-    setActiveImageIndex((prev) => {
-      return prev === 0 ? images.length - 1 : prev - 1;
-    });
+    setActiveImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
   };
 
   const goNext = () => {
     if (!hasMultipleImages) return;
 
-    setActiveImageIndex((prev) => {
-      return prev === images.length - 1 ? 0 : prev + 1;
-    });
+    setActiveImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+  };
+
+  const handleDragStart = (clientX) => {
+    if (!hasMultipleImages) return;
+
+    setDragStart(clientX);
+  };
+
+  const handleDragEnd = (clientX) => {
+    if (!hasMultipleImages || dragStart === null) {
+      return;
+    }
+
+    const distance = dragStart - clientX;
+
+    if (distance > 50) {
+      goNext();
+    }
+
+    if (distance < -50) {
+      goPrevious();
+    }
+
+    setDragStart(null);
   };
 
   return (
-    <article className="group overflow-hidden border-b border-border bg-background pb-6 shadow-lg">
-      <div className="relative h-64 w-full overflow-hidden bg-muted">
-        {activeImage ? (
-          <img
-            src={activeImage.url}
-            alt={`${formatServiceName(serviceName)} ${safeIndex + 1}`}
-            className="h-full w-full object-cover transition duration-300"
-            loading="lazy"
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center">
-            <p className="text-sm text-muted-foreground">No Image</p>
+    <>
+      <article className="group overflow-hidden rounded-md border bg-background shadow-sm">
+        {/* IMAGE */}
+        <div
+          className="relative aspect-4/2.75 w-full cursor-grab select-none overflow-hidden bg-muted active:cursor-grabbing"
+          onMouseDown={(e) => handleDragStart(e.clientX)}
+          onMouseUp={(e) => handleDragEnd(e.clientX)}
+          onMouseLeave={() => setDragStart(null)}
+          onTouchStart={(e) => handleDragStart(e.touches[0].clientX)}
+          onTouchEnd={(e) => handleDragEnd(e.changedTouches[0].clientX)}
+        >
+          {activeImage ? (
+            <img
+              src={activeImage.url}
+              alt={`${serviceTitle} ${safeIndex + 1}`}
+              onClick={() => setModalImage(activeImage.url)}
+              draggable="false"
+              className="h-full w-full cursor-pointer object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+              loading="lazy"
+              decoding="async"
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center">
+              <p className="text-sm text-muted-foreground">No Image</p>
+            </div>
+          )}
+
+          {/* SAME OVERLAY */}
+          <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-black/20 via-transparent to-black/5" />
+
+          {/* PRICE - SAME UI */}
+          <div className="absolute right-3 bottom-3 rounded-md bg-background/95 px-3 py-2 shadow-md backdrop-blur-md">
+            <p className="text-base font-bold leading-none text-foreground">
+              ৳ {Number(service?.shift_charge || 0).toLocaleString()}
+            </p>
           </div>
-        )}
 
-        <div className="absolute left-0 top-0 bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">
-          ৳{service?.shift_charge ?? "0.00"}
-        </div>
+          {/* SERVICE NAME - SAME UI */}
+          <div className="absolute bottom-3 left-3 max-w-[55%] rounded-md border bg-background/90 px-3 py-2 shadow-md backdrop-blur-md">
+            <div className="flex items-center gap-1.5">
+              <ServiceTypeIcon serviceName={serviceName} />
 
-        {hasMultipleImages && (
-          <>
+              <span className="truncate text-xs font-semibold">
+                {serviceTitle}
+              </span>
+            </div>
+          </div>
+
+          {/* PREVIOUS - SAME UI */}
+          {hasMultipleImages && (
             <button
               type="button"
-              onClick={goPrevious}
-              className="absolute left-3 top-1/2 -translate-y-1/2 bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground hover:bg-primary/90"
+              onClick={(e) => {
+                e.stopPropagation();
+                goPrevious();
+              }}
+              className="absolute left-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-background/90 shadow-md backdrop-blur hover:bg-background"
+              aria-label="Previous image"
             >
-              Prev
+              <ChevronLeft className="h-4 w-4" />
             </button>
+          )}
 
+          {/* NEXT - SAME UI */}
+          {hasMultipleImages && (
             <button
               type="button"
-              onClick={goNext}
-              className="absolute right-3 top-1/2 -translate-y-1/2 bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground hover:bg-primary/90"
+              onClick={(e) => {
+                e.stopPropagation();
+                goNext();
+              }}
+              className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-background/90 shadow-md backdrop-blur hover:bg-background"
+              aria-label="Next image"
             >
-              Next
+              <ChevronRight className="h-4 w-4" />
             </button>
-          </>
-        )}
+          )}
 
-        {hasMultipleImages && (
-          <div className="absolute bottom-3 left-3 bg-background px-3 py-1 text-xs font-semibold text-foreground">
-            {safeIndex + 1} / {images.length}
-          </div>
-        )}
-
-        {hasMultipleImages && (
-          <div className="absolute bottom-3 right-3 flex gap-1.5">
-            {images.map((image, index) => (
-              <button
-                key={image.id}
-                type="button"
-                onClick={() => setActiveImageIndex(index)}
-                className={`h-2 w-4 transition ${
-                  index === safeIndex ? "bg-primary" : "bg-background/70"
-                }`}
-                aria-label={`Go to image ${index + 1}`}
-              />
-            ))}
-          </div>
-        )}
-      </div>
-
-      <div className="p-5">
-        <h3 className="text-xl font-semibold text-foreground">
-          {formatServiceName(serviceName)}
-        </h3>
-
-        <p className="mt-3 line-clamp-2 text-sm leading-6 text-muted-foreground">
-          {service?.description || "No description available."}
-        </p>
-
-        <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
-          {service?.shift_hour ? (
-            <p>
-              <span className="font-medium text-foreground">Shift:</span>{" "}
-              {service.shift_hour} hours
-            </p>
-          ) : null}
-
-          {isGalleryOnlyService ? (
-            <p>
-              <span className="font-medium text-foreground">Image Limit:</span>{" "}
-              {service?.image_limit ?? 0}
-            </p>
-          ) : null}
-
-          {serviceName === "sound_lighting" ? (
-            <>
-              <p>
-                <span className="font-medium text-foreground">Sound:</span> ৳
-                {service?.sound_system_payment ?? "N/A"}
-              </p>
-
-              <p>
-                <span className="font-medium text-foreground">Lighting:</span> ৳
-                {service?.lighting_payment ?? "N/A"}
-              </p>
-            </>
-          ) : null}
+          {/* DOTS - SAME UI */}
+          {hasMultipleImages && (
+            <div className="absolute bottom-2 left-1/2 flex -translate-x-1/2 gap-1">
+              {images.map((image, index) => (
+                <button
+                  key={image.id}
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setActiveImageIndex(index);
+                  }}
+                  className={`h-1.5 rounded-full transition-all ${
+                    index === safeIndex ? "w-4 bg-white" : "w-1.5 bg-white/60"
+                  }`}
+                  aria-label={`Go to image ${index + 1}`}
+                />
+              ))}
+            </div>
+          )}
         </div>
 
-        <div className="mt-5 flex flex-wrap gap-4">
-          <Link
-            to={detailPath}
-            className="text-sm font-medium text-foreground underline underline-offset-4 hover:text-primary"
-          >
-            View Service Details
-          </Link>
+        {/* CARD CONTENT */}
+        <div className="p-5">
+          <p className="line-clamp-2 text-sm leading-6 text-muted-foreground">
+            {service?.description || "No description available."}
+          </p>
 
-          {service?.drive_link ? (
-            <a
-              href={service.drive_link}
-              target="_blank"
-              rel="noreferrer"
-              className="text-sm font-medium text-foreground underline underline-offset-4 hover:text-primary"
+          {/* SERVICE INFORMATION */}
+          <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
+            {service?.shift_hour ? (
+              <p>
+                <span className="font-medium text-foreground">Shift:</span>{" "}
+                {service.shift_hour} Hour
+                {Number(service.shift_hour) > 1 ? "s" : ""}
+              </p>
+            ) : null}
+
+            {serviceName === "sound_lighting" ? (
+              <>
+                <p>
+                  <span className="font-medium text-foreground">Sound:</span> ৳
+                  {service?.sound_system_payment ?? "N/A"}
+                </p>
+
+                <p>
+                  <span className="font-medium text-foreground">Lighting:</span>{" "}
+                  ৳{service?.lighting_payment ?? "N/A"}
+                </p>
+              </>
+            ) : null}
+          </div>
+
+          {/* ACTIONS */}
+          <div className="mt-5 gap-3 border-t pt-4">
+            <Link
+              to={detailPath}
+              className="inline-flex h-10 items-center justify-center rounded-md border px-4 text-sm font-medium text-foreground transition hover:bg-muted w-full"
             >
-              View Portfolio
-            </a>
-          ) : null}
+              View Service Details
+            </Link>
+          </div>
         </div>
-      </div>
-    </article>
+      </article>
+
+      <ImageModal
+        image={modalImage}
+        open={!!modalImage}
+        onClose={() => setModalImage(null)}
+      />
+    </>
   );
 };
 

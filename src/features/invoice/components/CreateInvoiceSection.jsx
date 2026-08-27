@@ -437,33 +437,26 @@ const CreateInvoiceSection = ({ hire, bookingRows }) => {
         /*
          * CLOSED STATE
          */
-        <div className="flex flex-col gap-5 px-5 py-6 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-          <div className="flex items-center gap-4">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-red-50">
-              <FilePlus2 className="h-5 w-5 text-[#b60018]" />
-            </div>
+        <div className="flex flex-col items-center gap-5 px-5 py-6 text-center sm:px-6 lg:flex-row lg:justify-between lg:text-left">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-wide text-[#b60018]">
+              Invoice
+            </p>
 
-            <div>
-              <p className="text-xs font-bold uppercase tracking-wide text-[#b60018]">
-                Invoice
-              </p>
+            <h2 className="mt-0.5 text-lg font-semibold text-gray-950">
+              Create Customer Invoice
+            </h2>
 
-              <h2 className="mt-0.5 text-lg font-semibold text-gray-950">
-                Create Customer Invoice
-              </h2>
-
-              <p className="mt-0.5 text-sm text-gray-500">
-                Generate invoice for accepted hire.
-              </p>
-            </div>
+            <p className="mt-0.5 text-sm text-gray-500">
+              Generate invoice for accepted hire.
+            </p>
           </div>
 
           <button
             type="button"
             onClick={handleOpen}
-            className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-[#b60018] px-5 text-sm font-semibold text-white transition hover:bg-[#960014]"
+            className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md bg-[#b60018] px-5 text-sm font-semibold text-white transition hover:bg-[#960014] lg:w-auto"
           >
-            <FilePlus2 className="h-4 w-4" />
             Create Invoice
           </button>
         </div>

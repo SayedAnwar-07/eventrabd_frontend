@@ -41,7 +41,7 @@ const formatServiceName = (name = "") => {
 
 const PACKAGE_SUPPORTED_SERVICES = ["photography", "videography"];
 
-const HireSellerSheet = ({ service }) => {
+const HireSellerSheet = ({ service, trigger }) => {
   const dispatch = useDispatch();
 
   const { user, isAuthenticated } = useSelector((state) => state.auth);
@@ -125,12 +125,15 @@ const HireSellerSheet = ({ service }) => {
     <>
       <Sheet open={sheetOpen} onOpenChange={handleSheetOpenChange}>
         <SheetTrigger asChild>
-          <button
-            type="button"
-            className="w-full rounded-md border bg-[#a2101b] px-5 py-3 text-sm font-semibold text-white transition hover:bg-gray-200"
-          >
-            Hire Seller
-          </button>
+          {trigger || (
+            <button
+              type="button"
+              className="relative w-full rounded-md bg-[#b60018] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#960014]"
+            >
+              <span className="absolute inset-0 -z-10 animate-ping rounded-md bg-[#b60018]/40" />
+              Hire Seller
+            </button>
+          )}
         </SheetTrigger>
 
         <SheetContent className="flex w-full flex-col rounded-none border-l border-gray-200 bg-white p-0 shadow-none sm:max-w-2xl lg:max-w-4xl [&>button]:rounded-none">

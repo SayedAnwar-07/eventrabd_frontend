@@ -1,4 +1,5 @@
 import { createRoot } from "react-dom/client";
+import { Toaster } from "react-hot-toast";
 
 import "./index.css";
 
@@ -18,6 +19,18 @@ createRoot(document.getElementById("root")).render(
   <Provider store={store}>
     <AuthInitializer>
       <MainRoutes />
+
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          duration: 3000,
+          style: {
+            borderRadius: "6px",
+            padding: "12px 16px",
+            fontSize: "14px",
+          },
+        }}
+      />
     </AuthInitializer>
   </Provider>,
 );

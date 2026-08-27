@@ -1,9 +1,23 @@
+export const normalizeBangladeshPhoneInput = (value = "") => {
+  let digits = String(value).replace(/\D/g, "");
+
+  if (digits.startsWith("880")) {
+    digits = digits.slice(2);
+  } else if (digits.startsWith("88")) {
+    digits = digits.slice(2);
+  }
+
+  return digits.slice(0, 11);
+};
+
 export const getInitialProfileValues = (user) => ({
   full_name: user?.full_name || "",
   username: user?.username || "",
   bio: user?.bio || "",
-  contact_number: user?.contact_number || "",
-  whatsapp_number: user?.whatsapp_number || "",
+
+  contact_number: normalizeBangladeshPhoneInput(user?.contact_number || ""),
+
+  whatsapp_number: normalizeBangladeshPhoneInput(user?.whatsapp_number || ""),
 });
 
 export const getUsernameRemainingDays = (usernameLastChanged) => {

@@ -1,7 +1,10 @@
 import { useEffect, useRef, useState } from "react";
+
 import { Camera, Check, ImagePlus, RotateCcw, X } from "lucide-react";
 
 import ReactCrop, { centerCrop, makeAspectCrop } from "react-image-crop";
+
+import ImageModal from "@/components/common/ImageModal";
 
 import "react-image-crop/dist/ReactCrop.css";
 
@@ -54,12 +57,10 @@ const createCroppedFile = (image, crop, originalFileName) => {
 
     ctx.drawImage(
       image,
-
       crop.x * scaleX,
       crop.y * scaleY,
       crop.width * scaleX,
       crop.height * scaleY,
-
       0,
       0,
       OUTPUT_SIZE,
@@ -70,6 +71,7 @@ const createCroppedFile = (image, crop, originalFileName) => {
       (blob) => {
         if (!blob) {
           reject(new Error("Unable to crop image."));
+
           return;
         }
 
@@ -114,6 +116,8 @@ export default function ProfileImageUploader({
 
   const previewUrl = croppedPreviewUrl || currentImageUrl || "";
 
+  const [imagePreviewOpen, setImagePreviewOpen] = useState(false);
+
   useEffect(() => {
     return () => {
       if (sourceUrl) {
@@ -143,11 +147,13 @@ export default function ProfileImageUploader({
 
     if (!allowedTypes.includes(file.type)) {
       setError("Please select a JPG, PNG or WEBP image.");
+
       return;
     }
 
     if (file.size > MAX_FILE_SIZE) {
       setError("Image must be smaller than 5 MB.");
+
       return;
     }
 
@@ -159,10 +165,8 @@ export default function ProfileImageUploader({
 
     setSelectedFile(file);
     setSourceUrl(objectUrl);
-
     setCrop(undefined);
     setCompletedCrop(null);
-
     setIsCropping(true);
   };
 
@@ -184,6 +188,7 @@ export default function ProfileImageUploader({
         !completedCrop?.height
       ) {
         setError("Please select an area to crop.");
+
         return;
       }
 
@@ -200,7 +205,6 @@ export default function ProfileImageUploader({
       const preview = URL.createObjectURL(croppedFile);
 
       setCroppedPreviewUrl(preview);
-
       setIsCropping(false);
 
       onImageChange(croppedFile);
@@ -216,10 +220,8 @@ export default function ProfileImageUploader({
 
     setSourceUrl("");
     setSelectedFile(null);
-
     setCrop(undefined);
     setCompletedCrop(null);
-
     setIsCropping(false);
     setError("");
   };
@@ -235,12 +237,9 @@ export default function ProfileImageUploader({
 
     setCroppedPreviewUrl("");
     setSourceUrl("");
-
     setSelectedFile(null);
-
     setCrop(undefined);
     setCompletedCrop(null);
-
     setIsCropping(false);
     setError("");
 
@@ -248,45 +247,46 @@ export default function ProfileImageUploader({
   };
 
   return (
-    <div className="space-y-4">
-      <div>
-        <p className="text-sm font-semibold">Profile Photo</p>
+    <>
+      <div className="space-y-4">
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          onChange={handleFileChange}
+          className="hidden"
+        />
 
-        <p className="mt-1 text-sm text-muted-foreground">
-          Upload and crop a square profile photo.
-        </p>
-      </div>
+        {!isCropping && (
+          <div>
+            <div className="aspect-square w-full max-w-70 overflow-hidden rounded-md border border-gray-200 bg-gray-100">
+              {previewUrl ? (
+                <button
+                  type="button"
+                  onClick={() => setImagePreviewOpen(true)}
+                  className="block h-full w-full cursor-zoom-in overflow-hidden rounded-md"
+                  aria-label="View profile photo"
+                >
+                  <img
+                    src={previewUrl}
+                    alt="Profile"
+                    draggable="false"
+                    className="h-full w-full object-cover object-top transition duration-200 hover:scale-[1.02]"
+                  />
+                </button>
+              ) : (
+                <div className="flex h-full w-full items-center justify-center">
+                  <Camera className="h-10 w-10 text-gray-400" />
+                </div>
+              )}
+            </div>
 
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/jpeg,image/png,image/webp"
-        onChange={handleFileChange}
-        className="hidden"
-      />
-
-      {!isCropping && (
-        <div className="flex flex-wrap items-center gap-5">
-          <div className="h-28 w-28 shrink-0 overflow-hidden rounded-full border bg-muted">
-            {previewUrl ? (
-              <img
-                src={previewUrl}
-                alt="Profile"
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center">
-                <Camera className="h-8 w-8 text-muted-foreground" />
-              </div>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <div className="flex flex-wrap gap-2">
+            <div className="mt-4 max-w-70">
               <Button
                 type="button"
                 variant="outline"
                 onClick={handleChoosePhoto}
+                className="h-11 rounded-md px-5"
               >
                 <ImagePlus className="mr-2 h-4 w-4" />
 
@@ -298,73 +298,87 @@ export default function ProfileImageUploader({
                   type="button"
                   variant="ghost"
                   onClick={handleResetSelection}
+                  className="ml-2 h-11 rounded-md"
                 >
                   <RotateCcw className="mr-2 h-4 w-4" />
                   Reset
                 </Button>
               )}
+
+              <p className="mt-3 text-xs text-gray-500">
+                JPG, PNG or WEBP. Maximum 5 MB.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {isCropping && sourceUrl && (
+          <div className="rounded-md border border-gray-200 bg-white p-4">
+            <div className="mb-4">
+              <p className="text-sm font-semibold text-gray-950">
+                Crop profile photo
+              </p>
+
+              <p className="mt-1 text-xs text-gray-500">
+                Drag the square to position your photo.
+              </p>
             </div>
 
-            <p className="text-xs text-muted-foreground">
-              JPG, PNG or WEBP. Maximum 5 MB.
-            </p>
+            <div className="flex justify-center overflow-hidden rounded-md bg-gray-50">
+              <ReactCrop
+                crop={crop}
+                onChange={(pixelCrop, percentCrop) => {
+                  setCrop(percentCrop);
+                }}
+                onComplete={(pixelCrop) => {
+                  setCompletedCrop(pixelCrop);
+                }}
+                aspect={1}
+                keepSelection
+                minWidth={80}
+                minHeight={80}
+              >
+                <img
+                  ref={imageRef}
+                  src={sourceUrl}
+                  alt="Crop profile"
+                  onLoad={handleImageLoad}
+                  className="block max-h-105 max-w-full object-contain"
+                />
+              </ReactCrop>
+            </div>
+
+            <div className="mt-5 flex justify-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleCancelCrop}
+                className="rounded-md"
+              >
+                <X className="mr-2 h-4 w-4" />
+                Cancel
+              </Button>
+
+              <Button
+                type="button"
+                onClick={handleApplyCrop}
+                disabled={!completedCrop?.width || !completedCrop?.height}
+                className="rounded-md bg-[#b60018] text-white hover:bg-[#960014]"
+              >
+                <Check className="mr-2 h-4 w-4" />
+                Apply Crop
+              </Button>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {isCropping && sourceUrl && (
-        <div className="rounded-xl border bg-background p-4">
-          <div className="mb-4">
-            <p className="text-sm font-medium">Crop profile photo</p>
-
-            <p className="mt-1 text-xs text-muted-foreground">
-              Drag the square to position your photo.
-            </p>
-          </div>
-
-          <div className="flex justify-center">
-            <ReactCrop
-              crop={crop}
-              onChange={(pixelCrop, percentCrop) => {
-                setCrop(percentCrop);
-              }}
-              onComplete={(pixelCrop) => {
-                setCompletedCrop(pixelCrop);
-              }}
-              aspect={1}
-              keepSelection
-              minWidth={80}
-              minHeight={80}
-            >
-              <img
-                ref={imageRef}
-                src={sourceUrl}
-                alt="Crop profile"
-                onLoad={handleImageLoad}
-                className="block max-h-105 max-w-full object-contain"
-              />
-            </ReactCrop>
-          </div>
-
-          <div className="mt-5 flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={handleCancelCrop}>
-              <X className="mr-2 h-4 w-4" />
-              Cancel
-            </Button>
-
-            <Button
-              type="button"
-              onClick={handleApplyCrop}
-              disabled={!completedCrop?.width || !completedCrop?.height}
-            >
-              <Check className="mr-2 h-4 w-4" />
-              Apply Crop
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {error && <p className="text-sm font-medium text-destructive">{error}</p>}
-    </div>
+        {error && <p className="text-sm font-medium text-red-600">{error}</p>}
+      </div>
+      <ImageModal
+        image={previewUrl}
+        open={imagePreviewOpen}
+        onClose={() => setImagePreviewOpen(false)}
+      />
+    </>
   );
 }

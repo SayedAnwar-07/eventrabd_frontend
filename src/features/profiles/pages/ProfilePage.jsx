@@ -5,6 +5,7 @@ import { Navigate, useParams } from "react-router-dom";
 import { getMyProfile } from "@/store/features/auth/authSlice";
 import ProfileCard from "../components/ProfileCard";
 import api from "@/store/constant/api";
+import UpdateProfile from "../components/UpdateProfile";
 
 const ProfilePage = () => {
   const dispatch = useDispatch();
@@ -86,15 +87,18 @@ const ProfilePage = () => {
 
   return (
     <div className="container mx-auto px-2 py-8">
-      <div className="mx-auto max-w-400">
-        <h1 className="mb-2 text-3xl font-bold">User Profile</h1>
+      <div className="mb-6 flex flex-col gap-4 border-b border-gray-200 pb-5 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="mb-2 text-3xl font-bold">User Profile</h1>
 
-        <p className="mb-8 text-muted-foreground">
-          View and manage your profile information
-        </p>
+          <p className="mb-8 text-muted-foreground">
+            View and manage your profile information
+          </p>
+        </div>
 
         <ProfileCard />
       </div>
+      <UpdateProfile />
     </div>
   );
 };

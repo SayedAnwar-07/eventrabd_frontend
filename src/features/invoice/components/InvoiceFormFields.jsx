@@ -1,11 +1,11 @@
 import { formatMoney } from "../utils/currency";
 
 /*
- * Visible only on laptop / desktop.
- * Hidden on mobile and tablet.
+ * Visible on ALL devices
+ * Label -------- Input / Value
  */
-const DesktopDots = () => (
-  <div className="hidden flex-1 border-b border-dashed border-gray-500 md:block" />
+const FieldDots = () => (
+  <div className="min-w-3 border-b border-dashed border-gray-400" />
 );
 
 const InvoiceFormFields = ({
@@ -31,24 +31,34 @@ const InvoiceFormFields = ({
   const textareaClass =
     "w-full resize-y rounded-md border border-gray-300 bg-white px-3 py-3 text-sm text-gray-950 outline-none transition placeholder:text-gray-400 focus:border-[#b60018] focus:ring-2 focus:ring-red-100 disabled:cursor-not-allowed disabled:bg-gray-100";
 
+  /*
+   * Mobile:
+   * label | dots | input
+   *
+   * Desktop:
+   * label | dots | wider input
+   */
+  const fieldRowClass =
+    "grid grid-cols-[auto_minmax(12px,1fr)_minmax(145px,45%)] items-center gap-2 sm:grid-cols-[auto_minmax(20px,1fr)_224px] md:grid-cols-[auto_minmax(20px,1fr)_288px] md:gap-3";
+
   return (
-    <div className="w-full text-gray-900">
+    <div className="w-full text-gray-900 ">
       {/* =========================================
           DUE PAYMENT DATE
       ========================================== */}
       <div className="border-b border-gray-200 py-4">
-        <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-3">
+        <div className={fieldRowClass}>
           <label
             htmlFor="invoice-due-payment-date"
-            className="shrink-0 text-sm font-semibold text-gray-900"
+            className="shrink-0 whitespace-nowrap text-sm font-semibold text-gray-900"
           >
             Due Payment Date
             <span className="ml-0.5 text-[#b60018]">*</span>
           </label>
 
-          <DesktopDots />
+          <FieldDots />
 
-          <div className="w-full md:w-72">
+          <div className="min-w-0">
             <input
               id="invoice-due-payment-date"
               name="due_payment_last_date"
@@ -73,12 +83,14 @@ const InvoiceFormFields = ({
           BASE PRICE
       ========================================== */}
       <div className="py-4">
-        <div className="flex items-center gap-3">
-          <span className="shrink-0 text-sm text-gray-900">Base Price</span>
+        <div className="grid grid-cols-[auto_minmax(12px,1fr)_auto] items-center gap-2 md:gap-3">
+          <span className="shrink-0 whitespace-nowrap text-sm text-gray-900">
+            Base Price
+          </span>
 
-          <DesktopDots />
+          <FieldDots />
 
-          <span className="ml-auto shrink-0 text-sm font-semibold text-gray-950">
+          <span className="shrink-0 whitespace-nowrap text-sm font-semibold text-gray-950">
             {safeMoney(basePrice)}
           </span>
         </div>
@@ -88,17 +100,17 @@ const InvoiceFormFields = ({
           ADDITIONAL CHARGE
       ========================================== */}
       <div className="py-4">
-        <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-3">
+        <div className={fieldRowClass}>
           <label
             htmlFor="invoice-additional-charge"
-            className="shrink-0 text-sm text-gray-900"
+            className="shrink-0 whitespace-nowrap text-sm text-gray-900"
           >
             Additional Charge
           </label>
 
-          <DesktopDots />
+          <FieldDots />
 
-          <div className="w-full md:w-72">
+          <div className="min-w-0">
             <div className="relative">
               <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm text-gray-500">
                 ৳
@@ -155,7 +167,7 @@ const InvoiceFormFields = ({
           disabled={loading}
           required={hasAdditionalCharge}
           placeholder="Write the reason for additional charge"
-          className={`${textareaClass} min-h-22.5]`}
+          className={`${textareaClass} min-h-22.5`}
         />
 
         {validationErrors.additional_charge_reason ? (
@@ -169,17 +181,17 @@ const InvoiceFormFields = ({
           DISCOUNT
       ========================================== */}
       <div className="border-b border-gray-200 py-4">
-        <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-3">
+        <div className={fieldRowClass}>
           <label
             htmlFor="invoice-discount-price"
-            className="shrink-0 text-sm text-gray-900"
+            className="shrink-0 whitespace-nowrap text-sm text-gray-900"
           >
             Discount
           </label>
 
-          <DesktopDots />
+          <FieldDots />
 
-          <div className="w-full md:w-72">
+          <div className="min-w-0">
             <div className="relative">
               <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm text-gray-500">
                 −৳
@@ -217,14 +229,14 @@ const InvoiceFormFields = ({
           TOTAL
       ========================================== */}
       <div className="py-4">
-        <div className="flex items-center gap-3">
-          <span className="shrink-0 text-sm font-bold text-gray-950">
+        <div className="grid grid-cols-[auto_minmax(12px,1fr)_auto] items-center gap-2 md:gap-3">
+          <span className="shrink-0 whitespace-nowrap text-sm font-bold text-gray-950">
             Total
           </span>
 
-          <DesktopDots />
+          <FieldDots />
 
-          <span className="ml-auto shrink-0 text-sm font-bold text-gray-950">
+          <span className="shrink-0 whitespace-nowrap text-sm font-bold text-gray-950">
             {safeMoney(total)}
           </span>
         </div>
@@ -233,18 +245,18 @@ const InvoiceFormFields = ({
       {/* =========================================
           ADVANCE PAYMENT
       ========================================== */}
-      <div className="py-4 border-b border-gray-200">
-        <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-3">
+      <div className="border-b border-gray-200 py-4">
+        <div className={fieldRowClass}>
           <label
             htmlFor="invoice-advance-payment"
-            className="shrink-0 text-sm text-gray-900"
+            className="shrink-0 whitespace-nowrap text-sm text-gray-900"
           >
             Advance Payment
           </label>
 
-          <DesktopDots />
+          <FieldDots />
 
-          <div className="w-full md:w-72">
+          <div className="min-w-0">
             <div className="relative">
               <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm text-gray-500">
                 −৳
@@ -282,14 +294,14 @@ const InvoiceFormFields = ({
           DUE PAYMENT
       ========================================== */}
       <div className="py-4">
-        <div className="flex items-center gap-3">
-          <span className="shrink-0 text-sm font-bold text-gray-950">
+        <div className="grid grid-cols-[auto_minmax(12px,1fr)_auto] items-center gap-2 md:gap-3">
+          <span className="shrink-0 whitespace-nowrap text-sm font-bold text-gray-950">
             Due Payment
           </span>
 
-          <DesktopDots />
+          <FieldDots />
 
-          <span className="ml-auto shrink-0 text-sm font-bold text-gray-950">
+          <span className="shrink-0 whitespace-nowrap text-sm font-bold text-gray-950">
             {safeMoney(duePayment)}
           </span>
         </div>

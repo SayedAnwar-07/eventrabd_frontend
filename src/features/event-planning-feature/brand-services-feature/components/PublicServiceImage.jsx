@@ -9,7 +9,7 @@ import {
   Lightbulb,
   Star,
 } from "lucide-react";
-import ImageModal from "./ImageModal";
+import ImageModal from "@/components/common/ImageModal";
 
 const GALLERY_ONLY_SERVICE_TYPES = [
   "photography",

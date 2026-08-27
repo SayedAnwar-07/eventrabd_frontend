@@ -53,7 +53,7 @@ export default function CustomerHireRequestDetailsPage() {
   if (!hire) {
     return (
       <div className="min-h-screen bg-background">
-        <main className="mx-auto max-w-3xl px-4 py-16">
+        <main className="mx-auto max-w-3xl py-16">
           <section className="rounded-md border border-border bg-card px-6 py-12 text-center">
             <h1 className="text-xl font-semibold text-foreground">
               Hire request not found
@@ -78,7 +78,7 @@ export default function CustomerHireRequestDetailsPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <main className="mx-auto max-w-6xl px-4 py-8 lg:py-10">
+      <main className="mx-auto max-w-6xl py-8 lg:py-10">
         {/* Back navigation */}
         <Link
           to="/customer/hire-requests"

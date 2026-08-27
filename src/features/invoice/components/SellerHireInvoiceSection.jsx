@@ -132,7 +132,7 @@ const SellerHireInvoiceSection = ({ hire }) => {
         {error ? (
           <div
             role="alert"
-            className="mb-5 flex items-start gap-3 border-l-2 border-red-600 bg-red-50 px-4 py-3"
+            className="mb-5 flex items-start gap-3 border-l-2 border-red-600 px-4 py-3"
           >
             <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-600" />
 
@@ -180,11 +180,7 @@ const SellerHireInvoiceSection = ({ hire }) => {
             ) : null}
 
             {!customerDecisionSubmitted ? (
-              <div className="flex items-start gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-100">
-                  <Clock3 className="h-5 w-5 text-amber-700" />
-                </div>
-
+              <div className="flex justify-center text-center lg:justify-start lg:text-left">
                 <div>
                   <p className="font-semibold text-gray-950">
                     Waiting for customer decision
@@ -218,7 +214,7 @@ const SellerHireInvoiceSection = ({ hire }) => {
               <button
                 type="button"
                 disabled
-                className="inline-flex h-11 cursor-not-allowed items-center justify-center gap-2 rounded-lg border border-gray-300 bg-gray-100 px-6 text-sm font-semibold text-gray-500 opacity-70"
+                className="inline-flex h-11 cursor-not-allowed items-center justify-center gap-2 rounded-md border border-gray-300 bg-gray-100 px-6 text-sm font-semibold text-gray-500 opacity-70"
               >
                 <FileCheck2 className="h-4 w-4" />
                 Editing Disabled

@@ -10,6 +10,7 @@ import {
 import BrandHeader from "../components/brandDetails/BrandHeader";
 import BrandServicesSection from "../components/brandDetails/BrandServicesSection";
 import BrandPageState from "../components/brandDetails/BrandPageState";
+import BrandSidebarPanel from "../components/brandDetails/Brandsidebarpanel";
 
 const BrandDetailsPage = () => {
   const { slug } = useParams();
@@ -56,21 +57,39 @@ const BrandDetailsPage = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <main className="mx-auto max-w-6xl px-4 pb-10 sm:px-6 lg:px-8">
-        <BrandHeader
-          brand={publicBrandDetails}
-          onEdit={() =>
-            navigate(`/event-planner/brands/${publicBrandDetails.slug}/edit`)
-          }
-        />
-
-        <div className="">
-          <div className="">
-            <BrandServicesSection
+      <main className="mx-auto w-full max-w-7xl px-4 pb-10 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
+          {/* LEFT */}
+          <div className="min-w-0">
+            <BrandHeader
               brand={publicBrandDetails}
-              onServiceCreated={handleServiceCreated}
+              onEdit={() =>
+                navigate(
+                  `/event-planner/brands/${publicBrandDetails.slug}/edit`,
+                )
+              }
             />
           </div>
+
+          {/* RIGHT */}
+          <aside className="w-full lg:sticky lg:top-6">
+            <BrandSidebarPanel
+              brand={publicBrandDetails}
+              services={
+                Array.isArray(publicBrandDetails.services)
+                  ? publicBrandDetails.services
+                  : []
+              }
+            />
+          </aside>
+        </div>
+
+        {/* services */}
+        <div>
+          <BrandServicesSection
+            brand={publicBrandDetails}
+            onServiceCreated={handleServiceCreated}
+          />
         </div>
       </main>
     </div>

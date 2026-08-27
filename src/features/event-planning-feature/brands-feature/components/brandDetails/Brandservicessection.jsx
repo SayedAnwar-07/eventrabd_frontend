@@ -3,6 +3,7 @@ import EventServiceSheet from "@/features/event-planning-feature/brand-services-
 
 const BrandServicesSection = ({ brand, onServiceCreated }) => {
   const services = brand.services || [];
+  
 
   return (
     <section>
@@ -34,7 +35,7 @@ const BrandServicesSection = ({ brand, onServiceCreated }) => {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {services.map((service) => (
             <ServiceCard
               key={service.id}

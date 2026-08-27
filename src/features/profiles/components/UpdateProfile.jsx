@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-
 import { useDispatch, useSelector } from "react-redux";
-
 import { useForm } from "react-hook-form";
+import { Loader2 } from "lucide-react";
 
 import {
   clearError,
@@ -12,14 +11,12 @@ import {
   updateProfile,
 } from "@/store/features/auth/authSlice";
 
-import { Badge } from "@/components/ui/badge";
 import { Form } from "@/components/ui/form";
-import { Separator } from "@/components/ui/separator";
 
-import ProfileEditSidebar from "../components/ProfileEditSidebar";
-import BasicInformationFields from "../components/BasicInformationFields";
-import ContactDetailsFields from "../components/ContactDetailsFields";
-import ProfileFormActions from "../components/ProfileFormActions";
+import ProfileImageUploader from "./ProfileImageUploader";
+import BasicInformationFields from "./BasicInformationFields";
+import ContactDetailsFields from "./ContactDetailsFields";
+import ProfileFormActions from "./ProfileFormActions";
 
 import {
   getChangedProfileValues,
@@ -35,12 +32,8 @@ const UpdateProfile = () => {
 
   const { user, loading } = useSelector((state) => state.auth);
 
-  const [activeTab, setActiveTab] = useState("basic");
-
   const [profileImageFile, setProfileImageFile] = useState(null);
-
   const [localMessage, setLocalMessage] = useState("");
-
   const [localError, setLocalError] = useState("");
 
   const form = useForm({
@@ -144,11 +137,11 @@ const UpdateProfile = () => {
 
   if (!user && loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex min-h-[60vh] items-center justify-center">
         <div className="text-center">
-          <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-primary border-r-transparent" />
+          <Loader2 className="mx-auto h-7 w-7 animate-spin text-[#b60018]" />
 
-          <p className="mt-4 text-muted-foreground">Loading profile...</p>
+          <p className="mt-3 text-sm text-gray-500">Loading profile...</p>
         </div>
       </div>
     );
@@ -156,37 +149,19 @@ const UpdateProfile = () => {
 
   if (!user) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <p className="text-muted-foreground">Cannot load profile.</p>
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <p className="text-sm text-gray-500">Cannot load profile.</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen px-4 py-8 sm:px-6 lg:px-8">
-      <div className="container mx-auto">
-        <header className="mb-8">
-          <div className="mb-3 flex items-start justify-between gap-4">
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight">
-                Edit Profile
-              </h1>
-
-              <p className="mt-1 text-muted-foreground">
-                Update your personal and contact information.
-              </p>
-            </div>
-
-            <Badge className="capitalize">{user.role || "user"}</Badge>
-          </div>
-
-          <Separator />
-        </header>
-
+    <div className="min-h-screen bg-white py-8">
+      <div className="">
         {localMessage && (
           <div
             role="status"
-            className="mb-6 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700"
+            className="mb-5 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700"
           >
             {localMessage}
           </div>
@@ -195,44 +170,40 @@ const UpdateProfile = () => {
         {localError && (
           <div
             role="alert"
-            className="mb-6 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+            className="mb-5 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
           >
             {localError}
           </div>
         )}
 
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-          <aside className="lg:col-span-1">
-            <ProfileEditSidebar
-              activeTab={activeTab}
-              onTabChange={setActiveTab}
-            />
-          </aside>
-
-          <main className="lg:col-span-2">
-            <Form {...form}>
-              <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
-                {activeTab === "basic" && (
-                  <BasicInformationFields
-                    control={control}
-                    user={user}
+        <Form {...form}>
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <div className="">
+              <div className="grid grid-cols-1 gap-8 sm:p-6 lg:grid-cols-[280px_minmax(0,1fr)] lg:gap-10">
+                <aside>
+                  <ProfileImageUploader
+                    currentImageUrl={user?.profile_image_url}
                     onImageChange={handleProfileImageChange}
                   />
-                )}
+                </aside>
 
-                {activeTab === "contact" && (
-                  <ContactDetailsFields control={control} />
-                )}
+                <main className="min-w-0">
+                  <div className="space-y-6">
+                    <BasicInformationFields control={control} user={user} />
 
-                <ProfileFormActions
-                  loading={loading}
-                  hasChanges={hasChanges}
-                  onCancel={handleCancel}
-                />
-              </form>
-            </Form>
-          </main>
-        </div>
+                    <ContactDetailsFields control={control} />
+                  </div>
+                </main>
+              </div>
+
+              <ProfileFormActions
+                loading={loading}
+                hasChanges={hasChanges}
+                onCancel={handleCancel}
+              />
+            </div>
+          </form>
+        </Form>
       </div>
     </div>
   );

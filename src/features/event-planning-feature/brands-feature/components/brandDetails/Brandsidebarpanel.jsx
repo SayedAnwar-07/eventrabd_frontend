@@ -1,26 +1,6 @@
 import { Layers, Mail, MapPin, MessageCircle, Phone } from "lucide-react";
 
-import { DIVISION_OPTIONS } from "@/store/features/eventPlanner/bangladeshLocations";
-
 import { formatWhatsAppNumber } from "../../utils/Formatters";
-
-const getDivisionLabels = (divisions) => {
-  if (!Array.isArray(divisions) || divisions.length === 0) {
-    return "";
-  }
-
-  if (divisions.includes("whole_bangladesh")) {
-    return "Whole Bangladesh";
-  }
-
-  return divisions
-    .map(
-      (value) =>
-        DIVISION_OPTIONS.find((division) => division.value === value)?.label ||
-        value,
-    )
-    .join(", ");
-};
 
 const ContactRow = ({ icon: Icon, label, value, href }) => {
   if (!value) {

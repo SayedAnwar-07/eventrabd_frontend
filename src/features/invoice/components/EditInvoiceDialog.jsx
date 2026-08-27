@@ -56,18 +56,26 @@ const buildInitialSlotShifts = (breakdown = []) => {
   return slotShifts;
 };
 
+const toIntegerString = (value) => {
+  if (value === null || value === undefined || value === "") return "";
+
+  const number = Number(value);
+
+  return Number.isFinite(number) ? String(Math.trunc(number)) : "";
+};
+
 const getInitialFormData = (invoice, breakdown = []) => ({
   due_payment_last_date: invoice?.due_payment_last_date || "",
 
   slot_shifts: buildInitialSlotShifts(breakdown),
 
-  additional_charge: invoice?.additional_charge ?? "0.00",
+  additional_charge: toIntegerString(invoice?.additional_charge),
 
   additional_charge_reason: invoice?.additional_charge_reason || "",
 
-  discount_price: invoice?.discount_price ?? "0.00",
+  discount_price: toIntegerString(invoice?.discount_price),
 
-  advance_payment: invoice?.advance_payment ?? "0.00",
+  advance_payment: toIntegerString(invoice?.advance_payment),
 
   seller_note: invoice?.seller_note || "",
 
@@ -379,6 +387,7 @@ const EditInvoiceDialog = ({ invoice }) => {
 
     return Object.keys(errors).length === 0;
   };
+
   const getChangedSlotShifts = () => {
     const nextSlotShifts = breakdown.map((entry) => ({
       booking_slot: entry.booking_slot_id,
@@ -562,9 +571,8 @@ const EditInvoiceDialog = ({ invoice }) => {
         <button
           type="button"
           disabled={!invoice?.can_edit}
-          className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[#b60018] px-6 text-sm font-semibold text-white transition hover:bg-[#960014] disabled:bg-gray-300"
+          className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-md bg-[#b60018] px-6 text-sm font-semibold text-white transition hover:bg-[#960014] disabled:bg-gray-300 lg:w-auto"
         >
-          <FilePenLine className="h-4 w-4" />
           Edit Invoice
         </button>
       </DialogTrigger>
