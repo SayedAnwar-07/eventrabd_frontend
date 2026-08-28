@@ -2,7 +2,7 @@ export const PACKAGE_SUPPORTED_SERVICE_TYPES = ["photography", "videography"];
 
 export const BASIC_PACKAGE_LIMIT = 3;
 
-export const MAX_SHORT_INFO_ITEMS = 3;
+export const MAX_SHORT_INFO_ITEMS = 4;
 export const MAX_SHORT_INFO_LENGTH = 120;
 
 export const supportsPackages = (serviceName) =>
