@@ -1,4 +1,4 @@
-import { BriefcaseBusiness, MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { CalendarCheck2, MoreVertical, Pencil, Trash2 } from "lucide-react";
 
 import {
   DropdownMenu,
@@ -23,7 +23,7 @@ const ServiceFloatingActions = ({
   if (!service) return null;
 
   return (
-    <div className="fixed bottom-20 right-6 z-50 sm:bottom-6 sm:right-24">
+    <div className="fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom))] right-4 z-50 lg:bottom-6 lg:right-28">
       {/* NON OWNER */}
       {!isOwner && (
         <div ref={hireSheetRef}>
@@ -32,11 +32,13 @@ const ServiceFloatingActions = ({
             trigger={
               <button
                 type="button"
-                className="relative inline-flex h-11 items-center justify-center gap-2 rounded-md bg-[#b60018] px-4 text-sm font-semibold text-white shadow-lg transition hover:bg-[#960014]"
+                className="relative inline-flex h-12 items-center justify-center gap-2 rounded-full bg-[#b60018] px-5 text-sm font-semibold text-white shadow-lg transition hover:bg-[#960014] active:scale-95"
               >
-                <span className="absolute inset-0 -z-10 animate-ping rounded-md bg-[#b60018]/40" />
-                <BriefcaseBusiness className="h-4 w-4" />
-                Hire
+                <span className="absolute inset-0 -z-10 animate-ping rounded-full bg-[#b60018]/30" />
+
+                <CalendarCheck2 className="h-5 w-5" />
+
+                <span>Book Now</span>
               </button>
             }
           />
@@ -49,10 +51,10 @@ const ServiceFloatingActions = ({
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              className="relative flex h-11 w-11 items-center justify-center rounded-md border border-[#b60018] bg-[#b60018] text-white shadow-lg transition hover:bg-[#960014]"
+              className="relative flex h-12 w-12 items-center justify-center rounded-full border border-[#b60018] bg-[#b60018] text-white shadow-lg transition hover:bg-[#960014] active:scale-95"
               aria-label="Service actions"
             >
-              <span className="absolute inset-0 -z-10 animate-ping rounded-md bg-[#b60018]/40" />
+              <span className="absolute inset-0 -z-10 animate-ping rounded-full bg-[#b60018]/30" />
 
               <MoreVertical className="h-5 w-5" />
             </button>
@@ -61,8 +63,8 @@ const ServiceFloatingActions = ({
           <DropdownMenuContent
             align="end"
             side="top"
-            sideOffset={8}
-            className="w-44 rounded-md"
+            sideOffset={10}
+            className="w-44 rounded-lg"
           >
             {/* EDIT */}
             <EventServiceSheet
@@ -74,7 +76,7 @@ const ServiceFloatingActions = ({
               trigger={
                 <DropdownMenuItem
                   onSelect={(event) => event.preventDefault()}
-                  className="cursor-pointer gap-2 rounded-md"
+                  className="cursor-pointer gap-2"
                 >
                   <Pencil className="h-4 w-4" />
                   Edit Service
@@ -94,7 +96,7 @@ const ServiceFloatingActions = ({
               trigger={
                 <DropdownMenuItem
                   onSelect={(event) => event.preventDefault()}
-                  className="cursor-pointer gap-2 rounded-md text-red-600 focus:bg-red-50 focus:text-red-600"
+                  className="cursor-pointer gap-2 text-red-600 focus:bg-red-50 focus:text-red-600"
                 >
                   <Trash2 className="h-4 w-4" />
                   Delete Service

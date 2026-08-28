@@ -23,6 +23,23 @@ const BrandHeader = ({ brand, onEdit }) => {
   const officeAddress = brand?.office_address?.trim() || "";
   const serviceAreas = brand?.division || [];
 
+  const cleanRichText = (html = "") => {
+    return (
+      html
+        // Remove completely blank paragraphs
+        .replace(
+          /<p[^>]*>(?:\s|&nbsp;|&#160;|&#8203;|\u200B|<br[^>]*>)*<\/p>/gi,
+          "",
+        )
+
+        // Remove <br> from the beginning of a paragraph
+        .replace(
+          /<p([^>]*)>(?:\s|&nbsp;|&#160;|&#8203;|\u200B)*<br[^>]*>/gi,
+          "<p$1>",
+        )
+    );
+  };
+
   return (
     <header>
       {/* Breadcrumb + Actions */}
@@ -132,30 +149,37 @@ const BrandHeader = ({ brand, onEdit }) => {
 
       {/* Description */}
       {brand?.short_description ? (
-        <div
-          className="
-      mt-10 max-w-4xl text-base leading-7 text-foreground/80
+        <div className="mt-10 max-w-6xl">
+          <h2 className="mb-4 text-xl font-semibold text-foreground">
+            About This Brand
+            <span className="mt-2 block h-1 w-12 rounded-full bg-[#ae0212]" />
+          </h2>
 
-      [&_p]:mb-3
-      [&_p:last-child]:mb-0
+          <div
+            className="
+        text-base leading-7 text-foreground/80
 
-      [&_strong]:font-bold
-      [&_strong]:text-foreground
+        [&_p]:mb-3
+        [&_p:last-child]:mb-0
 
-      [&_ul]:my-3
-      [&_ul]:ml-6
-      [&_ul]:list-disc
+        [&_strong]:font-bold
+        [&_strong]:text-foreground
 
-      [&_ol]:my-3
-      [&_ol]:ml-6
-      [&_ol]:list-decimal
+        [&_ul]:my-3
+        [&_ul]:ml-6
+        [&_ul]:list-disc
 
-      [&_li]:my-1
-    "
-          dangerouslySetInnerHTML={{
-            __html: brand.short_description,
-          }}
-        />
+        [&_ol]:my-3
+        [&_ol]:ml-6
+        [&_ol]:list-decimal
+
+        [&_li]:my-1
+      "
+            dangerouslySetInnerHTML={{
+              __html: cleanRichText(brand.short_description),
+            }}
+          />
+        </div>
       ) : (
         <p className="mt-4 text-base text-foreground/70">
           No description available yet.

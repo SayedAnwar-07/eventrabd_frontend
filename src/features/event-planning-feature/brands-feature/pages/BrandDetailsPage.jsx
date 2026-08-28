@@ -57,7 +57,7 @@ const BrandDetailsPage = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <main className="mx-auto w-full max-w-7xl px-4 pb-10 sm:px-6 lg:px-8">
+      <main className="mx-auto w-full pb-10 sm:px-6">
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
           {/* LEFT */}
           <div className="min-w-0">

@@ -80,7 +80,8 @@ export default function MobileAndTabNav({
   const isSeller = user?.role === "seller";
   const isCustomer = user?.role === "customer";
 
-  const bottomGridClass = isSeller ? "grid-cols-5" : "grid-cols-4";
+  const bottomGridClass =
+    isSeller || isCustomer ? "grid-cols-5" : "grid-cols-4";
 
   return (
     <div className="lg:hidden">
