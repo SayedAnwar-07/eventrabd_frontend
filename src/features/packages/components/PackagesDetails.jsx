@@ -191,8 +191,6 @@ const PackagesDetails = ({ service }) => {
       <div className="mb-7 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
           <div className="flex items-start gap-3">
-
-
             <div>
               <h2 className="text-xl font-semibold tracking-tight">
                 {serviceDisplayName} Packages
@@ -300,7 +298,7 @@ const PackagesDetails = ({ service }) => {
         <div className="relative">
           <div
             ref={carouselRef}
-            className="flex touch-pan-x snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain scroll-smooth pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            className="flex touch-auto snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain scroll-smooth pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           >
             {packages.map((packageItem, index) => {
               const shortInfo = Array.isArray(packageItem.short_info)
@@ -311,7 +309,7 @@ const PackagesDetails = ({ service }) => {
                 <article
                   key={packageItem.id}
                   data-package-card
-                  className="group relative flex min-w-full snap-start flex-col overflow-hidden rounded-md border border-border bg-background shadow-sm transition-all duration-200 m:min-w-[calc((100%-1rem)/2)] lg:min-w-[calc((100%-2rem)/3)] lg:hover:shadow-md"
+                  className="group relative flex min-w-full snap-start flex-col overflow-hidden rounded-md border border-border bg-background shadow-sm transition-all duration-200 sm:min-w-[calc((100%-1rem)/2)] lg:min-w-[calc((100%-2rem)/3)] lg:hover:shadow-md"
                 >
                   <div className="flex flex-1 flex-col p-5 sm:p-6">
                     {/* Top */}
