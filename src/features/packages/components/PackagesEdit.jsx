@@ -26,12 +26,14 @@ const PackagesEdit = ({ serviceId, packageItem }) => {
   const dispatch = useDispatch();
 
   const updating = useSelector(selectPackageUpdating);
+
   const error = useSelector(selectPackageError);
 
   const [open, setOpen] = useState(false);
 
   const handleOpenChange = (value) => {
     setOpen(value);
+
     dispatch(clearPackageError());
   };
 
@@ -40,14 +42,17 @@ const PackagesEdit = ({ serviceId, packageItem }) => {
       await dispatch(
         updatePackage({
           serviceId,
+
           packageId: packageItem.id,
+
           packageData,
         }),
       ).unwrap();
 
       setOpen(false);
     } catch {
-      // Error is already stored in Redux.
+      // Backend error already
+      // stored in Redux.
     }
   };
 
@@ -74,7 +79,12 @@ const PackagesEdit = ({ serviceId, packageItem }) => {
           <PackagesForm
             initialValues={{
               package_title: packageItem.package_title,
+
               package_price: packageItem.package_price,
+
+              short_info: Array.isArray(packageItem.short_info)
+                ? packageItem.short_info
+                : [],
             }}
             loading={updating}
             error={error}

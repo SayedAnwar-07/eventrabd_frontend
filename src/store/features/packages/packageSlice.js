@@ -102,7 +102,6 @@ export const deletePackage = createAsyncThunk(
 
 const initialState = {
   packagesByService: {},
-
   loadingByService: {},
 
   creating: false,
@@ -116,6 +115,7 @@ const initialState = {
 
 const packageSlice = createSlice({
   name: "packages",
+
   initialState,
 
   reducers: {
@@ -135,7 +135,8 @@ const packageSlice = createSlice({
 
   extraReducers: (builder) => {
     builder
-      // ── Fetch packages ──────────────────────────────────────────────────────
+
+      // ── Fetch ───────────────────────────────────────────────────────────────
       .addCase(fetchPackagesByService.pending, (state, action) => {
         const serviceId = action.meta.arg;
 
@@ -147,6 +148,7 @@ const packageSlice = createSlice({
         const { serviceId, packages } = action.payload;
 
         state.loadingByService[serviceId] = false;
+
         state.packagesByService[serviceId] = packages;
       })
 
@@ -154,10 +156,11 @@ const packageSlice = createSlice({
         const serviceId = action.meta.arg;
 
         state.loadingByService[serviceId] = false;
+
         state.error = action.payload ?? action.error;
       })
 
-      // ── Create package ──────────────────────────────────────────────────────
+      // ── Create ──────────────────────────────────────────────────────────────
       .addCase(createPackage.pending, (state) => {
         state.creating = true;
         state.error = null;
@@ -177,10 +180,11 @@ const packageSlice = createSlice({
 
       .addCase(createPackage.rejected, (state, action) => {
         state.creating = false;
+
         state.error = action.payload ?? action.error;
       })
 
-      // ── Update package ──────────────────────────────────────────────────────
+      // ── Update ──────────────────────────────────────────────────────────────
       .addCase(updatePackage.pending, (state) => {
         state.updating = true;
         state.error = null;
@@ -210,10 +214,11 @@ const packageSlice = createSlice({
 
       .addCase(updatePackage.rejected, (state, action) => {
         state.updating = false;
+
         state.error = action.payload ?? action.error;
       })
 
-      // ── Delete package ──────────────────────────────────────────────────────
+      // ── Delete ──────────────────────────────────────────────────────────────
       .addCase(deletePackage.pending, (state) => {
         state.deleting = true;
         state.error = null;
@@ -237,6 +242,7 @@ const packageSlice = createSlice({
 
       .addCase(deletePackage.rejected, (state, action) => {
         state.deleting = false;
+
         state.error = action.payload ?? action.error;
       });
   },
@@ -251,6 +257,9 @@ const EMPTY_PACKAGES = [];
 
 export const selectPackagesByService = (state, serviceId) =>
   state.packages.packagesByService[serviceId] ?? EMPTY_PACKAGES;
+
+export const selectPackageCountByService = (state, serviceId) =>
+  state.packages.packagesByService[serviceId]?.length ?? 0;
 
 export const selectPackagesLoading = (state, serviceId) =>
   state.packages.loadingByService[serviceId] ?? false;

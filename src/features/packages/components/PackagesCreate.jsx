@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Plus } from "lucide-react";
+import { LockKeyhole, Plus } from "lucide-react";
 
 import {
   clearPackageError,
@@ -22,16 +22,26 @@ import {
 
 import PackagesForm from "./PackagesForm";
 
-const PackagesCreate = ({ serviceId }) => {
+const PackagesCreate = ({
+  serviceId,
+  disabled = false,
+  packageLimit = null,
+}) => {
   const dispatch = useDispatch();
 
   const creating = useSelector(selectPackageCreating);
+
   const error = useSelector(selectPackageError);
 
   const [open, setOpen] = useState(false);
 
   const handleOpenChange = (value) => {
+    if (value && disabled) {
+      return;
+    }
+
     setOpen(value);
+
     dispatch(clearPackageError());
   };
 
@@ -46,16 +56,31 @@ const PackagesCreate = ({ serviceId }) => {
 
       setOpen(false);
     } catch {
-      // Error is already stored in Redux.
+      // Backend error stays visible
+      // inside PackagesForm.
     }
   };
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button type="button" size="sm">
-          <Plus className="size-4" />
-          Add Package
+        <Button
+          type="button"
+          size="sm"
+          disabled={disabled}
+          title={
+            disabled
+              ? `Basic membership allows maximum ${packageLimit} packages.`
+              : undefined
+          }
+        >
+          {disabled ? (
+            <LockKeyhole className="size-4" />
+          ) : (
+            <Plus className="size-4" />
+          )}
+
+          {disabled ? "Package Limit Reached" : "Add Package"}
         </Button>
       </DialogTrigger>
 
