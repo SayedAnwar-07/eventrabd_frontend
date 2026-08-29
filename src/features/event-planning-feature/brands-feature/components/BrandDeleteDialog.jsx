@@ -59,9 +59,9 @@ export default function BrandDeleteDialog({ brand }) {
         <button
           type="button"
           disabled={deleteState.loading}
-          className="inline-flex items-center justify-center gap-2 rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60"
         >
-          <Trash2 className="h-4 w-4" />
+          <Trash2 className="h-4 w-4 text-red-600" />
           Delete Brand
         </button>
       </DialogTrigger>

@@ -1,6 +1,8 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
+
+import LoadingSpinner from "@/components/common/LoadingSpinner";
 
 // Store
 import { fetchEventServiceDetail } from "@/store/features/eventService/eventServiceSlice";
@@ -54,14 +56,134 @@ const ServiceDetailsPage = () => {
   // Brand state
   const { publicBrandDetails } = useSelector((state) => state.eventPlanner);
 
-  // Derived values
+  // Auth state
+  const { accessToken, authInitialized } = useSelector((state) => state.auth);
+
+  /*
+   * Stores the last service/auth combination
+   * that successfully completed an authenticated fetch.
+   */
+  const [verifiedOwnershipKey, setVerifiedOwnershipKey] = useState(null);
+
+  // Current ownership identity
+  const ownershipKey = accessToken
+    ? `${brandSlug}:${serviceId}:${serviceName}:${accessToken}`
+    : null;
+
+  // Backend ownership
   const isOwner = service?.brand?.is_owner === true;
+
+  /*
+   * Show the small action loader when:
+   *
+   * 1. Auth is still restoring
+   * OR
+   * 2. User is authenticated but authenticated
+   *    service details haven't finished yet.
+   */
+  const actionsLoading =
+    !authInitialized ||
+    (Boolean(accessToken) && verifiedOwnershipKey !== ownershipKey);
 
   const shouldOpenHireForm = location.state?.openHireForm === true;
 
-  // Refresh current service after edit/update
+  // =====================================================
+  // FETCH SERVICE DETAILS
+  // =====================================================
+  //
+  // First render:
+  // accessToken = null
+  // → public service data loads immediately.
+  //
+  // After auth restore:
+  // accessToken changes
+  // → effect runs again
+  // → authenticated service data loads
+  // → correct is_owner arrives.
+  // =====================================================
+
+  useEffect(() => {
+    if (!brandSlug || !serviceId || !serviceName) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const currentOwnershipKey = accessToken
+      ? `${brandSlug}:${serviceId}:${serviceName}:${accessToken}`
+      : null;
+
+    const request = dispatch(
+      fetchEventServiceDetail({
+        brandSlug,
+        serviceId,
+        serviceName,
+      }),
+    );
+
+    request.then((result) => {
+      if (
+        cancelled ||
+        !currentOwnershipKey ||
+        !fetchEventServiceDetail.fulfilled.match(result)
+      ) {
+        return;
+      }
+
+      /*
+       * This runs after the async request completes.
+       * It is NOT a synchronous setState inside effect.
+       */
+      setVerifiedOwnershipKey(currentOwnershipKey);
+    });
+
+    return () => {
+      cancelled = true;
+
+      // Prevent an old public request from overwriting
+      // a newer authenticated request.
+      request.abort();
+    };
+  }, [dispatch, brandSlug, serviceId, serviceName, accessToken]);
+
+  // =====================================================
+  // FETCH BRAND DETAILS
+  // =====================================================
+  //
+  // Also refetch when accessToken becomes available
+  // so SellerInfo gets authenticated brand information.
+  // =====================================================
+
+  useEffect(() => {
+    if (!brandSlug) {
+      return;
+    }
+
+    const request = dispatch(fetchBrandBySlug(brandSlug));
+
+    return () => {
+      request.abort();
+    };
+  }, [dispatch, brandSlug, accessToken]);
+
+  // =====================================================
+  // CLEAR BRAND WHEN LEAVING PAGE
+  // =====================================================
+
+  useEffect(() => {
+    return () => {
+      dispatch(clearPublicBrandDetails());
+    };
+  }, [dispatch, brandSlug]);
+
+  // =====================================================
+  // REFRESH SERVICE AFTER EDIT
+  // =====================================================
+
   const refreshServiceDetail = () => {
-    if (!brandSlug || !service) return;
+    if (!brandSlug || !service) {
+      return;
+    }
 
     dispatch(
       fetchEventServiceDetail({
@@ -72,44 +194,22 @@ const ServiceDetailsPage = () => {
     );
   };
 
-  // Fetch service details
-  useEffect(() => {
-    if (!brandSlug || !serviceId || !serviceName) {
-      return;
-    }
+  // =====================================================
+  // RESET AUTO OPEN
+  // =====================================================
 
-    dispatch(
-      fetchEventServiceDetail({
-        brandSlug,
-        serviceId,
-        serviceName,
-      }),
-    );
-  }, [dispatch, brandSlug, serviceId, serviceName]);
-
-  // Fetch full brand details for SellerInfo
-  useEffect(() => {
-    if (!brandSlug) {
-      return;
-    }
-
-    dispatch(fetchBrandBySlug(brandSlug));
-
-    return () => {
-      dispatch(clearPublicBrandDetails());
-    };
-  }, [dispatch, brandSlug]);
-
-  // Reset auto-open state when service changes
   useEffect(() => {
     autoOpenedRef.current = false;
   }, [serviceId]);
 
-  // Automatically open HireSellerSheet
+  // =====================================================
+  // AUTO OPEN HIRE SHEET
+  // =====================================================
+
   useEffect(() => {
     if (
       !shouldOpenHireForm ||
-      loading ||
+      actionsLoading ||
       !service ||
       isOwner ||
       autoOpenedRef.current
@@ -128,7 +228,6 @@ const ServiceDetailsPage = () => {
 
       triggerButton.click();
 
-      // Remove navigation state after opening
       navigate(location.pathname, {
         replace: true,
         state: {},
@@ -140,30 +239,45 @@ const ServiceDetailsPage = () => {
     };
   }, [
     shouldOpenHireForm,
-    loading,
+    actionsLoading,
     service,
     isOwner,
     navigate,
     location.pathname,
   ]);
 
-  // Loading
-  if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background text-sm text-muted-foreground">
-        Loading...
-      </div>
-    );
+  // =====================================================
+  // INITIAL LOADING
+  // =====================================================
+
+  if (loading && !service) {
+    return <LoadingSpinner size="md" text="Loading service..." />;
   }
 
-  // Error
-  if (error || !service) {
+  // First render before pending reducer executes
+  if (!service && !error) {
+    return <LoadingSpinner size="md" text="Loading service..." />;
+  }
+
+  // =====================================================
+  // ERROR
+  // =====================================================
+
+  if (error && !service) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background text-sm text-muted-foreground">
         Service not found.
       </div>
     );
   }
+
+  if (!service) {
+    return null;
+  }
+
+  // =====================================================
+  // PAGE
+  // =====================================================
 
   return (
     <main className="min-h-screen bg-background text-foreground">
@@ -182,7 +296,7 @@ const ServiceDetailsPage = () => {
         />
 
         <div className="mt-10 grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
-          {/* LEFT - Service Information */}
+          {/* LEFT */}
           <div className="min-w-0">
             <ServiceHero
               service={service}
@@ -190,7 +304,7 @@ const ServiceDetailsPage = () => {
             />
           </div>
 
-          {/* RIGHT - Seller Information */}
+          {/* RIGHT */}
           <aside className="w-full lg:sticky lg:top-6">
             <SellerInfo brand={publicBrandDetails} />
           </aside>
@@ -209,6 +323,7 @@ const ServiceDetailsPage = () => {
           service={service}
           brandSlug={brandSlug}
           isOwner={isOwner}
+          actionsLoading={actionsLoading}
           hireSheetRef={hireSheetRef}
           onServiceUpdated={refreshServiceDetail}
           onServiceDeleted={() =>

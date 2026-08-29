@@ -11,9 +11,11 @@ import BrandHeader from "../components/brandDetails/BrandHeader";
 import BrandServicesSection from "../components/brandDetails/BrandServicesSection";
 import BrandPageState from "../components/brandDetails/BrandPageState";
 import BrandSidebarPanel from "../components/brandDetails/Brandsidebarpanel";
+import LoadingSpinner from "@/components/common/LoadingSpinner";
 
 const BrandDetailsPage = () => {
   const { slug } = useParams();
+
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -21,13 +23,39 @@ const BrandDetailsPage = () => {
     (state) => state.eventPlanner,
   );
 
-  // console.log(publicBrandDetails);
+  const { accessToken, authInitialized } = useSelector((state) => state.auth);
+
+  // ─────────────────────────────────────────────
+  // Fetch brand
+  // First request can load public data immediately.
+  // When access token is restored, it fetches again
+  // so backend can return correct is_owner.
+  // ─────────────────────────────────────────────
 
   useEffect(() => {
-    if (slug) dispatch(fetchBrandBySlug(slug));
+    if (!slug) return;
 
-    return () => dispatch(clearPublicBrandDetails());
+    dispatch(fetchBrandBySlug(slug));
+  }, [dispatch, slug, accessToken]);
+
+  // ─────────────────────────────────────────────
+  // Clear brand only when leaving/changing page
+  //
+  // IMPORTANT:
+  // Don't put this cleanup inside the accessToken
+  // dependent effect, otherwise existing brand data
+  // disappears during authenticated refetch.
+  // ─────────────────────────────────────────────
+
+  useEffect(() => {
+    return () => {
+      dispatch(clearPublicBrandDetails());
+    };
   }, [dispatch, slug]);
+
+  // ─────────────────────────────────────────────
+  // Slug redirect
+  // ─────────────────────────────────────────────
 
   useEffect(() => {
     if (publicDetails.redirectInfo?.newSlug) {
@@ -37,23 +65,53 @@ const BrandDetailsPage = () => {
     }
   }, [publicDetails.redirectInfo, navigate]);
 
+  // ─────────────────────────────────────────────
+  // Refresh after creating service
+  // ─────────────────────────────────────────────
+
   const handleServiceCreated = () => {
-    if (publicBrandDetails?.slug) {
-      dispatch(fetchBrandBySlug(publicBrandDetails.slug));
-    }
+    if (!publicBrandDetails?.slug) return;
+
+    dispatch(fetchBrandBySlug(publicBrandDetails.slug));
   };
 
-  if (publicDetails.loading) {
-    return <BrandPageState>Loading brand details…</BrandPageState>;
-  }
+  // ─────────────────────────────────────────────
+  // Initial loading only
+  //
+  // If brand data already exists, don't hide the
+  // whole page during ownership/auth refetch.
+  // ─────────────────────────────────────────────
 
-  if (publicDetails.errorMessage) {
+  if (publicDetails.loading && !publicBrandDetails) {
+    return <LoadingSpinner text="Loading brand details..." />;
+  }
+  // ─────────────────────────────────────────────
+  // Error
+  // ─────────────────────────────────────────────
+
+  if (publicDetails.errorMessage && !publicBrandDetails) {
     return <BrandPageState>{publicDetails.errorMessage}</BrandPageState>;
   }
+
+  // ─────────────────────────────────────────────
+  // Not found
+  // ─────────────────────────────────────────────
 
   if (!publicBrandDetails) {
     return <BrandPageState>Brand not found.</BrandPageState>;
   }
+
+  // ─────────────────────────────────────────────
+  // Action ownership loading
+  //
+  // 1. Auth is still restoring
+  // OR
+  // 2. Brand is being refetched while old/public
+  //    brand data is already visible.
+  // ─────────────────────────────────────────────
+
+  const actionsLoading =
+    !authInitialized || (publicDetails.loading && Boolean(publicBrandDetails));
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -63,6 +121,7 @@ const BrandDetailsPage = () => {
           <div className="min-w-0">
             <BrandHeader
               brand={publicBrandDetails}
+              actionsLoading={actionsLoading}
               onEdit={() =>
                 navigate(
                   `/event-planner/brands/${publicBrandDetails.slug}/edit`,
@@ -84,7 +143,7 @@ const BrandDetailsPage = () => {
           </aside>
         </div>
 
-        {/* services */}
+        {/* SERVICES */}
         <div>
           <BrandServicesSection
             brand={publicBrandDetails}

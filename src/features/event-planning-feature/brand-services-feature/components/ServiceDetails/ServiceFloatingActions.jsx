@@ -7,6 +7,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+import LoadingSpinner from "@/components/common/LoadingSpinner";
+
 import EventServiceSheet from "../services-create-update/EventServiceSheet";
 import ServiceDelete from "../ServiceDelete";
 
@@ -16,37 +18,24 @@ const ServiceFloatingActions = ({
   service,
   brandSlug,
   isOwner,
+  actionsLoading,
   hireSheetRef,
   onServiceUpdated,
   onServiceDeleted,
 }) => {
-  if (!service) return null;
+  if (!service) {
+    return null;
+  }
 
   return (
     <div className="fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom))] right-4 z-50 lg:bottom-6 lg:right-28">
-      {/* NON OWNER */}
-      {!isOwner && (
-        <div ref={hireSheetRef}>
-          <HireSellerSheet
-            service={service}
-            trigger={
-              <button
-                type="button"
-                className="relative inline-flex h-12 items-center justify-center gap-2 rounded-full bg-[#b60018] px-5 text-sm font-semibold text-white shadow-lg transition hover:bg-[#960014] active:scale-95"
-              >
-                <span className="absolute inset-0 -z-10 animate-ping rounded-full bg-[#b60018]/30" />
-
-                <CalendarCheck2 className="h-5 w-5" />
-
-                <span>Book Now</span>
-              </button>
-            }
-          />
+      {/* ACTION LOADING */}
+      {actionsLoading ? (
+        <div className="flex h-12 w-12 items-center justify-center rounded-full border border-border bg-background shadow-lg">
+          <LoadingSpinner size="sm" text="" fullScreen={false} />
         </div>
-      )}
-
-      {/* OWNER */}
-      {isOwner && (
+      ) : isOwner ? (
+        /* OWNER */
         <DropdownMenu modal={false}>
           <DropdownMenuTrigger asChild>
             <button
@@ -105,6 +94,25 @@ const ServiceFloatingActions = ({
             />
           </DropdownMenuContent>
         </DropdownMenu>
+      ) : (
+        /* NON OWNER */
+        <div ref={hireSheetRef}>
+          <HireSellerSheet
+            service={service}
+            trigger={
+              <button
+                type="button"
+                className="relative inline-flex h-12 items-center justify-center gap-2 rounded-full bg-[#b60018] px-5 text-sm font-semibold text-white shadow-lg transition hover:bg-[#960014] active:scale-95"
+              >
+                <span className="absolute inset-0 -z-10 animate-ping rounded-full bg-[#b60018]/30" />
+
+                <CalendarCheck2 className="h-5 w-5" />
+
+                <span>Book Now</span>
+              </button>
+            }
+          />
+        </div>
       )}
     </div>
   );

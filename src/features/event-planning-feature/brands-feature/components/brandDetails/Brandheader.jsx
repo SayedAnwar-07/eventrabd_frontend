@@ -1,9 +1,9 @@
 import {
   BriefcaseBusiness,
+  Loader2,
   MapPin,
   MoreVertical,
   Pencil,
-  Trash2,
 } from "lucide-react";
 
 import {
@@ -17,27 +17,23 @@ import { DIVISION_OPTIONS } from "@/store/features/eventPlanner/bangladeshLocati
 
 import BrandDeleteDialog from "../BrandDeleteDialog";
 import BrandBreadcrumb from "./BrandBreadcrumb";
+import LoadingSpinner from "@/components/common/LoadingSpinner";
 
-const BrandHeader = ({ brand, onEdit }) => {
+const BrandHeader = ({ brand, onEdit, actionsLoading = false }) => {
   const portfolioLink = brand?.portfolio_link?.trim() || "";
   const officeAddress = brand?.office_address?.trim() || "";
   const serviceAreas = brand?.division || [];
 
   const cleanRichText = (html = "") => {
-    return (
-      html
-        // Remove completely blank paragraphs
-        .replace(
-          /<p[^>]*>(?:\s|&nbsp;|&#160;|&#8203;|\u200B|<br[^>]*>)*<\/p>/gi,
-          "",
-        )
-
-        // Remove <br> from the beginning of a paragraph
-        .replace(
-          /<p([^>]*)>(?:\s|&nbsp;|&#160;|&#8203;|\u200B)*<br[^>]*>/gi,
-          "<p$1>",
-        )
-    );
+    return html
+      .replace(
+        /<p[^>]*>(?:\s|&nbsp;|&#160;|&#8203;|\u200B|<br[^>]*>)*<\/p>/gi,
+        "",
+      )
+      .replace(
+        /<p([^>]*)>(?:\s|&nbsp;|&#160;|&#8203;|\u200B)*<br[^>]*>/gi,
+        "<p$1>",
+      );
   };
 
   return (
@@ -46,39 +42,51 @@ const BrandHeader = ({ brand, onEdit }) => {
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <BrandBreadcrumb brandName={brand?.display_name || brand?.brand_name} />
 
-        {/* action button */}
-        {brand?.is_owner && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                type="button"
-                className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-border bg-background transition hover:bg-muted"
-                aria-label="Brand actions"
-              >
-                <MoreVertical className="h-5 w-5" />
-              </button>
-            </DropdownMenuTrigger>
+        {/* ACTION AREA */}
+        {actionsLoading ? (
+          <div className="flex h-10 w-10 items-center justify-center rounded-md border border-border bg-background">
+            <LoadingSpinner size="sm" text="" fullScreen={false} />
+          </div>
+        ) : (
+          brand?.is_owner && (
+            <DropdownMenu modal={false}>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-background text-foreground shadow-sm transition hover:bg-muted focus:outline-none"
+                  aria-label="Brand actions"
+                >
+                  <MoreVertical className="h-5 w-5" />
+                </button>
+              </DropdownMenuTrigger>
 
-            <DropdownMenuContent align="end" className="w-40">
-              <DropdownMenuItem
-                onSelect={(event) => {
-                  event.preventDefault();
-                  onEdit();
-                }}
-                className="cursor-pointer"
+              <DropdownMenuContent
+                align="end"
+                sideOffset={8}
+                className="w-44 rounded-xl border border-border bg-background p-1.5 shadow-lg"
               >
-                <Pencil className="mr-2 h-4 w-4" />
-                Edit
-              </DropdownMenuItem>
+                {/* EDIT */}
+                <DropdownMenuItem
+                  onSelect={(event) => {
+                    event.preventDefault();
+                    onEdit();
+                  }}
+                  className="h-10 cursor-pointer gap-3 rounded-lg px-3 text-sm font-medium focus:bg-muted"
+                >
+                  <Pencil className="h-4 w-4 text-muted-foreground" />
+                  <span>Edit Brand</span>
+                </DropdownMenuItem>
 
-              <DropdownMenuItem
-                onSelect={(event) => event.preventDefault()}
-                className="cursor-pointer p-0 text-destructive focus:text-destructive"
-              >
-                <BrandDeleteDialog brand={brand} />
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                {/* DELETE */}
+                <DropdownMenuItem
+                  onSelect={(event) => event.preventDefault()}
+                  className="h-10 cursor-pointer rounded-lg p-0 text-destructive focus:bg-destructive/10 focus:text-destructive"
+                >
+                  <BrandDeleteDialog brand={brand} />
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )
         )}
       </div>
 
@@ -157,24 +165,19 @@ const BrandHeader = ({ brand, onEdit }) => {
 
           <div
             className="
-        text-base leading-7 text-foreground/80
-
-        [&_p]:mb-3
-        [&_p:last-child]:mb-0
-
-        [&_strong]:font-bold
-        [&_strong]:text-foreground
-
-        [&_ul]:my-3
-        [&_ul]:ml-6
-        [&_ul]:list-disc
-
-        [&_ol]:my-3
-        [&_ol]:ml-6
-        [&_ol]:list-decimal
-
-        [&_li]:my-1
-      "
+              text-base leading-7 text-foreground/80
+              [&_p]:mb-3
+              [&_p:last-child]:mb-0
+              [&_strong]:font-bold
+              [&_strong]:text-foreground
+              [&_ul]:my-3
+              [&_ul]:ml-6
+              [&_ul]:list-disc
+              [&_ol]:my-3
+              [&_ol]:ml-6
+              [&_ol]:list-decimal
+              [&_li]:my-1
+            "
             dangerouslySetInnerHTML={{
               __html: cleanRichText(brand.short_description),
             }}
@@ -186,6 +189,7 @@ const BrandHeader = ({ brand, onEdit }) => {
         </p>
       )}
 
+      {/* Portfolio */}
       {portfolioLink && (
         <a
           href={portfolioLink}
