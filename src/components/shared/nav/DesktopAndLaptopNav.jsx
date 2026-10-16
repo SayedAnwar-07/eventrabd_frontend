@@ -60,17 +60,17 @@ export default function DesktopAndLaptopNav({
         <div className="flex flex-1 items-center">
           <Link
             to="/"
-            className="group flex items-center gap-2"
+            className="flex items-center gap-[6px]"
             aria-label="EventraBD home"
           >
             <img
               src={eventraBDLogo}
-              alt=""
-              className="h-9 w-9 object-contain"
+              alt="EventraBD"
+              className="h-7 w-7 object-contain"
             />
 
-            <span className="text-xl font-bold tracking-tight text-[#9f0712]">
-              EventraBD
+            <span className="text-[30px] font-bold tracking-tight text-[#b00116]">
+              ventraBD
             </span>
           </Link>
         </div>

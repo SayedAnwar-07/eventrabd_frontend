@@ -10,9 +10,11 @@ import {
   selectCreateHireLoading,
 } from "@/store/features/hire/hireSlice";
 
-import HireBookingOptions from "./HireBookingOptions";
-import HireBookingItemCard from "./HireBookingItemCard";
-import HireBookingSummary from "./HireBookingSummary";
+import StepBookingDetails from "../steps/StepBookingDetails";
+import StepConfirmation from "../steps/StepConfirmation";
+import StepIndicator from "../steps/StepIndicator";
+import StepPackageSelection from "../steps/StepPackageSelection";
+import StepServiceSelection from "../steps/StepServiceSelection";
 
 import {
   createBookingItem,
@@ -23,72 +25,75 @@ import {
   normalizeOptionalText,
   PACKAGE_SUPPORTED_SERVICES,
 } from "../utils/hireFormUtils";
+import { Star } from "lucide-react";
+
+const formatServiceName = (name = "") => {
+  return name
+    .replaceAll("_", " ")
+    .replace(/\b\w/g, (character) => character.toUpperCase());
+};
 
 const HireRequestForm = ({
   serviceId,
   serviceName,
   serviceCharge,
+
+  // Brand Data
+  brandLogo,
+  brandName,
+  brandAddress,
+  rating,
+  ratingCount,
+
   packages = [],
   packagesLoading = false,
   packagesError = null,
   onSuccess,
 }) => {
   const dispatch = useDispatch();
-
   const loading = useSelector(selectCreateHireLoading);
-
   const apiError = useSelector(selectCreateHireError);
 
   const supportsPackages = PACKAGE_SUPPORTED_SERVICES.includes(serviceName);
+  const availablePackages = Array.isArray(packages) ? packages : [];
 
-  /*
-   * Stable value without useEffect/useMemo.
-   */
+  // Form state
   const [minimumDateTime] = useState(getMinimumDateTime);
-
-  /*
-   * Photography/Videography:
-   * user first chooses normal or package.
-   *
-   * Other services:
-   * normal booking is automatically active.
-   */
   const [bookingMode, setBookingMode] = useState(() =>
     supportsPackages ? "" : "normal",
   );
-
   const [bookingItems, setBookingItems] = useState(() =>
     supportsPackages ? [] : [createBookingItem(null)],
   );
-
   const [customerWhatsappNumber, setCustomerWhatsappNumber] = useState("");
-
   const [customerNote, setCustomerNote] = useState("");
-
   const [fieldErrors, setFieldErrors] = useState({});
-
   const [formError, setFormError] = useState("");
-
   const [successMessage, setSuccessMessage] = useState("");
+  const [currentStep, setCurrentStep] = useState(() =>
+    supportsPackages ? 1 : 2,
+  );
 
-  const availablePackages = Array.isArray(packages) ? packages : [];
+  // Step positions depend on whether package booking is selected
+  const hasPackageStep = supportsPackages && bookingMode === "packages";
+  const detailsStep = hasPackageStep ? 3 : 2;
+  const confirmStep = hasPackageStep ? 4 : 3;
 
-  /* =====================================
-     HELPERS
-  ====================================== */
-
+  // Clear Redux create error
   const clearCreateError = () => {
     if (apiError) {
       dispatch(clearHireOperationError("create"));
     }
   };
 
+  // Clear general messages
   const clearMessages = () => {
     setFormError("");
     setSuccessMessage("");
     clearCreateError();
   };
 
+  // Clear one field error
   const clearFieldError = (path) => {
     setFieldErrors((currentErrors) => ({
       ...currentErrors,
@@ -96,16 +101,15 @@ const HireRequestForm = ({
     }));
   };
 
+  // Find selected package
   const getPackageById = (packageId) => {
     return availablePackages.find(
       (item) => String(item?.id) === String(packageId),
     );
   };
 
+  // Get display title and unit price
   const getBookingItemInfo = (item) => {
-    /*
-     * packageId null = normal service.
-     */
     if (!item.packageId) {
       return {
         title: "Book Service Normally",
@@ -117,15 +121,11 @@ const HireRequestForm = ({
 
     return {
       title: selectedPackage?.package_title || "Selected Package",
-
       unitPrice: Number(selectedPackage?.package_price),
     };
   };
 
-  /* =====================================
-     CALCULATED VALUES
-  ====================================== */
-
+  // Calculated booking values
   const totalQuantity = bookingItems.reduce(
     (total, item) => total + Number(item.quantity || 0),
     0,
@@ -135,43 +135,46 @@ const HireRequestForm = ({
     bookingItems.length > 0 &&
     bookingItems.every((item) => {
       const { unitPrice } = getBookingItemInfo(item);
-
       return Number.isFinite(unitPrice);
     });
 
   const grandTotal = pricesAvailable
     ? bookingItems.reduce((total, item) => {
         const { unitPrice } = getBookingItemInfo(item);
-
         return total + unitPrice * Number(item.quantity || 1);
       }, 0)
     : null;
 
-  /* =====================================
-     NORMAL SERVICE
-  ====================================== */
-
+  // Select normal booking and continue to details
   const handleNormalServiceSelect = () => {
     if (loading) {
       return;
     }
 
-    /*
-     * Normal and packages are mutually exclusive.
-     */
     setBookingMode("normal");
-
     setBookingItems([createBookingItem(null)]);
-
     setFieldErrors({});
-
     clearMessages();
+    setCurrentStep(2);
   };
 
-  /* =====================================
-     PACKAGE MULTI SELECT
-  ====================================== */
+  // Select package booking mode
+  const handlePackageSelect = () => {
+    if (loading) {
+      return;
+    }
 
+    if (bookingMode !== "packages") {
+      setBookingMode("packages");
+      setBookingItems([]);
+      setFieldErrors({});
+      clearMessages();
+    }
+
+    setCurrentStep(2);
+  };
+
+  // Select or deselect package
   const handlePackageToggle = (packageId) => {
     if (loading) {
       return;
@@ -183,54 +186,31 @@ const HireRequestForm = ({
       bookingMode === "packages" &&
       bookingItems.some((item) => String(item.packageId) === normalizedId);
 
-    /*
-     * Deselect package.
-     */
     if (alreadySelected) {
       const nextItems = bookingItems.filter(
         (item) => String(item.packageId) !== normalizedId,
       );
 
       setBookingItems(nextItems);
-
-      if (nextItems.length === 0) {
-        setBookingMode("");
-      }
-
       setFieldErrors({});
-
       clearMessages();
-
       return;
     }
 
-    /*
-     * First package.
-     * Replaces normal service if selected.
-     */
     if (bookingMode !== "packages") {
       setBookingMode("packages");
-
       setBookingItems([createBookingItem(normalizedId)]);
-
       setFieldErrors({});
-
       clearMessages();
-
       return;
     }
 
     if (bookingItems.length >= MAX_BOOKING_SLOTS) {
       setFormError(`Maximum ${MAX_BOOKING_SLOTS} packages can be selected.`);
-
       return;
     }
 
-    /*
-     * Important:
-     * When another different package is selected,
-     * all package quantities become 1.
-     */
+    // Multiple packages always keep quantity at one
     const normalizedExistingItems = bookingItems.map(
       normalizeItemToQuantityOne,
     );
@@ -239,16 +219,11 @@ const HireRequestForm = ({
       ...normalizedExistingItems,
       createBookingItem(normalizedId),
     ]);
-
     setFieldErrors({});
-
     clearMessages();
   };
 
-  /* =====================================
-     QUANTITY
-  ====================================== */
-
+  // Increase quantity only when one booking option exists
   const handleIncreaseQuantity = () => {
     if (loading || bookingItems.length !== 1) {
       return;
@@ -258,27 +233,23 @@ const HireRequestForm = ({
 
     if (currentItem.quantity >= MAX_BOOKING_SLOTS) {
       setFormError(`Maximum quantity is ${MAX_BOOKING_SLOTS}.`);
-
       return;
     }
 
     setBookingItems([
       {
         ...currentItem,
-
         quantity: currentItem.quantity + 1,
-
         eventTypes: [...currentItem.eventTypes, ""],
-
         bookingSlots: [...currentItem.bookingSlots, createEmptySlot()],
       },
     ]);
 
     setFieldErrors({});
-
     clearMessages();
   };
 
+  // Decrease quantity only when one booking option exists
   const handleDecreaseQuantity = () => {
     if (loading || bookingItems.length !== 1) {
       return;
@@ -293,24 +264,17 @@ const HireRequestForm = ({
     setBookingItems([
       {
         ...currentItem,
-
         quantity: currentItem.quantity - 1,
-
         eventTypes: currentItem.eventTypes.slice(0, -1),
-
         bookingSlots: currentItem.bookingSlots.slice(0, -1),
       },
     ]);
 
     setFieldErrors({});
-
     clearMessages();
   };
 
-  /* =====================================
-     EVENT TYPE
-  ====================================== */
-
+  // Update event type
   const handleEventTypeChange = (itemIndex, slotIndex, value) => {
     setBookingItems((currentItems) =>
       currentItems.map((item, currentItemIndex) => {
@@ -319,7 +283,6 @@ const HireRequestForm = ({
         }
 
         const nextEventTypes = [...item.eventTypes];
-
         nextEventTypes[slotIndex] = value;
 
         return {
@@ -330,16 +293,11 @@ const HireRequestForm = ({
     );
 
     clearFieldError(`booking_items.${itemIndex}.event_types.${slotIndex}`);
-
     clearFieldError(`booking_items.${itemIndex}.event_types`);
-
     clearMessages();
   };
 
-  /* =====================================
-     SLOT FIELDS
-  ====================================== */
-
+  // Update booking slot field
   const updateBookingField = (itemIndex, slotIndex, field, value) => {
     setBookingItems((currentItems) =>
       currentItems.map((item, currentItemIndex) => {
@@ -366,21 +324,13 @@ const HireRequestForm = ({
     clearFieldError(
       `booking_items.${itemIndex}.booking_slots.${slotIndex}.${field}`,
     );
-
     clearMessages();
   };
 
-  /* =====================================
-     WHATSAPP
-  ====================================== */
-
+  // Normalize WhatsApp number to local 01XXXXXXXXX format
   const handleWhatsappChange = (value) => {
     let digitsOnly = value.replace(/\D/g, "");
 
-    /*
-     * User may paste +880...
-     * Keep local 01XXXXXXXXX.
-     */
     if (digitsOnly.startsWith("880")) {
       digitsOnly = digitsOnly.slice(2);
     }
@@ -388,16 +338,17 @@ const HireRequestForm = ({
     digitsOnly = digitsOnly.slice(0, 11);
 
     setCustomerWhatsappNumber(digitsOnly);
-
     clearFieldError("customer_whatsapp_number");
-
     clearMessages();
   };
 
-  /* =====================================
-     VALIDATION
-  ====================================== */
+  // Update customer note
+  const handleNoteChange = (value) => {
+    setCustomerNote(value.slice(0, 1000));
+    clearMessages();
+  };
 
+  // Validate booking details
   const validateForm = () => {
     const errors = {};
 
@@ -409,10 +360,6 @@ const HireRequestForm = ({
       errors.booking_items = `Maximum ${MAX_BOOKING_SLOTS} bookings are allowed.`;
     }
 
-    /*
-     * Multiple different packages:
-     * quantity must be exactly 1.
-     */
     if (bookingItems.length > 1) {
       bookingItems.forEach((item, itemIndex) => {
         if (item.quantity !== 1) {
@@ -425,10 +372,6 @@ const HireRequestForm = ({
     const usedDateTimes = new Set();
 
     bookingItems.forEach((item, itemIndex) => {
-      /* -------------------------
-           Quantity relationship
-        -------------------------- */
-
       if (item.eventTypes.length !== item.quantity) {
         errors[`booking_items.${itemIndex}.event_types`] =
           "Event type count must match quantity.";
@@ -438,10 +381,6 @@ const HireRequestForm = ({
         errors[`booking_items.${itemIndex}.booking_slots`] =
           "Booking slot count must match quantity.";
       }
-
-      /* -------------------------
-           Event types
-        -------------------------- */
 
       const selectedEvents = item.eventTypes.filter(Boolean);
 
@@ -457,21 +396,10 @@ const HireRequestForm = ({
         }
       });
 
-      /* -------------------------
-           Booking slots
-        -------------------------- */
-
       item.bookingSlots.forEach((slot, slotIndex) => {
-        /*
-         * Only first slot of whole Hire
-         * is mandatory.
-         */
         const isFirstBooking = itemIndex === 0 && slotIndex === 0;
-
         const startsAtPath = `booking_items.${itemIndex}.booking_slots.${slotIndex}.starts_at`;
-
         const venueNamePath = `booking_items.${itemIndex}.booking_slots.${slotIndex}.venue_name`;
-
         const venueAddressPath = `booking_items.${itemIndex}.booking_slots.${slotIndex}.venue_address`;
 
         if (isFirstBooking && !slot.starts_at) {
@@ -485,10 +413,6 @@ const HireRequestForm = ({
         if (isFirstBooking && !String(slot.venue_address || "").trim()) {
           errors[venueAddressPath] = "Venue address is required.";
         }
-
-        /* -------------------------
-               Date validation
-            -------------------------- */
 
         if (slot.starts_at) {
           const startsAt = new Date(slot.starts_at);
@@ -517,65 +441,93 @@ const HireRequestForm = ({
     return Object.keys(errors).length === 0;
   };
 
-  /* =====================================
-     SUBMIT
-  ====================================== */
+  // Continue from package selection
+  const handlePackageContinue = () => {
+    if (loading) {
+      return;
+    }
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
+    if (bookingItems.length === 0) {
+      setFieldErrors((currentErrors) => ({
+        ...currentErrors,
+        booking_option: "Select at least one package before continuing.",
+      }));
+      setFormError("Select at least one package before continuing.");
+      return;
+    }
+
+    setFieldErrors({});
+    clearMessages();
+    setCurrentStep(3);
+  };
+
+  // Continue from booking details to confirmation
+  const handleDetailsContinue = () => {
+    if (loading) {
+      return;
+    }
 
     setFormError("");
     setSuccessMessage("");
+    clearCreateError();
 
+    if (!validateForm()) {
+      setFormError("Fix the highlighted fields before continuing.");
+      return;
+    }
+
+    setCurrentStep(confirmStep);
+  };
+
+  // Return to the previous step
+  const handleDetailsBack = () => {
+    clearMessages();
+
+    if (hasPackageStep) {
+      setCurrentStep(2);
+      return;
+    }
+
+    if (supportsPackages) {
+      setCurrentStep(1);
+    }
+  };
+
+  // Build API payload and submit
+  const submitHireRequest = async () => {
+    if (loading) {
+      return;
+    }
+
+    setFormError("");
+    setSuccessMessage("");
     clearCreateError();
 
     if (!serviceId) {
       setFormError("The selected service is unavailable.");
-
       return;
     }
 
     if (!validateForm()) {
       setFormError("Fix the highlighted fields before submitting.");
-
+      setCurrentStep(detailsStep);
       return;
     }
 
-    /*
-     * New backend structure:
-     *
-     * Hire
-     *   -> booking_items
-     *      -> event_types
-     *      -> booking_slots
-     */
     const payload = {
       service: serviceId,
-
       customer_whatsapp_number: `+88${customerWhatsappNumber.trim()}`,
-
       customer_note: customerNote.trim(),
-
       booking_items: bookingItems.map((item) => ({
-        /*
-         * null = normal service
-         * ID   = package
-         */
         package: item.packageId || null,
-
         quantity: item.quantity,
-
         event_types: [...item.eventTypes],
-
         booking_slots: item.bookingSlots.map((slot) => ({
           starts_at: slot.starts_at
             ? new Date(slot.starts_at).toISOString()
             : null,
-
           venue_name: normalizeOptionalText(slot.venue_name),
-
           venue_address: normalizeOptionalText(slot.venue_address),
-
           google_map_link: normalizeOptionalText(slot.google_map_link),
         })),
       })),
@@ -584,236 +536,244 @@ const HireRequestForm = ({
     try {
       const createdHire = await dispatch(createHire(payload)).unwrap();
 
-      /*
-       * Reset form after success.
-       */
       if (supportsPackages) {
         setBookingMode("");
         setBookingItems([]);
+        setCurrentStep(1);
       } else {
         setBookingMode("normal");
-
         setBookingItems([createBookingItem(null)]);
+        setCurrentStep(2);
       }
 
       setCustomerWhatsappNumber("");
       setCustomerNote("");
-
       setFieldErrors({});
-
       setFormError("");
-
       setSuccessMessage("Your hire request was submitted successfully.");
 
       onSuccess?.(createdHire);
     } catch {
-      /*
-       * Redux keeps the API error.
-       * GlobalErrorMessage displays it.
-       */
+      // Redux stores the API error and GlobalErrorMessage displays it.
     }
   };
 
-  return (
-    <form onSubmit={handleSubmit} noValidate>
-      <div className="space-y-8">
-        {/* =====================================
-            BOOKING OPTIONS
-        ====================================== */}
+  // Prevent native form submission because confirmation controls submission
+  const handleFormSubmit = (event) => {
+    event.preventDefault();
+  };
 
-        {supportsPackages && (
-          <HireBookingOptions
-            bookingMode={bookingMode}
-            bookingItems={bookingItems}
-            serviceCharge={serviceCharge}
+  return (
+    <form onSubmit={handleFormSubmit} noValidate className="space-y-6">
+      {/* Step progress */}
+      <div className="w-full mb-10">
+        <StepIndicator currentStep={currentStep} hasPackages={hasPackageStep} />
+      </div>
+
+      <div className="flex items-start gap-4">
+        <div className="h-14 w-14 overflow-hidden rounded-full">
+          {brandLogo ? (
+            <img
+              src={brandLogo}
+              alt={brandName || "Brand"}
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center bg-gray-100">
+              {brandName?.charAt(0) || "B"}
+            </div>
+          )}
+        </div>
+
+        <div className="">
+          <div className="flex gap-3 items-center">
+            <h3 className="text-lg font-semibold">
+              {formatServiceName(serviceName)}
+            </h3>
+            {/* Rating */}
+            <div className="ml-3 flex items-center gap-2">
+              <Star className="h-5 w-5 fill-amber-400 text-amber-400" />
+
+              <span className="text-lg font-semibold">
+                {Number(rating || 0).toFixed(1)}
+              </span>
+
+              <span className="text-sm text-muted-foreground">
+                ({ratingCount} rating{ratingCount !== 1 ? "s" : ""})
+              </span>
+            </div>
+          </div>
+
+          <p className="text-sm text-gray-500">{brandAddress}</p>
+        </div>
+      </div>
+
+      {/* Success message */}
+      {successMessage && (
+        <div className="rounded-xl border border-green-200 bg-green-50 px-4 py-3">
+          <p className="text-sm font-medium text-green-800">{successMessage}</p>
+        </div>
+      )}
+
+      {/* API error */}
+      {apiError && <GlobalErrorMessage error={apiError} />}
+
+      {/* Step 1: Booking type */}
+      {supportsPackages && currentStep === 1 && (
+        <StepServiceSelection
+          bookingMode={bookingMode}
+          serviceCharge={serviceCharge}
+          onNormalServiceSelect={handleNormalServiceSelect}
+          onPackageSelect={handlePackageSelect}
+          disabled={loading}
+        />
+      )}
+
+      {/* Step 2: Package selection */}
+      {hasPackageStep && currentStep === 2 && (
+        <>
+          <StepPackageSelection
             packages={availablePackages}
             packagesLoading={packagesLoading}
             packagesError={packagesError}
+            bookingMode={bookingMode}
+            bookingItems={bookingItems}
             loading={loading}
-            bookingOptionError={fieldErrors.booking_option}
-            onNormalServiceSelect={handleNormalServiceSelect}
             onPackageToggle={handlePackageToggle}
           />
-        )}
 
-        {/* =====================================
-            SELECTED BOOKINGS
-        ====================================== */}
+          {fieldErrors.booking_option && (
+            <p className="text-sm font-medium text-red-600">
+              {fieldErrors.booking_option}
+            </p>
+          )}
 
-        {bookingItems.length > 0 && (
-          <section className="space-y-5">
-            <div>
-              <p className="text-xs font-medium uppercase tracking-[0.2em] text-green-700">
-                Selected Booking
-              </p>
-
-              <h3 className="mt-1 text-lg font-semibold text-gray-950">
-                Your Booking Selection
-              </h3>
-
-              {bookingItems.length > 1 && (
-                <p className="mt-1 text-sm leading-6 text-gray-600">
-                  Each package has its own event and booking information.
-                  Quantity stays at 1 while multiple packages are selected.
-                </p>
-              )}
+          {formError && (
+            <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+              <p className="text-sm text-red-700">{formError}</p>
             </div>
+          )}
 
-            {bookingItems.map((item, itemIndex) => {
-              const { title, unitPrice } = getBookingItemInfo(item);
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              disabled={loading}
+              onClick={() => {
+                clearMessages();
+                setCurrentStep(1);
+              }}
+              className="flex-1 rounded-xl border border-gray-300 bg-white px-5 py-3 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Back
+            </button>
 
-              return (
-                <HireBookingItemCard
-                  key={item.key}
-                  item={item}
-                  itemIndex={itemIndex}
-                  bookingItemsCount={bookingItems.length}
-                  minimumDateTime={minimumDateTime}
-                  loading={loading}
-                  fieldErrors={fieldErrors}
-                  title={title}
-                  unitPrice={unitPrice}
-                  onIncreaseQuantity={handleIncreaseQuantity}
-                  onDecreaseQuantity={handleDecreaseQuantity}
-                  onEventTypeChange={handleEventTypeChange}
-                  onBookingFieldChange={updateBookingField}
-                />
-              );
-            })}
+            <button
+              type="button"
+              disabled={loading || bookingItems.length === 0}
+              onClick={handlePackageContinue}
+              className="flex-1 rounded-xl bg-green-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-green-800 disabled:cursor-not-allowed disabled:bg-gray-400"
+            >
+              Continue
+            </button>
+          </div>
+        </>
+      )}
 
-            {/* =================================
-                BOOKING SUMMARY
-            ================================== */}
+      {/* Booking details */}
+      {currentStep === detailsStep && (
+        <>
+          <StepBookingDetails
+            bookingItems={bookingItems}
+            minimumDateTime={minimumDateTime}
+            loading={loading}
+            fieldErrors={fieldErrors}
+            onIncreaseQuantity={handleIncreaseQuantity}
+            onDecreaseQuantity={handleDecreaseQuantity}
+            onEventTypeChange={handleEventTypeChange}
+            onBookingFieldChange={updateBookingField}
+            getBookingItemInfo={getBookingItemInfo}
+            customerWhatsappNumber={customerWhatsappNumber}
+            customerNote={customerNote}
+            onWhatsappChange={handleWhatsappChange}
+            onNoteChange={handleNoteChange}
+          />
 
-            <HireBookingSummary
-              bookingOptionCount={bookingItems.length}
-              totalQuantity={totalQuantity}
-              grandTotal={grandTotal}
-            />
+          {fieldErrors.customer_whatsapp_number && (
+            <p className="text-sm font-medium text-red-600">
+              {fieldErrors.customer_whatsapp_number}
+            </p>
+          )}
 
-            {/* =================================
-                WHATSAPP
-            ================================== */}
-
-            <div>
-              <label
-                htmlFor="customer-whatsapp-number"
-                className="mb-2 block text-sm font-medium text-gray-950"
-              >
-                WhatsApp Number
-              </label>
-
-              <div
-                className={`flex h-11 w-full overflow-hidden ${
-                  fieldErrors.customer_whatsapp_number
-                    ? "border border-red-600"
-                    : customerWhatsappNumber
-                      ? "border border-green-700 bg-green-50"
-                      : "border border-gray-300 bg-white"
-                }`}
-              >
-                <span className="flex shrink-0 items-center pl-3 text-sm font-medium text-gray-700">
-                  +88
-                </span>
-
-                <input
-                  id="customer-whatsapp-number"
-                  type="tel"
-                  inputMode="numeric"
-                  autoComplete="tel"
-                  value={customerWhatsappNumber}
-                  disabled={loading}
-                  placeholder="01XXXXXXXXX"
-                  maxLength={11}
-                  onChange={(event) => handleWhatsappChange(event.target.value)}
-                  className="min-w-0 flex-1 bg-transparent pl-1 pr-3 text-sm outline-none disabled:bg-gray-100"
-                />
-              </div>
-
-              {fieldErrors.customer_whatsapp_number && (
-                <p className="mt-2 text-xs text-red-600">
-                  {fieldErrors.customer_whatsapp_number}
-                </p>
-              )}
-
-              <p className="mt-1 text-xs text-gray-500">
-                One WhatsApp number will be used for the entire hire request.
+          {fieldErrors.booking_items && (
+            <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+              <p className="text-sm text-red-700">
+                {fieldErrors.booking_items}
               </p>
             </div>
+          )}
 
-            {/* =================================
-                CUSTOMER NOTE
-            ================================== */}
+          {formError && (
+            <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+              <p className="text-sm text-red-700">{formError}</p>
+            </div>
+          )}
 
-            <div>
-              <label
-                htmlFor="customer-note"
-                className="mb-2 block text-sm font-medium text-gray-950"
-              >
-                Customer Note
-              </label>
-
-              <textarea
-                id="customer-note"
-                rows={4}
-                maxLength={1000}
-                value={customerNote}
+          <div className="flex items-center gap-3">
+            {supportsPackages && (
+              <button
+                type="button"
                 disabled={loading}
-                onChange={(event) => {
-                  setCustomerNote(event.target.value);
+                onClick={handleDetailsBack}
+                className="flex-1 rounded-xl border border-gray-300 bg-white px-5 py-3 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Back
+              </button>
+            )}
 
-                  clearMessages();
-                }}
-                className={`w-full resize-none rounded-none px-3 py-3 text-sm outline-none ${
-                  customerNote.trim()
-                    ? "border border-green-700 bg-green-50"
-                    : "border border-gray-300 bg-white"
-                }`}
-              />
+            <button
+              type="button"
+              disabled={loading || !serviceId || bookingItems.length === 0}
+              onClick={handleDetailsContinue}
+              className="flex-1 rounded-xl bg-green-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-green-800 disabled:cursor-not-allowed disabled:bg-gray-400"
+            >
+              Review Booking
+            </button>
+          </div>
+        </>
+      )}
 
-              <p className="mt-1 text-right text-xs text-gray-500">
-                {customerNote.length}/1000
-              </p>
+      {/* Final confirmation */}
+      {currentStep === confirmStep && (
+        <>
+          <StepConfirmation
+            bookingItems={bookingItems}
+            getBookingItemInfo={getBookingItemInfo}
+            grandTotal={grandTotal}
+            customerWhatsappNumber={customerWhatsappNumber}
+            customerNote={customerNote}
+            onConfirm={submitHireRequest}
+            loading={loading}
+          />
+
+          {formError && (
+            <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+              <p className="text-sm text-red-700">{formError}</p>
             </div>
-          </section>
-        )}
+          )}
 
-        {/* =====================================
-            GENERAL ERRORS
-        ====================================== */}
-
-        {fieldErrors.booking_items && (
-          <div className="border-l-2 border-red-600 bg-red-50 px-4 py-3">
-            <p className="text-sm text-red-700">{fieldErrors.booking_items}</p>
-          </div>
-        )}
-
-        {formError && (
-          <div className="border-l-2 border-red-600 bg-red-50 px-4 py-3">
-            <p className="text-sm text-red-700">{formError}</p>
-          </div>
-        )}
-
-        {apiError && <GlobalErrorMessage error={apiError} />}
-
-        {successMessage && (
-          <div className="border-l-2 border-green-700 bg-green-50 px-4 py-3">
-            <p className="text-sm text-green-800">{successMessage}</p>
-          </div>
-        )}
-
-        {/* =====================================
-            SUBMIT
-        ====================================== */}
-
-        <button
-          type="submit"
-          disabled={loading || !serviceId || bookingItems.length === 0}
-          className="w-full bg-gray-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:bg-gray-400"
-        >
-          {loading ? "Submitting Request..." : "Submit Hire Request"}
-        </button>
-      </div>
+          <button
+            type="button"
+            disabled={loading}
+            onClick={() => {
+              clearMessages();
+              setCurrentStep(detailsStep);
+            }}
+            className="w-full rounded-xl border border-gray-300 bg-white px-5 py-3 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Back to Booking Details
+          </button>
+        </>
+      )}
     </form>
   );
 };

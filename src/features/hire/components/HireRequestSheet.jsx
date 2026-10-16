@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
+import { Clock3, MapPin } from "lucide-react";
 
 import {
   AlertDialog,
@@ -32,12 +33,6 @@ import {
   selectPackagesByService,
   selectPackagesLoading,
 } from "@/store/features/packages/packageSlice";
-
-const formatServiceName = (name = "") => {
-  return name
-    .replaceAll("_", " ")
-    .replace(/\b\w/g, (character) => character.toUpperCase());
-};
 
 const PACKAGE_SUPPORTED_SERVICES = ["photography", "videography"];
 
@@ -136,58 +131,28 @@ const HireSellerSheet = ({ service, trigger }) => {
           )}
         </SheetTrigger>
 
-        <SheetContent className="flex w-full flex-col rounded-none border-l border-gray-200 bg-white p-0 shadow-none sm:max-w-2xl lg:max-w-4xl [&>button]:rounded-none">
-          <SheetHeader className="border-b border-gray-200 px-6 py-6 text-left">
-            <p className="text-xs font-medium uppercase tracking-[0.2em] text-gray-500">
-              Booking Request
-            </p>
-
-            <SheetTitle className="text-2xl font-semibold tracking-tight text-gray-950">
-              Hire Seller
-            </SheetTitle>
-
-            <SheetDescription className="text-sm leading-6 text-gray-600">
-              Select your event types and submit the booking and venue
-              information for this service.
-            </SheetDescription>
-          </SheetHeader>
-
-          <div className="flex-1 overflow-y-auto px-6 py-6">
-            <div className="border-l-2 border-gray-950 pl-4">
-              <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
-                Selected Service
-              </p>
-
-              <p className="mt-1 text-base font-semibold text-gray-950">
-                {formatServiceName(service?.service_name)}
-              </p>
-
-              <p className="mt-1 text-sm text-gray-600">
-                {service?.brand?.display_name || "Unknown brand"}
-              </p>
-
-              <p className="mt-2 text-sm font-medium text-gray-950">
-                {service?.shift_charge !== undefined &&
-                service?.shift_charge !== null
-                  ? `৳${Number(service.shift_charge).toLocaleString(
-                      "en-US",
-                    )} per shift`
-                  : "Shift charge unavailable"}
-              </p>
-            </div>
-
-            <div className="mt-8">
-              <HireRequestForm
-                key={serviceId}
-                serviceId={serviceId}
-                serviceName={service?.service_name}
-                serviceCharge={service?.shift_charge}
-                packages={packages}
-                packagesLoading={packagesLoading}
-                packagesError={packagesError}
-                onSuccess={handleHireSuccess}
-              />
-            </div>
+        <SheetContent className="flex w-full flex-col rounded-none border-l overflow-y-auto border-gray-200 bg-white p-0 shadow-none sm:max-w-2xl lg:max-w-4xl [&>button]:rounded-none">
+          <div className="mt-8 p-6">
+            <HireRequestForm
+              key={serviceId}
+              serviceId={serviceId}
+              serviceName={service?.service_name}
+              serviceCharge={service?.shift_charge}
+              // Brand Data
+              brandLogo={service?.brand?.logo_url}
+              brandName={service?.brand?.display_name}
+              brandAddress={service?.brand?.office_address}
+              rating={
+                service?.review_count > 0
+                  ? service?.rating_sum / service?.review_count / 2
+                  : 0
+              }
+              ratingCount={service?.review_count || 0}
+              packages={packages}
+              packagesLoading={packagesLoading}
+              packagesError={packagesError}
+              onSuccess={handleHireSuccess}
+            />
           </div>
 
           <SheetFooter className="border-t border-gray-200 px-6 py-4">

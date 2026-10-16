@@ -27,6 +27,23 @@ const ServiceFloatingActions = ({
     return null;
   }
 
+  const hireService = {
+    id: service.id,
+    service_name: service.service_name,
+    shift_charge: service.shift_charge,
+    shift_hour: service.shift_hour,
+
+    review_count: service.review_count,
+    rating: service.rating,
+
+    brand: {
+      display_name: service.brand?.display_name,
+      is_owner: service.brand?.is_owner,
+      logo_url: service.brand?.logo_url,
+      office_address: service.brand?.office_address,
+    },
+  };
+
   return (
     <div className="fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom))] right-4 z-50 lg:bottom-6 lg:right-28">
       {/* ACTION LOADING */}
@@ -98,7 +115,7 @@ const ServiceFloatingActions = ({
         /* NON OWNER */
         <div ref={hireSheetRef}>
           <HireSellerSheet
-            service={service}
+            service={hireService}
             trigger={
               <button
                 type="button"
