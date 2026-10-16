@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { RouterProvider, createBrowserRouter } from "react-router-dom";
 
 import MainLayout from "@/layouts/MainLayout";
