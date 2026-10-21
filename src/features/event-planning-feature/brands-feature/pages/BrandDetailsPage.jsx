@@ -10,7 +10,10 @@ import {
 import BrandHeader from "../components/brandDetails/BrandHeader";
 import BrandServicesSection from "../components/brandDetails/BrandServicesSection";
 import BrandPageState from "../components/brandDetails/BrandPageState";
-import BrandSidebarPanel from "../components/brandDetails/Brandsidebarpanel";
+
+// import BrandSidebarPanel from "../components/brandDetails/Brandsidebarpanel";
+import BrandSidebarPanel from "../components/brandDetails/BrandSidebarPanel";
+
 import LoadingSpinner from "@/components/common/LoadingSpinner";
 
 const BrandDetailsPage = () => {
