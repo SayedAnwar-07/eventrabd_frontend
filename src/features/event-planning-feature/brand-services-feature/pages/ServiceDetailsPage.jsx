@@ -64,6 +64,9 @@ const ServiceDetailsPage = () => {
    * that successfully completed an authenticated fetch.
    */
   const [verifiedOwnershipKey, setVerifiedOwnershipKey] = useState(null);
+  
+  // Stores the package selected for direct booking.
+  const [directBookPackageId, setDirectBookPackageId] = useState(null);
 
   // Current ownership identity
   const ownershipKey = accessToken
@@ -176,10 +179,44 @@ const ServiceDetailsPage = () => {
     };
   }, [dispatch, brandSlug]);
 
+  // Opens the hire sheet for the package selected by the customer.
+  const handleBookPackage = (packageId) => {
+    if (!packageId || isOwner) {
+      return;
+    }
+
+    setDirectBookPackageId(packageId);
+  };
+
+  // Automatically opens the hire sheet after a package is selected.
+  useEffect(() => {
+    if (
+      directBookPackageId === null ||
+      actionsLoading ||
+      !service ||
+      isOwner
+    ) {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      const triggerButton = hireSheetRef.current?.querySelector("button");
+
+      if (!triggerButton) {
+        return;
+      }
+
+      triggerButton.click();
+    }, 0);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [directBookPackageId, actionsLoading, service, isOwner]);
+
   // =====================================================
   // REFRESH SERVICE AFTER EDIT
   // =====================================================
-
   const refreshServiceDetail = () => {
     if (!brandSlug || !service) {
       return;
@@ -311,7 +348,10 @@ const ServiceDetailsPage = () => {
         </div>
 
         {/* Packages */}
-        <PackagesDetails service={service} />
+        <PackagesDetails
+          service={service}
+          onBookPackage={handleBookPackage}
+        />
 
         {/* Reviews */}
         <div className="mt-12">
@@ -325,6 +365,7 @@ const ServiceDetailsPage = () => {
           isOwner={isOwner}
           actionsLoading={actionsLoading}
           hireSheetRef={hireSheetRef}
+          selectedPackageId={directBookPackageId}
           onServiceUpdated={refreshServiceDetail}
           onServiceDeleted={() =>
             navigate(`/event-planner/brands/${brandSlug}`)

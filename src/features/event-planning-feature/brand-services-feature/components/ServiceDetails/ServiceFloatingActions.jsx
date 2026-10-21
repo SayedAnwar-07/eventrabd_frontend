@@ -20,6 +20,7 @@ const ServiceFloatingActions = ({
   isOwner,
   actionsLoading,
   hireSheetRef,
+  selectedPackageId,
   onServiceUpdated,
   onServiceDeleted,
 }) => {
@@ -116,6 +117,7 @@ const ServiceFloatingActions = ({
         <div ref={hireSheetRef}>
           <HireSellerSheet
             service={hireService}
+            selectedPackageId={selectedPackageId}
             trigger={
               <button
                 type="button"

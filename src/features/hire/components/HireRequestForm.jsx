@@ -37,6 +37,7 @@ const HireRequestForm = ({
   serviceId,
   serviceName,
   serviceCharge,
+  selectedPackageId = null,
 
   // Brand Data
   brandLogo,
@@ -59,19 +60,35 @@ const HireRequestForm = ({
 
   // Form state
   const [minimumDateTime] = useState(getMinimumDateTime);
+
   const [bookingMode, setBookingMode] = useState(() =>
-    supportsPackages ? "" : "normal",
+    selectedPackageId !== null && supportsPackages
+      ? "packages"
+      : supportsPackages
+        ? ""
+        : "normal",
   );
+
   const [bookingItems, setBookingItems] = useState(() =>
-    supportsPackages ? [] : [createBookingItem(null)],
+    selectedPackageId !== null && supportsPackages
+      ? [createBookingItem(selectedPackageId)]
+      : supportsPackages
+        ? []
+        : [createBookingItem(null)],
   );
+
   const [customerWhatsappNumber, setCustomerWhatsappNumber] = useState("");
   const [customerNote, setCustomerNote] = useState("");
   const [fieldErrors, setFieldErrors] = useState({});
   const [formError, setFormError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+
   const [currentStep, setCurrentStep] = useState(() =>
-    supportsPackages ? 1 : 2,
+    selectedPackageId !== null && supportsPackages
+      ? 3
+      : supportsPackages
+        ? 1
+        : 2,
   );
 
   // Step positions depend on whether package booking is selected

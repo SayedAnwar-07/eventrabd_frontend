@@ -255,9 +255,7 @@ const ServiceCard = ({ service, brandSlug }) => {
 
         {/* CARD CONTENT */}
         <div className="p-5">
-          <p className="line-clamp-2 text-sm leading-6 text-muted-foreground">
-            {service?.description || "No description available."}
-          </p>
+
 
           {/* SERVICE INFORMATION */}
           <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">

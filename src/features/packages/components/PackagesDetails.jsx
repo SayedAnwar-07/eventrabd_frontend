@@ -60,7 +60,7 @@ const PackageSkeleton = () => (
   </div>
 );
 
-const PackagesDetails = ({ service }) => {
+const PackagesDetails = ({ service, onBookPackage }) => {
   const dispatch = useDispatch();
 
   const carouselRef = useRef(null);
@@ -426,7 +426,21 @@ const PackagesDetails = ({ service }) => {
                       )}
                     </div>
                   </div>
-                </article>
+                  {/* Direct package booking action for customers  */}
+          
+                  {!isOwner && (
+                    <div className="border-t border-border p-5 pt-4 sm:px-6">
+                      <Button
+                        type="button"
+                        disabled={loading || !onBookPackage}
+                        onClick={() => onBookPackage(packageItem.id)}
+                        className="w-full"
+                      >
+                        Book This Package
+                      </Button>
+                    </div>
+                  )}
+                </article>               
               );
             })}
           </div>

@@ -36,7 +36,11 @@ import {
 
 const PACKAGE_SUPPORTED_SERVICES = ["photography", "videography"];
 
-const HireSellerSheet = ({ service, trigger }) => {
+const HireSellerSheet = ({
+  service,
+  trigger,
+  selectedPackageId = null,
+}) => {
   const dispatch = useDispatch();
 
   const { user, isAuthenticated } = useSelector((state) => state.auth);
@@ -134,11 +138,10 @@ const HireSellerSheet = ({ service, trigger }) => {
         <SheetContent className="flex w-full flex-col rounded-none border-l overflow-y-auto border-gray-200 bg-white p-0 shadow-none sm:max-w-2xl lg:max-w-4xl [&>button]:rounded-none">
           <div className="mt-8 p-6">
             <HireRequestForm
-              key={serviceId}
+              key={`${serviceId}-${selectedPackageId ?? "normal"}`}
               serviceId={serviceId}
               serviceName={service?.service_name}
               serviceCharge={service?.shift_charge}
-              // Brand Data
               brandLogo={service?.brand?.logo_url}
               brandName={service?.brand?.display_name}
               brandAddress={service?.brand?.office_address}
@@ -151,6 +154,7 @@ const HireSellerSheet = ({ service, trigger }) => {
               packages={packages}
               packagesLoading={packagesLoading}
               packagesError={packagesError}
+              selectedPackageId={selectedPackageId}
               onSuccess={handleHireSuccess}
             />
           </div>
