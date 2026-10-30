@@ -141,11 +141,7 @@ const HireSellerSheet = ({ service, trigger, selectedPackageId = null }) => {
               brandLogo={service?.brand?.logo_url}
               brandName={service?.brand?.display_name}
               brandAddress={service?.brand?.office_address}
-              rating={
-                service?.review_count > 0
-                  ? service?.rating_sum / service?.review_count / 2
-                  : 0
-              }
+              rating={Number(service?.rating ?? 0)}
               ratingCount={service?.review_count || 0}
               packages={packages}
               packagesLoading={packagesLoading}
