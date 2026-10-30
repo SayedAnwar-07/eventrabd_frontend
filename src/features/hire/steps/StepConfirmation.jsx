@@ -1,13 +1,128 @@
+
 import {
+  ArrowRight,
   CalendarDays,
-  CheckCircle2,
+  Clock3,
   MapPin,
-  Package,
   Phone,
   StickyNote,
+  ExternalLink,
+  Loader2,
 } from "lucide-react";
 
-import { formatPrice } from "../utils/hireFormUtils";
+import {
+  formatPrice,
+  getEventTypeLabel,
+} from "../utils/hireFormUtils";
+
+// Format local date/time without timezone conversion
+const formatEventDate = (value) => {
+  if (!value) return "Not selected";
+
+  const [datePart, timePart = ""] = value.split("T");
+  const [year, month, day] = datePart.split("-").map(Number);
+
+  if (!year || !month || !day) return "Not selected";
+
+  const date = new Date(year, month - 1, day);
+
+  const formattedDate = new Intl.DateTimeFormat("en", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).format(date);
+
+  if (!timePart) return formattedDate;
+
+  const [hour, minute] = timePart.split(":").map(Number);
+
+  if (
+    !Number.isInteger(hour) ||
+    !Number.isInteger(minute) ||
+    hour < 0 ||
+    hour > 23 ||
+    minute < 0 ||
+    minute > 59
+  ) {
+    return formattedDate;
+  }
+
+  const time = new Date(
+    year,
+    month - 1,
+    day,
+    hour,
+    minute
+  );
+
+  const formattedTime = new Intl.DateTimeFormat("en", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  }).format(time);
+
+  return `${formattedDate} · ${formattedTime}`;
+};
+
+// Format WhatsApp number
+const formatWhatsapp = (value) => {
+  const digits = String(value || "").replace(/\D/g, "");
+
+  if (!digits) return "Not provided";
+
+  if (digits.startsWith("880")) return `+${digits}`;
+  if (digits.startsWith("0")) return `+88${digits}`;
+  if (digits.length === 10) return `+880${digits}`;
+
+  return `+${digits}`;
+};
+
+// Validate Google Maps URL
+const getSafeMapUrl = (value) => {
+  if (!value) return null;
+
+  try {
+    const url = new URL(value);
+
+    if (
+      url.protocol !== "https:" &&
+      url.protocol !== "http:"
+    ) {
+      return null;
+    }
+
+    return url.href;
+  } catch {
+    return null;
+  }
+};
+
+// Reusable section heading
+const SectionHeading = ({
+  icon: Icon,
+  title,
+  meta,
+}) => (
+  <div className="flex items-center justify-between gap-3 border-b border-[#F0EAE4] px-4 py-3.5 sm:px-5">
+    <div className="flex items-center gap-2.5">
+      <Icon
+        size={17}
+        strokeWidth={1.8}
+        className="shrink-0 text-[#756A62]"
+      />
+
+      <h3 className="text-sm font-semibold text-[#3D3530]">
+        {title}
+      </h3>
+    </div>
+
+    {meta && (
+      <span className="shrink-0 text-xs text-[#9B9087]">
+        {meta}
+      </span>
+    )}
+  </div>
+);
 
 const StepConfirmation = ({
   bookingItems = [],
@@ -18,241 +133,278 @@ const StepConfirmation = ({
   onConfirm,
   loading = false,
 }) => {
+  // Flatten booking slots into one event list.
+  // This ensures event numbering stays sequential
+  // across different services and packages.
+  const allEvents = bookingItems.flatMap(
+    (item, itemIndex) =>
+      (item.bookingSlots || []).map(
+        (slot, slotIndex) => ({
+          item,
+          itemIndex,
+          slot,
+          slotIndex,
+        })
+      )
+  );
+
+  const totalEvents = allEvents.length;
+
+  const cardClass =
+    "overflow-hidden rounded-md border border-[#E5DDD5] bg-white shadow-[0_1px_2px_rgba(61,53,48,0.04),0_8px_24px_-12px_rgba(61,53,48,0.10)]";
+
+  const totalAvailable =
+    grandTotal !== null &&
+    grandTotal !== undefined &&
+    Number.isFinite(Number(grandTotal));
+
   return (
-    <section className="space-y-6">
-      {/* Header */}
-      <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">
+    <section className="mx-auto w-full space-y-5 pb-3">
+
+      {/* HEADER */}
+      <div className="space-y-1.5">
+        <p className="text-[11px] font-semibold uppercase tracking-widest text-[#756A62]">
           Final Step
         </p>
-        <h2 className="mt-2 text-2xl font-semibold text-gray-950">
+
+        <h2 className="text-xl font-semibold tracking-tight text-[#3D3530] sm:text-2xl">
           Review & Confirm
         </h2>
-        <p className="mt-2 text-sm text-gray-600">
-          Check your booking information before confirming.
+
+        <p className="text-sm leading-relaxed text-[#756A62]">
+          Please review your booking details before confirming.
         </p>
       </div>
 
-      {/* Booking selection */}
-      <div className="space-y-4 rounded-2xl border border-gray-200 bg-white p-5">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-green-50 text-green-700">
-            <CheckCircle2 size={20} />
-          </div>
+      {/* EVENT DETAILS */}
+      <div className={cardClass}>
+        <SectionHeading
+          icon={CalendarDays}
+          title="Event details"
+          meta={`${totalEvents} ${
+            totalEvents === 1 ? "event" : "events"
+          }`}
+        />
 
-          <div>
-            <h3 className="font-semibold text-gray-950">Booking Selection</h3>
-            <p className="text-sm text-gray-500">
-              Review your selected service or packages.
-            </p>
-          </div>
-        </div>
+        <div className="divide-y divide-[#F0EAE4]">
+          {allEvents.map(
+            (
+              { item, itemIndex, slot, slotIndex },
+              eventIndex
+            ) => {
+              const { title } = getBookingItemInfo(item);
 
-        <div className="space-y-3">
-          {bookingItems.map((item, itemIndex) => {
-            const { title, unitPrice } = getBookingItemInfo(item);
-            const quantity = Number(item.quantity || 1);
-            const lineTotal = Number.isFinite(unitPrice)
-              ? unitPrice * quantity
-              : null;
+              const quantity =
+                Number(item.quantity) || 1;
 
-            return (
-              <div
-                key={item.key}
-                className="rounded-xl border border-gray-200 bg-gray-50 p-4"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="min-w-0">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
-                      Booking {itemIndex + 1}
-                    </p>
+              const eventType =
+                item.eventTypes?.[slotIndex];
 
-                    <h4 className="mt-1 font-semibold text-gray-950">
-                      {title}
-                    </h4>
+              const eventLabel = eventType
+                ? getEventTypeLabel(eventType)
+                : "Event not selected";
 
-                    <p className="mt-1 text-sm text-gray-600">
-                      Quantity:{" "}
-                      <span className="font-medium text-gray-900">
-                        {quantity}
-                      </span>
-                    </p>
-
-                    {item.packageId && (
-                      <div className="mt-2 flex items-center gap-2 text-sm font-medium text-green-700">
-                        <Package size={15} />
-                        Package Booking
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="shrink-0 text-right">
-                    <p className="font-semibold text-green-700">
-                      {lineTotal !== null
-                        ? formatPrice(lineTotal)
-                        : "Unavailable"}
-                    </p>
-
-                    {quantity > 1 && Number.isFinite(unitPrice) && (
-                      <p className="mt-1 text-xs text-gray-500">
-                        {formatPrice(unitPrice)} each
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Event information */}
-      <div className="space-y-4 rounded-2xl border border-gray-200 bg-white p-5">
-        <div>
-          <h3 className="font-semibold text-gray-950">Event Information</h3>
-          <p className="mt-1 text-sm text-gray-500">
-            Review event, schedule and venue information.
-          </p>
-        </div>
-
-        <div className="space-y-3">
-          {bookingItems.map((item, itemIndex) => {
-            const { title } = getBookingItemInfo(item);
-
-            return item.bookingSlots.map((slot, slotIndex) => {
-              const eventType = item.eventTypes?.[slotIndex];
+              const mapUrl = getSafeMapUrl(
+                slot.google_map_link
+              );
 
               return (
                 <div
                   key={`${item.key}-${slotIndex}`}
-                  className="rounded-xl border border-gray-200 bg-gray-50 p-4"
+                  className="px-4 py-4 sm:px-5"
                 >
-                  <div className="mb-3 flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
-                        {bookingItems.length > 1
-                          ? `Booking ${itemIndex + 1} · Event ${slotIndex + 1}`
-                          : `Event ${slotIndex + 1}`}
-                      </p>
-
-                      <p className="mt-1 text-sm font-semibold text-gray-900">
-                        {eventType || "Event type not selected"}
-                      </p>
+                  {/* EVENT TITLE + SERVICE NAME */}
+                  <div className="flex items-start gap-3">
+                    {/* Global event number */}
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-[#F5F0EB] text-xs font-semibold text-[#51463E]">
+                      {String(eventIndex + 1).padStart(
+                        2,
+                        "0"
+                      )}
                     </div>
 
-                    {bookingItems.length > 1 && (
-                      <span className="max-w-[45%] truncate text-xs font-medium text-green-700">
+                    <div className="min-w-0 flex-1 space-y-1">
+                      <h4 className="text-sm font-semibold text-[#3D3530]">
+                        {eventLabel}
+                      </h4>
+
+                      <p className="break-words text-xs leading-relaxed text-[#756A62]">
                         {title}
+                      </p>
+
+                      {bookingItems.length > 1 && (
+                        <p className="text-[11px] text-[#9B9087]">
+                          Booking {itemIndex + 1}
+                        </p>
+                      )}
+                    </div>
+
+                    {quantity > 1 && (
+                      <span className="shrink-0 rounded-md bg-[#F3ECE5] px-2 py-1 text-[11px] font-medium text-[#51463E]">
+                        Qty {quantity}
                       </span>
                     )}
                   </div>
 
-                  <div className="space-y-2.5">
-                    <div className="flex items-start gap-2.5 text-sm text-gray-700">
-                      <CalendarDays
-                        size={16}
-                        className="mt-0.5 shrink-0 text-gray-400"
-                      />
-                      <span>
-                        {slot.starts_at
-                          ? new Date(slot.starts_at).toLocaleString()
-                          : "Date and time not selected"}
-                      </span>
-                    </div>
+                  {/* EVENT SCHEDULE AND VENUE */}
+                  <div className="mt-4 space-y-4 border-t border-[#F0EAE4] pt-4 sm:ml-12">
 
-                    <div className="flex items-start gap-2.5 text-sm text-gray-700">
-                      <MapPin
+                    {/* DATE & TIME */}
+                    <div className="flex items-start gap-3">
+                      <Clock3
                         size={16}
-                        className="mt-0.5 shrink-0 text-gray-400"
+                        strokeWidth={1.8}
+                        className="mt-0.5 shrink-0 text-[#9B9087]"
                       />
-                      <div className="min-w-0">
-                        <p>{slot.venue_name || "Venue not provided"}</p>
 
-                        {slot.venue_address && (
-                          <p className="mt-1 text-gray-500">
-                            {slot.venue_address}
-                          </p>
-                        )}
+                      <div className="min-w-0 space-y-1">
+                        <p className="text-[11px] font-medium uppercase tracking-[0.06em] text-[#9B9087]">
+                          Date & Time
+                        </p>
+
+                        <p className="text-sm font-medium text-[#3D3530]">
+                          {formatEventDate(
+                            slot.starts_at
+                          )}
+                        </p>
                       </div>
                     </div>
 
-                    {slot.google_map_link && (
-                      <a
-                        href={slot.google_map_link}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex text-sm font-medium text-green-700 transition hover:text-green-800"
-                      >
-                        View on Google Maps
-                      </a>
-                    )}
+                    {/* VENUE */}
+                    <div className="flex items-start gap-3">
+                      <MapPin
+                        size={16}
+                        strokeWidth={1.8}
+                        className="mt-0.5 shrink-0 text-[#9B9087]"
+                      />
+
+                      <div className="min-w-0 space-y-1">
+                        <p className="text-[11px] font-medium uppercase tracking-[0.06em] text-[#9B9087]">
+                          Venue
+                        </p>
+
+                        <p className="text-sm font-medium text-[#3D3530]">
+                          {slot.venue_name ||
+                            "Not provided"}
+                        </p>
+
+                        {slot.venue_address && (
+                          <p className="break-words text-xs leading-relaxed text-[#756A62]">
+                            {slot.venue_address}
+                          </p>
+                        )}
+
+                        {mapUrl && (
+                          <a
+                            href={mapUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 pt-1 text-xs font-medium text-[#8B735F] transition-colors hover:text-[#3D3530] hover:underline"
+                          >
+                            View on Google Maps
+                            <ExternalLink size={12} />
+                          </a>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
               );
-            });
-          })}
+            }
+          )}
         </div>
       </div>
 
-      {/* Contact information */}
-      <div className="space-y-4 rounded-2xl border border-gray-200 bg-white p-5">
-        <div>
-          <h3 className="font-semibold text-gray-950">Contact Information</h3>
-          <p className="mt-1 text-sm text-gray-500">
-            Contact details for this hire request.
-          </p>
-        </div>
+      {/* CONTACT DETAILS */}
+      <div className={cardClass}>
+        <SectionHeading
+          icon={Phone}
+          title="Contact details"
+        />
 
-        <div className="flex items-center gap-3 rounded-xl bg-gray-50 p-4">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-green-700">
-            <Phone size={17} />
-          </div>
-
+        <div className="space-y-4 px-4 py-4 sm:px-5">
           <div>
-            <p className="text-xs text-gray-500">WhatsApp Number</p>
-            <p className="mt-0.5 text-sm font-medium text-gray-900">
-              +88{customerWhatsappNumber}
+            <p className="mb-1 text-[11px] text-[#9B9087]">
+              WhatsApp number
+            </p>
+
+            <p className="text-sm font-medium text-[#3D3530]">
+              {formatWhatsapp(customerWhatsappNumber)}
             </p>
           </div>
-        </div>
 
-        {customerNote && (
-          <div className="flex items-start gap-3 rounded-xl bg-gray-50 p-4">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-gray-600">
-              <StickyNote size={17} />
-            </div>
+          {customerNote?.trim() && (
+            <div className="border-t border-[#F0EAE4] pt-3">
+              <div className="mb-2 flex items-center gap-2">
+                <StickyNote
+                  size={14}
+                  className="text-[#9B9087]"
+                />
 
-            <div className="min-w-0">
-              <p className="text-xs text-gray-500">Customer Note</p>
-              <p className="mt-1 whitespace-pre-wrap break-words text-sm leading-6 text-gray-700">
+                <p className="text-[11px] text-[#9B9087]">
+                  Customer note
+                </p>
+              </div>
+
+              <p className="whitespace-pre-wrap break-words text-sm leading-relaxed text-[#51463E]">
                 {customerNote}
               </p>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
-      {/* Total */}
-      <div className="flex items-center justify-between gap-4 rounded-2xl border border-green-200 bg-green-50 p-5">
-        <div>
-          <p className="font-semibold text-green-950">Total Amount</p>
-          <p className="mt-1 text-xs text-green-700">Final booking total</p>
+      {/* TOTAL + CONFIRM */}
+      <div className="space-y-4 rounded-md border border-[#E5DDD5] bg-[#FFFCF9] p-4 sm:p-5">
+
+        {/* TOTAL */}
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-sm font-semibold text-[#3D3530]">
+              Total amount
+            </p>
+
+            <p className="mt-1 text-xs text-[#756A62]">
+              Final booking total
+            </p>
+          </div>
+
+          <p className="text-2xl font-bold tracking-tight tabular-nums text-[#3D3530]">
+            {totalAvailable
+              ? formatPrice(Number(grandTotal))
+              : "Unavailable"}
+          </p>
         </div>
 
-        <p className="text-2xl font-bold text-green-800">
-          {grandTotal !== null ? formatPrice(grandTotal) : "Unavailable"}
+        <div className="h-px bg-[#E5DDD5]" />
+
+        {/* CONFIRM BUTTON */}
+        <button
+          type="button"
+          disabled={loading || !totalAvailable}
+          onClick={onConfirm}
+          className="flex h-12 w-full items-center justify-center gap-2 rounded-md bg-[#3D3530] px-5 text-sm font-semibold text-white transition-colors hover:bg-[#51463E] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A68C78] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {loading ? (
+            <>
+              <Loader2
+                size={17}
+                className="animate-spin"
+              />
+              Submitting...
+            </>
+          ) : (
+            <>
+              Confirm Hire
+              <ArrowRight size={17} />
+            </>
+          )}
+        </button>
+
+        <p className="text-center text-xs text-[#9B9087]">
+          Please make sure your booking details are correct.
         </p>
       </div>
-
-      {/* Confirm */}
-      <button
-        type="button"
-        disabled={loading}
-        onClick={onConfirm}
-        className="w-full rounded-xl bg-green-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-green-800 disabled:cursor-not-allowed disabled:bg-gray-400"
-      >
-        {loading ? "Submitting..." : "Confirm Hire"}
-      </button>
     </section>
   );
 };

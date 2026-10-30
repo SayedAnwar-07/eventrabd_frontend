@@ -78,7 +78,7 @@ export default function BookingSlotCard({ slot, brand }) {
   const mapLink = slot?.google_map_link;
 
   return (
-    <div className="p-5 sm:p-6">
+    <div className="p-5 sm:p-6 border border-gray-200">
       {/* Event type */}
       <div className="mb-6 flex items-center justify-between gap-4 border-b border-gray-100 pb-4 dark:border-gray-800">
         <div>

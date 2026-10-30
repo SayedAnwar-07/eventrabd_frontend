@@ -1,110 +1,109 @@
-const StepIndicator = ({ currentStep = 1, hasPackages = false }) => {
+const StepIndicator = ({
+  currentStep = 1,
+  highestCompletedStep = 0,
+  hasPackages = false,
+  supportsPackages = true,
+  onStepClick,
+}) => {
   const steps = hasPackages
     ? [
-        {
-          id: 1,
-          title: "Select",
-          description: "Booking Type",
-        },
-        {
-          id: 2,
-          title: "Package",
-          description: "Choose Package",
-        },
-        {
-          id: 3,
-          title: "Details",
-          description: "Booking Info",
-        },
-        {
-          id: 4,
-          title: "Confirm",
-          description: "Review",
-        },
+        { id: 1, title: "Select", description: "Booking Type" },
+        { id: 2, title: "Package", description: "Choose Package" },
+        { id: 3, title: "Details", description: "Booking Info" },
+        { id: 4, title: "Confirm", description: "Review" },
       ]
-    : [
-        {
-          id: 1,
-          title: "Select",
-          description: "Booking Type",
-        },
-        {
-          id: 2,
-          title: "Details",
-          description: "Booking Info",
-        },
-        {
-          id: 3,
-          title: "Confirm",
-          description: "Review",
-        },
-      ];
+    : supportsPackages
+      ? [
+          { id: 1, title: "Select", description: "Booking Type" },
+          { id: 2, title: "Details", description: "Booking Info" },
+          { id: 3, title: "Confirm", description: "Review" },
+        ]
+      : [
+          { id: 2, title: "Details", description: "Booking Info" },
+          { id: 3, title: "Confirm", description: "Review" },
+        ];
 
   return (
-    <div className="w-full">
-      <div className="flex items-center justify-between">
+    <nav aria-label="Booking progress" className="w-full">
+      <ol className="flex w-full items-start gap-0">
         {steps.map((step, index) => {
           const active = currentStep === step.id;
-          const completed = currentStep > step.id;
+          const completed = step.id <= highestCompletedStep;
+          const clickable = completed && !active && Boolean(onStepClick);
 
           return (
-            <div key={step.id} className="flex flex-1 items-center">
-              {/* Circle + Text */}
-              <div className="flex flex-col items-center">
-                <div
-                  className={`
-                    flex h-10 w-10 items-center justify-center
-                    rounded-full border-2
-                    text-sm font-bold
-                    transition-all duration-300
-
-                    ${
-                      active
-                        ? "border-green-700 bg-green-700 text-white shadow-lg shadow-green-200"
-                        : completed
-                          ? "border-green-700 bg-green-50 text-green-700"
-                          : "border-gray-300 bg-white text-gray-400"
-                    }
-                  `}
-                >
-                  {completed ? "✓" : step.id}
-                </div>
-
-                <div className="mt-3 text-center">
-                  <p
-                    className={`
-                      text-xs font-semibold
-
-                      ${
-                        active || completed ? "text-green-700" : "text-gray-400"
-                      }
-                    `}
-                  >
-                    {step.title}
-                  </p>
-
-                  <p className="hidden text-[11px] text-gray-400 sm:block">
-                    {step.description}
-                  </p>
-                </div>
-              </div>
-
-              {/* Line */}
+            <li
+              key={step.id}
+              className="relative flex min-w-0 flex-1 flex-col items-center"
+            >
               {index !== steps.length - 1 && (
-                <div
-                  className={`
-                    mx-3 h-0.5 flex-1
-                    transition-all duration-500
-
-                    ${completed ? "bg-green-700" : "bg-gray-200"}
-                  `}
+                <span
+                  aria-hidden="true"
+                  className={`absolute left-[calc(50%+18px)] right-[calc(-50%+18px)] top-4.5 z-0 h-0.5 transition-colors duration-300 sm:left-[calc(50%+20px)] sm:right-[calc(-50%+20px)] sm:top-5 ${
+                    step.id <= highestCompletedStep
+                      ? "bg-theme-color"
+                      : "bg-border"
+                  }`}
                 />
               )}
-            </div>
+
+              <button
+                type="button"
+                disabled={!clickable}
+                onClick={() => onStepClick?.(step.id)}
+                aria-current={active ? "step" : undefined}
+                aria-label={`Go to ${step.title} step`}
+                className="group relative z-10 flex w-full cursor-pointer flex-col items-center rounded-md px-1 py-1 text-center outline-none focus-visible:ring-2 focus-visible:ring-theme-color/30 focus-visible:ring-offset-2 disabled:cursor-default"
+              >
+                <div
+                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 text-xs font-semibold transition-all duration-300 sm:h-10 sm:w-10 sm:text-sm ${
+                    active
+                      ? "border-theme-color bg-theme-color text-white shadow-md shadow-theme-color/20"
+                      : completed
+                        ? "border-theme-color bg-theme-color/10 text-theme-color group-hover:bg-theme-color/20"
+                        : "border-border bg-background text-muted-foreground"
+                  }`}
+                >
+                  {completed ? (
+                    <svg
+                      width="17"
+                      height="17"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden="true"
+                    >
+                      <path d="m5 12 4 4L19 6" />
+                    </svg>
+                  ) : (
+                    index + 1
+                  )}
+                </div>
+
+                <div className="mt-2 flex w-full flex-col items-center text-center sm:mt-2.5">
+                  <span
+                    className={`whitespace-nowrap text-[11px] font-semibold leading-tight transition-colors duration-300 sm:text-xs ${
+                      active || completed
+                        ? "text-theme-color"
+                        : "text-muted-foreground"
+                    }`}
+                  >
+                    {step.title}
+                  </span>
+
+                  <span className="mt-1 hidden whitespace-nowrap text-[11px] leading-tight text-muted-foreground md:block">
+                    {step.description}
+                  </span>
+                </div>
+              </button>
+            </li>
           );
         })}
-      </div>
-    </div>
+      </ol>
+    </nav>
   );
 };
 

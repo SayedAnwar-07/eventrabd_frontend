@@ -36,11 +36,7 @@ import {
 
 const PACKAGE_SUPPORTED_SERVICES = ["photography", "videography"];
 
-const HireSellerSheet = ({
-  service,
-  trigger,
-  selectedPackageId = null,
-}) => {
+const HireSellerSheet = ({ service, trigger, selectedPackageId = null }) => {
   const dispatch = useDispatch();
 
   const { user, isAuthenticated } = useSelector((state) => state.auth);
@@ -135,8 +131,8 @@ const HireSellerSheet = ({
           )}
         </SheetTrigger>
 
-        <SheetContent className="flex w-full flex-col rounded-none border-l overflow-y-auto border-gray-200 bg-white p-0 shadow-none sm:max-w-2xl lg:max-w-4xl [&>button]:rounded-none">
-          <div className="mt-8 p-6">
+        <SheetContent className="flex h-dvh max-h-dvh w-full flex-col overflow-hidden overscroll-none rounded-none border-l border-gray-200 bg-secondary-custom p-0 shadow-none sm:max-w-2xl lg:max-w-4xl [&>button]:rounded-none">
+          <div className="flex min-h-0 flex-1 flex-col px-4 pb-0 pt-12 sm:px-6">
             <HireRequestForm
               key={`${serviceId}-${selectedPackageId ?? "normal"}`}
               serviceId={serviceId}
@@ -158,17 +154,6 @@ const HireSellerSheet = ({
               onSuccess={handleHireSuccess}
             />
           </div>
-
-          <SheetFooter className="border-t border-gray-200 px-6 py-4">
-            <SheetClose asChild>
-              <button
-                type="button"
-                className="border border-gray-300 bg-white px-5 py-2.5 text-sm font-semibold text-gray-950 transition hover:bg-gray-100"
-              >
-                Cancel
-              </button>
-            </SheetClose>
-          </SheetFooter>
         </SheetContent>
       </Sheet>
 

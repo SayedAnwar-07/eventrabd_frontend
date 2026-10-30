@@ -13,7 +13,7 @@ export default function InformationRow({
     : "grid-cols-[76px_minmax(0,1fr)] sm:grid-cols-[92px_minmax(0,1fr)]";
 
   const contentClassName =
-    "min-w-0 break-words [overflow-wrap:anywhere] text-[10px] font-medium leading-4 text-gray-700 sm:text-[11px] sm:leading-5";
+    "min-w-0 wrap-break-word [overflow-wrap:anywhere] text-[10px] font-medium leading-4 text-gray-700 sm:text-[11px] sm:leading-5";
 
   return (
     <div

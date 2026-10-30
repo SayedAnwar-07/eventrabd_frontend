@@ -25,13 +25,27 @@ import {
   normalizeOptionalText,
   PACKAGE_SUPPORTED_SERVICES,
 } from "../utils/hireFormUtils";
-import { Star } from "lucide-react";
+
+import { Star, MapPin, ArrowLeft, ArrowRight } from "lucide-react";
+import toast from "react-hot-toast";
 
 const formatServiceName = (name = "") => {
   return name
     .replaceAll("_", " ")
     .replace(/\b\w/g, (character) => character.toUpperCase());
 };
+
+const primaryButtonClass =
+  "inline-flex min-h-11 flex-1 cursor-pointer items-center justify-center gap-2 rounded-md bg-theme-color px-5 py-3 text-sm font-semibold text-white shadow-sm shadow-theme-color/20 transition-all duration-200 hover:brightness-95 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-color/30 focus-visible:ring-offset-2 active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground disabled:shadow-none disabled:opacity-70 border border-gray-500";
+
+const secondaryButtonClass =
+  "inline-flex min-h-11 flex-1 cursor-pointer items-center justify-center gap-2 rounded-md border border-theme-color bg-background px-5 py-3 text-sm font-semibold text-theme-color transition-all duration-200 hover:bg-theme-color/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-color/20 focus-visible:ring-offset-2 active:scale-[0.99] disabled:cursor-not-allowed disabled:border-border disabled:bg-muted disabled:text-muted-foreground disabled:opacity-70";
+
+const textButtonClass =
+  "inline-flex cursor-pointer items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-semibold text-theme-color transition-colors hover:bg-theme-color/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-color/20 disabled:cursor-not-allowed disabled:opacity-50";
+
+const iconButtonClass =
+  "inline-flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-full bg-theme-color text-white shadow-sm transition-all duration-200 hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-color/30 focus-visible:ring-offset-2 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50";
 
 const HireRequestForm = ({
   serviceId,
@@ -91,10 +105,24 @@ const HireRequestForm = ({
         : 2,
   );
 
+  // Tracks the furthest step the user has successfully completed.
+  const [highestCompletedStep, setHighestCompletedStep] = useState(() =>
+    selectedPackageId !== null && supportsPackages
+      ? 2
+      : supportsPackages
+        ? 0
+        : 1,
+  );
+
   // Step positions depend on whether package booking is selected
   const hasPackageStep = supportsPackages && bookingMode === "packages";
   const detailsStep = hasPackageStep ? 3 : 2;
   const confirmStep = hasPackageStep ? 4 : 3;
+
+  // Any booking-detail edit requires the user to review the details again.
+  const markDetailsIncomplete = () => {
+    setHighestCompletedStep(detailsStep - 1);
+  };
 
   // Clear Redux create error
   const clearCreateError = () => {
@@ -172,6 +200,11 @@ const HireRequestForm = ({
     setBookingItems([createBookingItem(null)]);
     setFieldErrors({});
     clearMessages();
+
+    // Mark Step 1 as completed
+    setHighestCompletedStep(1);
+
+    // Navigate to Step 2
     setCurrentStep(2);
   };
 
@@ -188,6 +221,7 @@ const HireRequestForm = ({
       clearMessages();
     }
 
+    setHighestCompletedStep(1);
     setCurrentStep(2);
   };
 
@@ -209,6 +243,7 @@ const HireRequestForm = ({
       );
 
       setBookingItems(nextItems);
+      setHighestCompletedStep(1);
       setFieldErrors({});
       clearMessages();
       return;
@@ -217,13 +252,14 @@ const HireRequestForm = ({
     if (bookingMode !== "packages") {
       setBookingMode("packages");
       setBookingItems([createBookingItem(normalizedId)]);
+      setHighestCompletedStep(1);
       setFieldErrors({});
       clearMessages();
       return;
     }
 
     if (bookingItems.length >= MAX_BOOKING_SLOTS) {
-      setFormError(`Maximum ${MAX_BOOKING_SLOTS} packages can be selected.`);
+      toast.error(`Maximum ${MAX_BOOKING_SLOTS} packages can be selected.`);
       return;
     }
 
@@ -236,6 +272,7 @@ const HireRequestForm = ({
       ...normalizedExistingItems,
       createBookingItem(normalizedId),
     ]);
+    setHighestCompletedStep(1);
     setFieldErrors({});
     clearMessages();
   };
@@ -262,6 +299,7 @@ const HireRequestForm = ({
       },
     ]);
 
+    markDetailsIncomplete();
     setFieldErrors({});
     clearMessages();
   };
@@ -287,6 +325,7 @@ const HireRequestForm = ({
       },
     ]);
 
+    markDetailsIncomplete();
     setFieldErrors({});
     clearMessages();
   };
@@ -309,6 +348,7 @@ const HireRequestForm = ({
       }),
     );
 
+    markDetailsIncomplete();
     clearFieldError(`booking_items.${itemIndex}.event_types.${slotIndex}`);
     clearFieldError(`booking_items.${itemIndex}.event_types`);
     clearMessages();
@@ -338,6 +378,7 @@ const HireRequestForm = ({
       }),
     );
 
+    markDetailsIncomplete();
     clearFieldError(
       `booking_items.${itemIndex}.booking_slots.${slotIndex}.${field}`,
     );
@@ -355,6 +396,7 @@ const HireRequestForm = ({
     digitsOnly = digitsOnly.slice(0, 11);
 
     setCustomerWhatsappNumber(digitsOnly);
+    markDetailsIncomplete();
     clearFieldError("customer_whatsapp_number");
     clearMessages();
   };
@@ -362,6 +404,7 @@ const HireRequestForm = ({
   // Update customer note
   const handleNoteChange = (value) => {
     setCustomerNote(value.slice(0, 1000));
+    markDetailsIncomplete();
     clearMessages();
   };
 
@@ -469,13 +512,14 @@ const HireRequestForm = ({
         ...currentErrors,
         booking_option: "Select at least one package before continuing.",
       }));
-      setFormError("Select at least one package before continuing.");
+      toast.error("Select at least one package before continuing.");
       return;
     }
 
     setFieldErrors({});
     clearMessages();
-    setCurrentStep(3);
+    setHighestCompletedStep(2);
+    setCurrentStep(detailsStep);
   };
 
   // Continue from booking details to confirmation
@@ -489,10 +533,11 @@ const HireRequestForm = ({
     clearCreateError();
 
     if (!validateForm()) {
-      setFormError("Fix the highlighted fields before continuing.");
+      toast.error("Please fix the highlighted fields before continuing.");
       return;
     }
 
+    setHighestCompletedStep(detailsStep);
     setCurrentStep(confirmStep);
   };
 
@@ -527,6 +572,7 @@ const HireRequestForm = ({
 
     if (!validateForm()) {
       setFormError("Fix the highlighted fields before submitting.");
+      setHighestCompletedStep(detailsStep - 1);
       setCurrentStep(detailsStep);
       return;
     }
@@ -557,22 +603,45 @@ const HireRequestForm = ({
         setBookingMode("");
         setBookingItems([]);
         setCurrentStep(1);
+        setHighestCompletedStep(0);
       } else {
         setBookingMode("normal");
         setBookingItems([createBookingItem(null)]);
         setCurrentStep(2);
+        setHighestCompletedStep(1);
       }
 
       setCustomerWhatsappNumber("");
       setCustomerNote("");
       setFieldErrors({});
       setFormError("");
-      setSuccessMessage("Your hire request was submitted successfully.");
+      toast.success("Your hire request was submitted successfully.");
 
       onSuccess?.(createdHire);
-    } catch {
-      // Redux stores the API error and GlobalErrorMessage displays it.
+    } catch (error) {
+      const errorMessage =
+        typeof error === "string"
+          ? error
+          : error?.message ||
+            error?.detail ||
+            "Unable to submit your booking. Please try again.";
+
+      toast.error(errorMessage);
     }
+  };
+
+  // Navigate only to steps that have already been completed.
+  const handleStepNavigation = (stepId) => {
+    if (loading || stepId === currentStep) {
+      return;
+    }
+
+    if (stepId > highestCompletedStep) {
+      return;
+    }
+
+    clearMessages();
+    setCurrentStep(stepId);
   };
 
   // Prevent native form submission because confirmation controls submission
@@ -581,97 +650,214 @@ const HireRequestForm = ({
   };
 
   return (
-    <form onSubmit={handleFormSubmit} noValidate className="space-y-6">
-      {/* Step progress */}
-      <div className="w-full mb-10">
-        <StepIndicator currentStep={currentStep} hasPackages={hasPackageStep} />
-      </div>
-
-      <div className="flex items-start gap-4">
-        <div className="h-14 w-14 overflow-hidden rounded-full">
-          {brandLogo ? (
-            <img
-              src={brandLogo}
-              alt={brandName || "Brand"}
-              className="h-full w-full object-cover"
-            />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center bg-gray-100">
-              {brandName?.charAt(0) || "B"}
-            </div>
-          )}
+    <form
+      onSubmit={handleFormSubmit}
+      noValidate
+      className="flex min-h-0 flex-1 flex-col overflow-hidden"
+    >
+      {/* SCROLLABLE CONTENT */}
+      <div className="min-h-0 flex-1 space-y-6 overflow-y-auto overscroll-contain scroll-smooth pb-6 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+        {/* STEP INDICATOR */}
+        <div className="mb-8 w-full">
+          <StepIndicator
+            currentStep={currentStep}
+            highestCompletedStep={highestCompletedStep}
+            hasPackages={hasPackageStep}
+            supportsPackages={supportsPackages}
+            onStepClick={handleStepNavigation}
+          />
         </div>
+        {/* BRAND HEADER */}
+        <div className="w-full rounded-sm border border-[#DCE3E5] bg-white p-5 shadow-md sm:p-6 md:p-7">
+          <div className="flex min-w-0 flex-col items-center gap-4 text-center lg:flex-row lg:items-center lg:gap-5 lg:text-left">
+            {/* BRAND LOGO */}
+            <div className="shrink-0">
+              <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full p-1 sm:h-24 sm:w-24">
+                {brandLogo ? (
+                  <img
+                    src={brandLogo}
+                    alt={`${brandName || "Brand"} logo`}
+                    className="h-full w-full rounded-full object-cover"
+                  />
+                ) : (
+                  <span className="text-2xl font-light tracking-wider text-[#293B47]">
+                    {brandName?.trim()?.charAt(0)?.toUpperCase() || "B"}
+                  </span>
+                )}
+              </div>
+            </div>
 
-        <div className="">
-          <div className="flex gap-3 items-center">
-            <h3 className="text-lg font-semibold">
-              {formatServiceName(serviceName)}
-            </h3>
-            {/* Rating */}
-            <div className="ml-3 flex items-center gap-2">
-              <Star className="h-5 w-5 fill-amber-400 text-amber-400" />
+            {/* BRAND DETAILS */}
+            <div className="min-w-0 flex-1 space-y-2">
+              <div className="flex flex-wrap items-center justify-center gap-4 md:justify-start">
+                <h3 className="wrap-break-word text-lg font-medium uppercase leading-snug tracking-[0.16em] text-[#293B47] sm:text-xl sm:tracking-[0.20em]">
+                  {brandName || "Event Service Provider"}
+                </h3>
 
-              <span className="text-lg font-semibold">
-                {Number(rating || 0).toFixed(1)}
-              </span>
+                {/* RATING */}
+                <div className="flex flex-wrap items-center justify-center gap-2 lg:justify-start">
+                  <div
+                    className="inline-flex items-center gap-1.5"
+                    aria-label={`${Number(rating || 0).toFixed(1)} out of 5 stars`}
+                  >
+                    <Star
+                      size={18}
+                      strokeWidth={1.8}
+                      fill="#FFCC40"
+                      color="#FFCC40"
+                      className="shrink-0"
+                    />
 
-              <span className="text-sm text-muted-foreground">
-                ({ratingCount} rating{ratingCount !== 1 ? "s" : ""})
-              </span>
+                    <span className="text-sm font-semibold tabular-nums text-[#293B47]">
+                      {Number(rating || 0).toFixed(1)}
+                    </span>
+                  </div>
+
+                  <span className="text-sm text-[#73818A]">
+                    ({ratingCount || 0}{" "}
+                    {Number(ratingCount) === 1 ? "rating" : "ratings"})
+                  </span>
+                </div>
+              </div>
+
+              {/* SERVICE NAME */}
+              <p className="text-[10px] font-medium uppercase tracking-[0.28em] text-[#52636E] sm:text-xs sm:tracking-[0.32em]">
+                {formatServiceName(serviceName)}
+              </p>
+
+              <div className="mx-auto h-px w-12 bg-[#B9C6CB] lg:mx-0" />
+
+              {/* BRAND ADDRESS */}
+              {brandAddress && (
+                <div className="flex min-w-0 items-start justify-center gap-2 pt-1 lg:justify-start">
+                  <MapPin
+                    size={15}
+                    strokeWidth={1.6}
+                    className="mt-0.5 shrink-0 text-[#667780]"
+                  />
+
+                  <p className="min-w-0 wrap-break-word text-xs leading-relaxed text-[#73818A] sm:text-sm">
+                    {brandAddress}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
-
-          <p className="text-sm text-gray-500">{brandAddress}</p>
         </div>
+
+        {/* SUCCESS MESSAGE */}
+        {successMessage && (
+          <div className="rounded-md border border-green-200 bg-green-50 px-4 py-3">
+            <p className="text-sm font-medium text-green-800">
+              {successMessage}
+            </p>
+          </div>
+        )}
+
+        {/* API ERROR */}
+        {apiError && <GlobalErrorMessage error={apiError} />}
+
+        {/* STEP 1: BOOKING TYPE */}
+        {supportsPackages && currentStep === 1 && (
+          <StepServiceSelection
+            serviceName={serviceName}
+            bookingMode={bookingMode}
+            serviceCharge={serviceCharge}
+            onNormalServiceSelect={handleNormalServiceSelect}
+            onPackageSelect={handlePackageSelect}
+            disabled={loading}
+          />
+        )}
+
+        {/* STEP 2: PACKAGE SELECTION */}
+        {hasPackageStep && currentStep === 2 && (
+          <>
+            <StepPackageSelection
+              packages={availablePackages}
+              packagesLoading={packagesLoading}
+              packagesError={packagesError}
+              bookingMode={bookingMode}
+              bookingItems={bookingItems}
+              loading={loading}
+              onPackageToggle={handlePackageToggle}
+            />
+
+            {fieldErrors.booking_option && (
+              <p className="text-sm font-medium text-red-600">
+                {fieldErrors.booking_option}
+              </p>
+            )}
+
+            {formError && (
+              <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3">
+                <p className="text-sm text-red-700">{formError}</p>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* BOOKING DETAILS */}
+        {currentStep === detailsStep && (
+          <>
+            <StepBookingDetails
+              bookingItems={bookingItems}
+              minimumDateTime={minimumDateTime}
+              loading={loading}
+              fieldErrors={fieldErrors}
+              onIncreaseQuantity={handleIncreaseQuantity}
+              onDecreaseQuantity={handleDecreaseQuantity}
+              onEventTypeChange={handleEventTypeChange}
+              onBookingFieldChange={updateBookingField}
+              getBookingItemInfo={getBookingItemInfo}
+              customerWhatsappNumber={customerWhatsappNumber}
+              customerNote={customerNote}
+              onWhatsappChange={handleWhatsappChange}
+              onNoteChange={handleNoteChange}
+            />
+
+            {fieldErrors.booking_items && (
+              <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3">
+                <p className="text-sm text-red-700">
+                  {fieldErrors.booking_items}
+                </p>
+              </div>
+            )}
+
+            {formError && (
+              <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3">
+                <p className="text-sm text-red-700">{formError}</p>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* FINAL CONFIRMATION */}
+        {currentStep === confirmStep && (
+          <>
+            <StepConfirmation
+              bookingItems={bookingItems}
+              getBookingItemInfo={getBookingItemInfo}
+              grandTotal={grandTotal}
+              customerWhatsappNumber={customerWhatsappNumber}
+              customerNote={customerNote}
+              onConfirm={submitHireRequest}
+              loading={loading}
+            />
+
+            {formError && (
+              <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3">
+                <p className="text-sm text-red-700">{formError}</p>
+              </div>
+            )}
+          </>
+        )}
       </div>
 
-      {/* Success message */}
-      {successMessage && (
-        <div className="rounded-xl border border-green-200 bg-green-50 px-4 py-3">
-          <p className="text-sm font-medium text-green-800">{successMessage}</p>
-        </div>
-      )}
-
-      {/* API error */}
-      {apiError && <GlobalErrorMessage error={apiError} />}
-
-      {/* Step 1: Booking type */}
-      {supportsPackages && currentStep === 1 && (
-        <StepServiceSelection
-          bookingMode={bookingMode}
-          serviceCharge={serviceCharge}
-          onNormalServiceSelect={handleNormalServiceSelect}
-          onPackageSelect={handlePackageSelect}
-          disabled={loading}
-        />
-      )}
-
-      {/* Step 2: Package selection */}
-      {hasPackageStep && currentStep === 2 && (
-        <>
-          <StepPackageSelection
-            packages={availablePackages}
-            packagesLoading={packagesLoading}
-            packagesError={packagesError}
-            bookingMode={bookingMode}
-            bookingItems={bookingItems}
-            loading={loading}
-            onPackageToggle={handlePackageToggle}
-          />
-
-          {fieldErrors.booking_option && (
-            <p className="text-sm font-medium text-red-600">
-              {fieldErrors.booking_option}
-            </p>
-          )}
-
-          {formError && (
-            <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3">
-              <p className="text-sm text-red-700">{formError}</p>
-            </div>
-          )}
-
-          <div className="flex items-center gap-3">
+      {/* FIXED BOTTOM ACTION BAR */}
+      <div className="z-20 shrink-0  px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:px-6 sm:py-4">
+        {/* PACKAGE SELECTION */}
+        {hasPackageStep && currentStep === 2 && (
+          <div className="flex w-full items-center gap-3">
             <button
               type="button"
               disabled={loading}
@@ -679,8 +865,9 @@ const HireRequestForm = ({
                 clearMessages();
                 setCurrentStep(1);
               }}
-              className="flex-1 rounded-xl border border-gray-300 bg-white px-5 py-3 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+              className={secondaryButtonClass}
             >
+              <ArrowLeft size={17} />
               Back
             </button>
 
@@ -688,61 +875,25 @@ const HireRequestForm = ({
               type="button"
               disabled={loading || bookingItems.length === 0}
               onClick={handlePackageContinue}
-              className="flex-1 rounded-xl bg-green-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-green-800 disabled:cursor-not-allowed disabled:bg-gray-400"
+              className={primaryButtonClass}
             >
               Continue
+              <ArrowRight size={17} />
             </button>
           </div>
-        </>
-      )}
+        )}
 
-      {/* Booking details */}
-      {currentStep === detailsStep && (
-        <>
-          <StepBookingDetails
-            bookingItems={bookingItems}
-            minimumDateTime={minimumDateTime}
-            loading={loading}
-            fieldErrors={fieldErrors}
-            onIncreaseQuantity={handleIncreaseQuantity}
-            onDecreaseQuantity={handleDecreaseQuantity}
-            onEventTypeChange={handleEventTypeChange}
-            onBookingFieldChange={updateBookingField}
-            getBookingItemInfo={getBookingItemInfo}
-            customerWhatsappNumber={customerWhatsappNumber}
-            customerNote={customerNote}
-            onWhatsappChange={handleWhatsappChange}
-            onNoteChange={handleNoteChange}
-          />
-
-          {fieldErrors.customer_whatsapp_number && (
-            <p className="text-sm font-medium text-red-600">
-              {fieldErrors.customer_whatsapp_number}
-            </p>
-          )}
-
-          {fieldErrors.booking_items && (
-            <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3">
-              <p className="text-sm text-red-700">
-                {fieldErrors.booking_items}
-              </p>
-            </div>
-          )}
-
-          {formError && (
-            <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3">
-              <p className="text-sm text-red-700">{formError}</p>
-            </div>
-          )}
-
-          <div className="flex items-center gap-3">
+        {/* BOOKING DETAILS */}
+        {currentStep === detailsStep && (
+          <div className="flex w-full items-center gap-3">
             {supportsPackages && (
               <button
                 type="button"
                 disabled={loading}
                 onClick={handleDetailsBack}
-                className="flex-1 rounded-xl border border-gray-300 bg-white px-5 py-3 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                className={secondaryButtonClass}
               >
+                <ArrowLeft size={17} />
                 Back
               </button>
             )}
@@ -751,33 +902,16 @@ const HireRequestForm = ({
               type="button"
               disabled={loading || !serviceId || bookingItems.length === 0}
               onClick={handleDetailsContinue}
-              className="flex-1 rounded-xl bg-green-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-green-800 disabled:cursor-not-allowed disabled:bg-gray-400"
+              className={primaryButtonClass}
             >
               Review Booking
+              <ArrowRight size={17} />
             </button>
           </div>
-        </>
-      )}
+        )}
 
-      {/* Final confirmation */}
-      {currentStep === confirmStep && (
-        <>
-          <StepConfirmation
-            bookingItems={bookingItems}
-            getBookingItemInfo={getBookingItemInfo}
-            grandTotal={grandTotal}
-            customerWhatsappNumber={customerWhatsappNumber}
-            customerNote={customerNote}
-            onConfirm={submitHireRequest}
-            loading={loading}
-          />
-
-          {formError && (
-            <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3">
-              <p className="text-sm text-red-700">{formError}</p>
-            </div>
-          )}
-
+        {/* CONFIRMATION */}
+        {currentStep === confirmStep && (
           <button
             type="button"
             disabled={loading}
@@ -785,12 +919,13 @@ const HireRequestForm = ({
               clearMessages();
               setCurrentStep(detailsStep);
             }}
-            className="w-full rounded-xl border border-gray-300 bg-white px-5 py-3 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+            className={`w-full ${secondaryButtonClass.replace("flex-1", "")}`}
           >
+            <ArrowLeft size={17} />
             Back to Booking Details
           </button>
-        </>
-      )}
+        )}
+      </div>
     </form>
   );
 };
