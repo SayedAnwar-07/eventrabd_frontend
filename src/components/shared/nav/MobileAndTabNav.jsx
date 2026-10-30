@@ -29,7 +29,7 @@ import NotificationBell from "@/features/notfications/components/NotificationBel
 
 import SellerBrandNav from "./SellerBrandNav";
 
-import eventraBDLogo from "@/assets/logo/eventra-bd-logo.png";
+import eventraBDLogo from "@/assets/logo/logo.png";
 
 const getInitial = (user) => {
   const name = user?.full_name || user?.first_name || user?.email || "User";
@@ -97,12 +97,8 @@ export default function MobileAndTabNav({
             <img
               src={eventraBDLogo}
               alt="EventraBD"
-              className="h-8 w-8 shrink-0 object-contain"
+              className="h-8 shrink-0 object-contain"
             />
-
-            <span className="truncate text-lg font-bold tracking-tight text-[#9f0712] sm:text-xl">
-              EventraBD
-            </span>
           </Link>
 
           {/* Right Actions */}

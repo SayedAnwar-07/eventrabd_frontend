@@ -28,7 +28,7 @@ import NotificationBell from "@/features/notfications/components/NotificationBel
 
 import SellerBrandNav from "./SellerBrandNav";
 
-import eventraBDLogo from "@/assets/logo/eventra-bd-logo.png";
+import eventraBDLogo from "@/assets/logo/logo.png";
 
 const getInitial = (user) => {
   const name = user?.full_name || user?.first_name || user?.email || "User";
@@ -60,18 +60,14 @@ export default function DesktopAndLaptopNav({
         <div className="flex flex-1 items-center">
           <Link
             to="/"
-            className="flex items-center gap-[6px]"
+            className="flex items-center gap-1.5"
             aria-label="EventraBD home"
           >
             <img
               src={eventraBDLogo}
               alt="EventraBD"
-              className="h-7 w-7 object-contain"
+              className="h-10 object-contain"
             />
-
-            <span className="text-[30px] font-bold tracking-tight text-[#b00116]">
-              ventraBD
-            </span>
           </Link>
         </div>
 
