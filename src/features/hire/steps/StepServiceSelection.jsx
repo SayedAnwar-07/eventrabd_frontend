@@ -104,7 +104,7 @@ const StepServiceSelection = ({
 
   // COMPACT DIVIDER
   const dividerClass =
-    "my-2.5 sm:my-3 lg:my-3.5 " +
+    "my-2.5 sm:my-3 lg:my-3.5 mb-4" +
     "h-px w-9 sm:w-11 lg:w-12 " +
     "bg-[#B9C6CB] transition-all duration-300 " +
     "group-hover:w-14 sm:group-hover:w-16 lg:group-hover:w-20";
