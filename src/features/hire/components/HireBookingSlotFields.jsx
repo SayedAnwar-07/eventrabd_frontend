@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 
 import { Calendar } from "@/components/ui/calendar";
@@ -15,10 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-import {
-  EVENT_TYPE_OPTIONS,
-  getEventTypeLabel,
-} from "../utils/hireFormUtils";
+import { EVENT_TYPE_OPTIONS, getEventTypeLabel } from "../utils/hireFormUtils";
 
 const TIME_OPTIONS = Array.from({ length: 96 }, (_, index) => {
   const hour24 = Math.floor(index / 4);
@@ -26,13 +22,15 @@ const TIME_OPTIONS = Array.from({ length: 96 }, (_, index) => {
   const hour12 = hour24 % 12 || 12;
   const period = hour24 >= 12 ? "PM" : "AM";
 
-  const value = `${String(hour24).padStart(2, "0")}:${String(
-    minute
-  ).padStart(2, "0")}`;
+  const value = `${String(hour24).padStart(2, "0")}:${String(minute).padStart(
+    2,
+    "0",
+  )}`;
 
-  const label = `${String(hour12).padStart(2, "0")}:${String(
-    minute
-  ).padStart(2, "0")} ${period}`;
+  const label = `${String(hour12).padStart(2, "0")}:${String(minute).padStart(
+    2,
+    "0",
+  )} ${period}`;
 
   return { value, label };
 });
@@ -49,24 +47,19 @@ const HireBookingSlotFields = ({
   const [calendarOpen, setCalendarOpen] = useState({});
   const [calendarMonths, setCalendarMonths] = useState({});
 
-  
-const fieldTriggerClass =
-  "flex! h-11! min-h-11! w-full! min-w-0! items-center justify-between gap-2 rounded-md! border! border-[#E5DDD5]! bg-white! px-3! py-0! text-left text-sm font-normal text-[#3D3530] shadow-none! outline-none transition-colors hover:border-[#CFC2B6]! focus-visible:border-[#A68C78]! focus-visible:ring-2! focus-visible:ring-[#A68C78]/20! disabled:cursor-not-allowed disabled:bg-[#F8F5F2]! disabled:opacity-70 data-[placeholder]:text-[#A69B91]";
+  const fieldTriggerClass =
+    "flex! h-11! min-h-11! w-full! min-w-0! items-center justify-between gap-2 rounded-md! border! border-[#E5DDD5]! bg-gray-50! px-3! py-0! text-left text-sm font-normal text-[#3D3530] shadow-none! outline-none transition-colors hover:border-[#CFC2B6]! focus-visible:border-[#A68C78]! focus-visible:ring-2! focus-visible:ring-[#A68C78]/20! disabled:cursor-not-allowed disabled:bg-[#F8F5F2]! disabled:opacity-70 data-[placeholder]:text-[#A69B91]";
 
   const inputClass =
-    "h-11 w-full rounded-md border border-[#E5DDD5] bg-white px-3 text-sm text-[#3D3530] shadow-none outline-none transition-colors placeholder:text-[#A69B91] focus-visible:border-[#A68C78] focus-visible:ring-2 focus-visible:ring-[#A68C78]/20 disabled:cursor-not-allowed disabled:bg-[#F8F5F2] disabled:opacity-70";
+    "h-11 w-full rounded-md border border-[#E5DDD5] bg-gray-50 px-3 text-sm text-[#3D3530] shadow-none outline-none transition-colors placeholder:text-[#A69B91] focus-visible:border-[#A68C78] focus-visible:ring-2 focus-visible:ring-[#A68C78]/20 disabled:cursor-not-allowed disabled:bg-[#F8F5F2] disabled:opacity-70";
 
-  const labelClass =
-    "mb-1.5 block text-xs font-medium text-[#51463E]";
+  const labelClass = "mb-1.5 block text-xs font-medium text-[#51463E]";
 
-  const optionalClass =
-    "ml-1 text-[11px] font-normal text-[#9B9087]";
+  const optionalClass = "ml-1 text-[11px] font-normal text-[#9B9087]";
 
-  const getDatePart = (value) =>
-    value?.split("T")[0] || "";
+  const getDatePart = (value) => value?.split("T")[0] || "";
 
-  const getTimePart = (value) =>
-    value?.split("T")[1]?.slice(0, 5) || "";
+  const getTimePart = (value) => value?.split("T")[1]?.slice(0, 5) || "";
 
   const toLocalDate = (value) => {
     if (!value) return undefined;
@@ -104,20 +97,14 @@ const fieldTriggerClass =
 
   const renderError = (error) =>
     error ? (
-      <p
-        role="alert"
-        className="mt-1.5 text-xs leading-relaxed text-red-600"
-      >
+      <p role="alert" className="mt-1.5 text-xs leading-relaxed text-red-600">
         {error}
       </p>
     ) : null;
 
   const renderFieldStatus = (required) =>
     required ? (
-      <span
-        className="ml-1 text-red-600"
-        aria-label="required"
-      >
+      <span className="ml-1 text-red-600" aria-label="required">
         *
       </span>
     ) : (
@@ -129,28 +116,20 @@ const fieldTriggerClass =
       {item.bookingSlots.map((slot, slotIndex) => {
         const eventType = item.eventTypes?.[slotIndex] || "";
 
-        const errorPrefix =
-          `booking_items.${itemIndex}.booking_slots.${slotIndex}`;
+        const errorPrefix = `booking_items.${itemIndex}.booking_slots.${slotIndex}`;
 
         const eventTypeError =
-          fieldErrors[
-            `booking_items.${itemIndex}.event_types.${slotIndex}`
-          ];
+          fieldErrors[`booking_items.${itemIndex}.event_types.${slotIndex}`];
 
-        const startsAtError =
-          fieldErrors[`${errorPrefix}.starts_at`];
+        const startsAtError = fieldErrors[`${errorPrefix}.starts_at`];
 
-        const venueNameError =
-          fieldErrors[`${errorPrefix}.venue_name`];
+        const venueNameError = fieldErrors[`${errorPrefix}.venue_name`];
 
-        const venueAddressError =
-          fieldErrors[`${errorPrefix}.venue_address`];
+        const venueAddressError = fieldErrors[`${errorPrefix}.venue_address`];
 
-        const googleMapError =
-          fieldErrors[`${errorPrefix}.google_map_link`];
+        const googleMapError = fieldErrors[`${errorPrefix}.google_map_link`];
 
-        const isFirstBooking =
-          itemIndex === 0 && slotIndex === 0;
+        const isFirstBooking = itemIndex === 0 && slotIndex === 0;
 
         const eventLabel = getEventTypeLabel(eventType);
 
@@ -174,17 +153,13 @@ const fieldTriggerClass =
             new Date(
               minimumDate.getFullYear(),
               minimumDate.getMonth(),
-              minimumDate.getDate()
+              minimumDate.getDate(),
             )
           );
         };
 
         const updateDate = (date) => {
-          if (
-            !date ||
-            loading ||
-            dateIsBeforeMinimum(date)
-          ) {
+          if (!date || loading || dateIsBeforeMinimum(date)) {
             return;
           }
 
@@ -203,7 +178,7 @@ const fieldTriggerClass =
             itemIndex,
             slotIndex,
             "starts_at",
-            `${nextDate}T${nextTime}`
+            `${nextDate}T${nextTime}`,
           );
 
           setCalendarMonths((previous) => ({
@@ -234,7 +209,7 @@ const fieldTriggerClass =
             itemIndex,
             slotIndex,
             "starts_at",
-            `${datePart}T${nextTime}`
+            `${datePart}T${nextTime}`,
           );
         };
 
@@ -281,11 +256,9 @@ const fieldTriggerClass =
                   Event details
                 </p>
 
-
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                   {/* EVENT TYPE */}
                   <div className="w-full min-w-0">
-                    
                     <label
                       htmlFor={`event-${itemIndex}-${slotIndex}`}
                       className={labelClass}
@@ -294,10 +267,10 @@ const fieldTriggerClass =
                       <span className="ml-1 text-red-600">*</span>
                     </label>
 
-
                     <Select
                       value={eventType}
                       disabled={loading}
+                      className=""
                       onValueChange={(value) =>
                         onEventTypeChange(itemIndex, slotIndex, value)
                       }
@@ -318,7 +291,7 @@ const fieldTriggerClass =
                             item.eventTypes?.some(
                               (selectedValue, selectedIndex) =>
                                 selectedIndex !== slotIndex &&
-                                selectedValue === option.value
+                                selectedValue === option.value,
                             ) || false;
 
                           return (
@@ -363,9 +336,7 @@ const fieldTriggerClass =
                       >
                         <span
                           className={`min-w-0 truncate text-sm ${
-                            datePart
-                              ? "text-[#3D3530]"
-                              : "text-[#A69B91]"
+                            datePart ? "text-[#3D3530]" : "text-[#A69B91]"
                           }`}
                         >
                           {formatDate(datePart)}
@@ -383,13 +354,7 @@ const fieldTriggerClass =
                           className="shrink-0 text-[#756A62]"
                           aria-hidden="true"
                         >
-                          <rect
-                            x="3"
-                            y="4"
-                            width="18"
-                            height="18"
-                            rx="2"
-                          />
+                          <rect x="3" y="4" width="18" height="18" rx="2" />
                           <path d="M16 2v4M8 2v4M3 10h18" />
                         </svg>
                       </PopoverTrigger>
@@ -479,7 +444,6 @@ const fieldTriggerClass =
                     {renderError(timeError)}
                   </div>
                 </div>
-
               </div>
 
               {/* Venue details */}
@@ -512,13 +476,11 @@ const fieldTriggerClass =
                           itemIndex,
                           slotIndex,
                           "venue_name",
-                          event.target.value
+                          event.target.value,
                         )
                       }
                       className={`${inputClass} ${
-                        venueNameError
-                          ? "border-red-500!"
-                          : ""
+                        venueNameError ? "border-red-500!" : ""
                       }`}
                     />
 
@@ -542,21 +504,17 @@ const fieldTriggerClass =
                       disabled={loading}
                       placeholder="Street, area, city"
                       aria-required={isFirstBooking}
-                      aria-invalid={Boolean(
-                        venueAddressError
-                      )}
+                      aria-invalid={Boolean(venueAddressError)}
                       onChange={(event) =>
                         onBookingFieldChange(
                           itemIndex,
                           slotIndex,
                           "venue_address",
-                          event.target.value
+                          event.target.value,
                         )
                       }
                       className={`${inputClass} ${
-                        venueAddressError
-                          ? "border-red-500!"
-                          : ""
+                        venueAddressError ? "border-red-500!" : ""
                       }`}
                     />
 
@@ -571,9 +529,7 @@ const fieldTriggerClass =
                     className={labelClass}
                   >
                     Google Maps Link
-                    <span className={optionalClass}>
-                      (Optional)
-                    </span>
+                    <span className={optionalClass}>(Optional)</span>
                   </label>
 
                   <input
@@ -588,13 +544,11 @@ const fieldTriggerClass =
                         itemIndex,
                         slotIndex,
                         "google_map_link",
-                        event.target.value
+                        event.target.value,
                       )
                     }
                     className={`${inputClass} ${
-                      googleMapError
-                        ? "border-red-500!"
-                        : ""
+                      googleMapError ? "border-red-500!" : ""
                     }`}
                   />
 

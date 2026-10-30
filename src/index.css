@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@700;800&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@700;800&display=swap");
 
 @import "tailwindcss";
 @import "tw-animate-css";
@@ -133,20 +133,17 @@
   color: white;
   font-size: 16px;
   cursor: pointer;
-  background: linear-gradient(
-    to right, 
-    #c43c7b, 
-    #a8479e, 
-    #7a3286 
-  );
-  transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+  background: linear-gradient(to right, #c43c7b, #a8479e, #7a3286);
+  transition:
+    opacity 0.3s ease-in-out,
+    transform 0.3s ease-in-out;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
 }
 
 /* Hover Effect */
 .gradient-button:hover {
   opacity: 0.9;
-  transform: translateY(-2px); 
+  transform: translateY(-2px);
   box-shadow: 0 6px 8px rgba(0, 0, 0, 0.3);
 }
 
@@ -155,15 +152,8 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-
 .navbar-background {
-  background: linear-gradient(
-    to right, 
-    #c43c43,
-    #a84788,
-    #86324b  
-  );
-  
+  background: linear-gradient(to right, #c43c43, #a84788, #86324b);
 }
 
 @page {
@@ -206,5 +196,47 @@
   .break-inside-avoid {
     break-inside: avoid;
     page-break-inside: avoid;
+  }
+}
+
+/* Infinite Service Marquee */
+
+.service-marquee {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+}
+
+.service-marquee-track {
+  width: max-content;
+  animation: service-infinite-scroll 26s linear infinite;
+  will-change: transform;
+}
+
+.service-marquee-group {
+  padding-right: 1.5rem;
+}
+
+/* Pause when hovering */
+.service-marquee:hover .service-marquee-track {
+  animation-play-state: paused;
+}
+
+/* Seamless infinite movement */
+@keyframes service-infinite-scroll {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .service-marquee-track {
+    animation: none;
+    transform: translateX(0);
   }
 }

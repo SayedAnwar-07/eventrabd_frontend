@@ -1,4 +1,3 @@
-
 import HireBookingItemCard from "../components/HireBookingItemCard";
 
 const StepBookingDetails = ({
@@ -18,7 +17,8 @@ const StepBookingDetails = ({
 }) => {
   const labelClass = "mb-1.5 block text-xs font-medium text-[#51463E]";
 
-  const inputClass = "h-11 w-full rounded-md border border-[#E5DDD5] bg-white px-3 text-sm text-[#3D3530] shadow-none outline-none transition-colors placeholder:text-[#A69B91] hover:border-[#CFC2B6] focus-visible:border-[#A68C78] focus-visible:ring-2 focus-visible:ring-[#A68C78]/20 disabled:cursor-not-allowed disabled:bg-[#F8F5F2] disabled:opacity-70";
+  const inputClass =
+    "h-11 w-full rounded-md border border-[#E5DDD5] bg-gray-50 px-3 text-sm text-[#3D3530] shadow-none outline-none transition-colors placeholder:text-[#A69B91] hover:border-[#CFC2B6] focus-visible:border-[#A68C78] focus-visible:ring-2 focus-visible:ring-[#A68C78]/20 disabled:cursor-not-allowed disabled:bg-[#F8F5F2] disabled:opacity-70";
 
   const optionalClass = "ml-1 text-[11px] font-normal text-[#9B9087]";
 
@@ -65,9 +65,22 @@ const StepBookingDetails = ({
             <span className="ml-1 text-red-600">*</span>
           </label>
 
-          <div className={`flex h-11 w-full items-center overflow-hidden rounded-md border bg-white transition-colors focus-within:ring-2 disabled:bg-[#F8F5F2] ${whatsappError ? "border-red-500 focus-within:border-red-500 focus-within:ring-red-500/15" : "border-[#E5DDD5] hover:border-[#CFC2B6] focus-within:border-[#A68C78] focus-within:ring-[#A68C78]/20"}`}>
-            <span className="flex h-full shrink-0 items-center gap-2 pl-3 pr-2 text-sm font-medium text-[#51463E]">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="text-green-700">
+          <div
+            className={`flex h-11 w-full items-center overflow-hidden rounded-md border bg-white transition-colors focus-within:ring-2 disabled:bg-[#F8F5F2] ${whatsappError ? "border-red-500 focus-within:border-red-500 focus-within:ring-red-500/15" : "border-[#E5DDD5] hover:border-[#CFC2B6] focus-within:border-[#A68C78] focus-within:ring-[#A68C78]/20"}`}
+          >
+            <span className="flex h-full shrink-0 items-center gap-2 pl-3 pr-2 text-sm font-medium text-[#51463E] bg-gray-100">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+                className="text-green-700"
+              >
                 <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" />
               </svg>
               +88
@@ -81,19 +94,30 @@ const StepBookingDetails = ({
               disabled={loading}
               required
               aria-invalid={Boolean(whatsappError)}
-              aria-describedby={whatsappError ? "customer-whatsapp-error" : "customer-whatsapp-help"}
+              aria-describedby={
+                whatsappError
+                  ? "customer-whatsapp-error"
+                  : "customer-whatsapp-help"
+              }
               onChange={(e) => onWhatsappChange(e.target.value)}
               placeholder="01XXXXXXXXX"
-              className="h-full min-w-0 flex-1 bg-transparent pr-3 text-sm text-[#3D3530] outline-none placeholder:text-[#A69B91] disabled:cursor-not-allowed disabled:opacity-70"
+              className="h-full min-w-0 flex-1 bg-gray-100 pr-3 text-sm text-[#3D3530] outline-none placeholder:text-[#A69B91] disabled:cursor-not-allowed disabled:opacity-70"
             />
           </div>
 
           {whatsappError ? (
-            <p id="customer-whatsapp-error" role="alert" className="mt-1.5 text-xs text-red-600">
+            <p
+              id="customer-whatsapp-error"
+              role="alert"
+              className="mt-1.5 text-xs text-red-600"
+            >
               {whatsappError}
             </p>
           ) : (
-            <p id="customer-whatsapp-help" className="mt-1.5 text-xs text-[#9B9087]">
+            <p
+              id="customer-whatsapp-help"
+              className="mt-1.5 text-xs text-[#9B9087]"
+            >
               We'll use this number to share booking updates.
             </p>
           )}

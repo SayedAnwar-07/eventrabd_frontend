@@ -2,7 +2,6 @@ import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 import { fetchBrands } from "@/store/features/eventPlanner/eventPlannerSlice";
-
 import { fetchPublicServices } from "@/store/features/eventService/eventServiceSlice";
 
 import {
@@ -14,9 +13,9 @@ import {
 import BrandCard from "@/features/event-planning-feature/brands-feature/components/BrandCard";
 
 import GlobalErrorMessage from "@/components/common/GlobalErrorMessage";
+
 import PublicServiceCard from "@/features/event-planning-feature/brand-services-feature/components/PublicServiceCard";
-import SellerSearch from "@/features/event-planning-feature/brand-services-feature/components/search/SellerSearch";
-import BrandSearch from "@/features/event-planning-feature/brand-services-feature/components/search/BrandSearch";
+import Hero from "../components/Hero";
 
 const Home = () => {
   const dispatch = useDispatch();
@@ -24,9 +23,7 @@ const Home = () => {
   const { brands, list } = useSelector((state) => state.eventPlanner);
 
   const services = useSelector(selectPublicServices);
-
   const servicesLoading = useSelector(selectPublicServicesLoading);
-
   const servicesError = useSelector(selectPublicServicesError);
 
   useEffect(() => {
@@ -42,11 +39,10 @@ const Home = () => {
 
   return (
     <main className="min-h-screen">
-      <div className="mx-auto max-w-400 space-y-16">
-        <section className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <SellerSearch />
-          <BrandSearch />
-        </section>
+      {/* Hero Section */}
+      <Hero />
+
+      <div className="mx-auto max-w-400 space-y-16 px-4 py-12">
         {/* Services */}
         <section>
           <div className="mb-8">
@@ -69,7 +65,7 @@ const Home = () => {
             <p className="text-sm text-muted-foreground">No services found.</p>
           )}
 
-          {!servicesLoading && services.length > 0 && (
+          {!servicesLoading && !servicesError && services.length > 0 && (
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {services.map((service) => (
                 <PublicServiceCard key={service.id} service={service} />

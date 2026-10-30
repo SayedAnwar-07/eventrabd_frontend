@@ -1,4 +1,3 @@
-
 import { Check, Info, Minus, Plus } from "lucide-react";
 
 import HireBookingSlotFields from "./HireBookingSlotFields";
@@ -58,22 +57,17 @@ const HireBookingItemCard = ({
               </p>
 
               <p className="mt-1 text-base font-bold text-[#3D3530] sm:text-lg">
-                {itemTotal !== null
-                  ? formatPrice(itemTotal)
-                  : "Unavailable"}
+                {itemTotal !== null ? formatPrice(itemTotal) : "Unavailable"}
               </p>
             </div>
           </div>
 
           <div className="my-4 border-t border-[#F0EAE4]" />
 
-
           {/* Quantity */}
           <div className="mt-4 flex items-center justify-between gap-4">
             <div className="min-w-0">
-              <p className="text-xs font-semibold text-[#3D3530]">
-                Quantity
-              </p>
+              <p className="text-xs font-semibold text-[#3D3530]">Quantity</p>
 
               <p className="mt-1 text-[11px] text-[#8A817A]">
                 Maximum {MAX_BOOKING_SLOTS} bookings
@@ -89,7 +83,7 @@ const HireBookingItemCard = ({
                   aria-label="Decrease quantity"
                   disabled={loading || Number(item.quantity) <= 1}
                   onClick={onDecreaseQuantity}
-                  className="flex h-9 w-9 items-center justify-center rounded-l-md text-[#756A62] transition-colors hover:bg-[#F8F5F2] disabled:cursor-not-allowed disabled:opacity-35"
+                  className="flex h-9 w-9 items-center bg-gray-50 cursor-pointer justify-center rounded-l-md text-[#756A62] transition-colors hover:bg-[#F8F5F2] disabled:cursor-not-allowed disabled:opacity-35"
                 >
                   <Minus size={15} />
                 </button>
@@ -105,7 +99,7 @@ const HireBookingItemCard = ({
                     loading || Number(item.quantity) >= MAX_BOOKING_SLOTS
                   }
                   onClick={onIncreaseQuantity}
-                  className="flex h-9 w-9 items-center justify-center rounded-r-md text-[#756A62] transition-colors hover:bg-[#F8F5F2] disabled:cursor-not-allowed disabled:opacity-35"
+                  className="flex h-9 w-9 items-center bg-gray-50 cursor-pointer justify-center rounded-r-md text-[#756A62] transition-colors hover:bg-[#F8F5F2] disabled:cursor-not-allowed disabled:opacity-35"
                 >
                   <Plus size={15} />
                 </button>
@@ -123,28 +117,20 @@ const HireBookingItemCard = ({
             </p>
           )}
 
-
           {/* Multiple package information */}
           {!canChangeQuantity && (
             <div className="mt-3 flex items-start gap-2 rounded-md bg-[#F8F5F2] px-3 py-2.5">
-              <Info
-                size={15}
-                className="mt-0.5 shrink-0 text-[#8A817A]"
-              />
+              <Info size={15} className="mt-0.5 shrink-0 text-[#8A817A]" />
 
               <p className="text-xs leading-5 text-[#756A62]">
-                Quantity adjustment is unavailable while multiple
-                packages are selected. To change the quantity, select
-                only one package.
+                Quantity adjustment is unavailable while multiple packages are
+                selected. To change the quantity, select only one package.
               </p>
             </div>
           )}
 
           {quantityError && (
-            <p
-              role="alert"
-              className="mt-2 text-xs font-medium text-red-600"
-            >
+            <p role="alert" className="mt-2 text-xs font-medium text-red-600">
               {quantityError}
             </p>
           )}
