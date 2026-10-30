@@ -1,4 +1,3 @@
-
 import { Check, ArrowUpRight } from "lucide-react";
 
 import photographyIcon from "@/assets/service-icon/photography.svg";
@@ -40,8 +39,7 @@ const StepServiceSelection = ({
 
   const normalizedService = normalizeServiceName(serviceName);
 
-  const serviceIcon =
-    SERVICE_ICON_MAP[normalizedService] || photographyIcon;
+  const serviceIcon = SERVICE_ICON_MAP[normalizedService] || photographyIcon;
 
   const serviceLabel = formatServiceName(serviceName);
 
@@ -57,31 +55,90 @@ const StepServiceSelection = ({
     ? `৳${price.toLocaleString("en-BD")}`
     : "Price unavailable";
 
-  // Minimal logo-inspired card design.
+  // COMPACT RESPONSIVE CARD
   const baseCard =
-    "group relative flex min-h-[300px] w-full flex-col items-center rounded-sm border p-6 text-center outline-none transition-all duration-300 sm:min-h-[330px] sm:p-8";
+    "group relative flex min-w-0 w-full flex-col items-center " +
+    "justify-start rounded-sm border " +
+    "px-2 py-3 sm:px-3 sm:py-3.5 lg:px-5 lg:py-4 2xl:py-5 " +
+    "pb-7 sm:pb-8 text-center outline-none " +
+    "transition-all duration-300 ease-in-out shadow-sm hover:shadow-md";
 
+  // SELECTED CARD
   const selectedCard =
-    "border-[#344653] bg-[#f9fafb] shadow-[0_0_0_1px_#344653] cursor-pointer";
+    "border-[#344653] bg-[#f9fafb] " +
+    "shadow-[0_0_0_1px_#344653] cursor-pointer";
 
+  // UNSELECTED CARD
   const unselectedCard =
-    "border-[#DCE3E5] bg-[#fff] hover:border-[#AAB8BE] hover:bg-[#f9fafb] cursor-pointer";
+    "border-[#DCE3E5] bg-white " +
+    "hover:border-[#AAB8BE] hover:bg-[#f9fafb] cursor-pointer";
 
-  // Icon area: centered, clean, and spacious.
+  // RESPONSIVE ICON AREA
   const iconArea =
-    "flex h-[76px] w-[76px] items-center justify-center";
+    "flex h-10 w-10 sm:h-12 sm:w-12 " +
+    "lg:h-14 lg:w-14 2xl:h-16 2xl:w-16 " +
+    "shrink-0 items-center justify-center";
 
+  // RESPONSIVE ICON
   const iconImage =
-    "h-[58px] w-[58px] object-contain opacity-90 transition-transform duration-300 group-hover:scale-105";
+    "h-8 w-8 sm:h-10 sm:w-10 " +
+    "lg:h-12 lg:w-12 2xl:h-[54px] 2xl:w-[54px] " +
+    "object-contain opacity-90 " +
+    "transition-transform duration-300 group-hover:scale-105";
+
+  // SINGLE-LINE TITLE
+  const titleClass =
+    "mt-2 w-full whitespace-nowrap overflow-hidden text-ellipsis " +
+    "text-[clamp(9px,2.5vw,16px)] sm:text-sm lg:text-base " +
+    "font-medium uppercase " +
+    "tracking-[0.02em] sm:tracking-[0.08em] lg:tracking-[0.15em] " +
+    "leading-tight text-[#293B47]";
+
+  // SUBTITLE
+  const subtitleClass =
+    "mt-1.5 whitespace-nowrap " +
+    "text-[8px] sm:text-[9px] lg:text-[10px] " +
+    "font-medium uppercase " +
+    "tracking-[0.10em] sm:tracking-[0.18em] lg:tracking-[0.25em] " +
+    "leading-tight text-[#52636E]";
+
+  // COMPACT DIVIDER
+  const dividerClass =
+    "my-2.5 sm:my-3 lg:my-3.5 " +
+    "h-px w-9 sm:w-11 lg:w-12 " +
+    "bg-[#B9C6CB] transition-all duration-300 " +
+    "group-hover:w-14 sm:group-hover:w-16 lg:group-hover:w-20";
+
+  // PRICE
+  const priceClass =
+    "whitespace-nowrap " +
+    "text-[clamp(11px,3vw,20px)] sm:text-base lg:text-lg " +
+    "font-medium tracking-wide text-[#293B47]";
+
+  // SELECTION INDICATOR
+  const selectionIndicator = (selected) =>
+    `absolute right-2 top-2 sm:right-3 sm:top-3 ` +
+    `flex h-4 w-4 sm:h-5 sm:w-5 items-center justify-center ` +
+    `rounded-full border transition-all duration-200 ${
+      selected
+        ? "border-[#344653] bg-[#344653] text-white"
+        : "border-[#C4CFD3] bg-transparent text-transparent"
+    }`;
+
+  // ACTION ICON
+  const actionIconClass =
+    "absolute bottom-2 right-2 sm:bottom-3 sm:right-3 " +
+    "h-3.5 w-3.5 sm:h-4 sm:w-4 " +
+    "text-[#52636E] transition-transform duration-300 " +
+    "group-hover:translate-x-0.5 group-hover:-translate-y-0.5";
 
   return (
-    <section className="space-y-7">
-
+    <section className="w-full">
       {/* BOOKING CARDS */}
       <div
         role="group"
         aria-label="Choose booking type"
-        className="grid grid-cols-1 gap-5 sm:grid-cols-2"
+        className="grid w-full min-w-0 grid-cols-2 gap-2 sm:gap-3 lg:gap-5"
       >
         {/* STANDARD BOOKING */}
         <button
@@ -89,22 +146,22 @@ const StepServiceSelection = ({
           disabled={disabled}
           aria-pressed={normalSelected}
           onClick={onNormalServiceSelect}
-          className={`${baseCard} ${
-            normalSelected ? selectedCard : unselectedCard
-          } focus-visible:ring-2 focus-visible:ring-[#344653]/30 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 shadow-md`}
+          className={`
+            ${baseCard}
+            ${normalSelected ? selectedCard : unselectedCard}
+            focus-visible:ring-2
+            focus-visible:ring-[#344653]/30
+            focus-visible:ring-offset-2
+            disabled:cursor-not-allowed
+            disabled:opacity-50
+          `}
         >
-          {/* Selection indicator */}
-          <span
-            className={`absolute right-4 top-4 flex h-5 w-5 items-center justify-center rounded-full border transition-all ${
-              normalSelected
-                ? "border-[#344653] bg-[#344653] text-white"
-                : "border-[#C4CFD3] bg-transparent text-transparent"
-            }`}
-          >
+          {/* SELECTION INDICATOR */}
+          <span className={selectionIndicator(normalSelected)}>
             <Check size={12} strokeWidth={2.5} />
           </span>
 
-          {/* Centered service icon */}
+          {/* SERVICE ICON */}
           <div className={iconArea}>
             <img
               src={serviceIcon}
@@ -114,35 +171,36 @@ const StepServiceSelection = ({
             />
           </div>
 
-          {/* Main title */}
-          <h3 className="mt-5 text-lg font-medium uppercase tracking-[0.24em] text-[#293B47]">
-            {serviceLabel || "Our Service"}
-          </h3>
+          {/* SERVICE TITLE */}
+          <h3 className={titleClass}>{serviceLabel || "Our Service"}</h3>
 
-          {/* Subtitle inspired by the reference logo */}
-          <p className="mt-2 text-[10px] font-medium uppercase tracking-[0.34em] text-[#52636E]">
-            Standard Booking
-          </p>
+          {/* SUBTITLE */}
+          <p className={subtitleClass}>Standard Booking</p>
 
-          {/* Thin decorative divider */}
-          <div className="my-5 h-px w-12 bg-[#B9C6CB] transition-all duration-300 group-hover:w-20" />
+          {/* DIVIDER */}
+          <div className={dividerClass} />
 
-          {/* Price */}
-          <div className="mt-auto">
-            <p className="text-xl font-medium tracking-wide text-[#293B47]">
-              {formattedPrice}
-            </p>
+          {/* PRICE */}
+          <div className="w-full px-1">
+            <p className={priceClass}>{formattedPrice}</p>
 
-            <p className="mt-1 text-[10px] uppercase tracking-[0.22em] text-[#788890]">
+            <p
+              className="
+              mt-1 whitespace-nowrap
+              text-[8px] sm:text-[9px] lg:text-[10px]
+              uppercase tracking-[0.10em] sm:tracking-[0.18em]
+              text-[#788890]
+            "
+            >
               Per Shift
             </p>
           </div>
 
-          {/* Subtle action indicator */}
+          {/* ACTION ICON */}
           <ArrowUpRight
             size={16}
             strokeWidth={1.5}
-            className="absolute bottom-5 right-5 text-[#52636E] transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+            className={actionIconClass}
           />
         </button>
 
@@ -152,22 +210,22 @@ const StepServiceSelection = ({
           disabled={disabled}
           aria-pressed={packageSelected}
           onClick={onPackageSelect}
-          className={`${baseCard} ${
-            packageSelected ? selectedCard : unselectedCard
-          } focus-visible:ring-2 focus-visible:ring-[#344653]/30 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 shadow-md`}
+          className={`
+            ${baseCard}
+            ${packageSelected ? selectedCard : unselectedCard}
+            focus-visible:ring-2
+            focus-visible:ring-[#344653]/30
+            focus-visible:ring-offset-2
+            disabled:cursor-not-allowed
+            disabled:opacity-50
+          `}
         >
-          {/* Selection indicator */}
-          <span
-            className={`absolute right-4 top-4 flex h-5 w-5 items-center justify-center rounded-full border transition-all ${
-              packageSelected
-                ? "border-[#344653] bg-[#344653] text-white"
-                : "border-[#C4CFD3] bg-transparent text-transparent"
-            }`}
-          >
+          {/* SELECTION INDICATOR */}
+          <span className={selectionIndicator(packageSelected)}>
             <Check size={12} strokeWidth={2.5} />
           </span>
 
-          {/* Centered package icon */}
+          {/* PACKAGE ICON */}
           <div className={iconArea}>
             <img
               src={packagesHandGiftIcon}
@@ -177,35 +235,44 @@ const StepServiceSelection = ({
             />
           </div>
 
-          {/* Main title */}
-          <h3 className="mt-5 text-lg font-medium uppercase tracking-[0.24em] text-[#293B47]">
-            Event Packages
-          </h3>
+          {/* PACKAGE TITLE */}
+          <h3 className={titleClass}>Event Packages</h3>
 
-          {/* Subtitle */}
-          <p className="mt-2 text-[10px] font-medium uppercase tracking-[0.34em] text-[#52636E]">
-            Package Booking
-          </p>
+          {/* SUBTITLE */}
+          <p className={subtitleClass}>Package Booking</p>
 
-          {/* Thin decorative divider */}
-          <div className="my-5 h-px w-12 bg-[#B9C6CB] transition-all duration-300 group-hover:w-20" />
+          {/* DIVIDER */}
+          <div className={dividerClass} />
 
-          {/* Package description */}
-          <div className="mt-auto">
-            <p className="text-sm font-medium tracking-wide text-[#293B47]">
+          {/* PACKAGE DESCRIPTION */}
+          <div className="w-full px-1">
+            <p
+              className="
+              whitespace-nowrap
+              text-[clamp(10px,2.8vw,14px)] sm:text-sm lg:text-base
+              font-medium tracking-wide text-[#293B47]
+            "
+            >
               Explore Packages
             </p>
 
-            <p className="mt-1 text-[10px] uppercase tracking-[0.18em] text-[#788890]">
+            <p
+              className="
+              mt-1 whitespace-nowrap
+              text-[8px] sm:text-[9px] lg:text-[10px]
+              uppercase tracking-[0.05em] sm:tracking-[0.12em]
+              text-[#788890]
+            "
+            >
               Tailored For Your Event
             </p>
           </div>
 
-          {/* Subtle action indicator */}
+          {/* ACTION ICON */}
           <ArrowUpRight
             size={16}
             strokeWidth={1.5}
-            className="absolute bottom-5 right-5 text-[#52636E] transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+            className={actionIconClass}
           />
         </button>
       </div>
