@@ -237,7 +237,7 @@ export default function RichTextEditor({
 
   return (
     <div
-      className={`overflow-hidden rounded-md border border-input bg-background ${
+      className={`overflow-hidden border border-input px-4 bg-background ${
         disabled ? "opacity-70" : ""
       }`}
     >

@@ -1,6 +1,5 @@
 import BrandAlerts from "./BrandAlerts";
 import BrandFormFields from "./BrandFormFields";
-import BrandPreviewCard from "./BrandPreviewCard";
 
 export default function BrandForm({
   values,
@@ -17,8 +16,11 @@ export default function BrandForm({
   existingLogo,
 }) {
   return (
-    <form onSubmit={onSubmit} className="grid gap-10 lg:grid-cols-[1fr_320px]">
-      <div className="grid gap-8">
+    <form
+      onSubmit={onSubmit}
+      className="min-w-0"
+    >
+      <div className="grid min-w-0 gap-6">
         <BrandAlerts
           errorMessage={errorMessage}
           successMessage={successMessage}
@@ -35,28 +37,19 @@ export default function BrandForm({
           onRemoveLogo={onRemoveLogo}
         />
 
-        <div className="flex items-center justify-between">
-          <p className="text-xs text-muted-foreground">
+        {/* Form footer */}
+        <div className="flex flex-col-reverse gap-4 rounded-md border border-[#E5DDD5] bg-white p-4 shadow-[0_1px_2px_rgba(61,53,48,0.04)] sm:flex-row sm:items-center sm:justify-between sm:px-5 sm:py-4">
+          <p className="text-xs leading-relaxed text-[#756A62]">
             Changes appear in the preview as you type.
           </p>
 
           <button
             type="submit"
             disabled={loading}
-            className="gradient-button transition-opacity disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex h-11 items-center justify-center rounded-md border border-[#3D3530] bg-[#3D3530] px-6 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:border-[#51463E] hover:bg-[#51463E] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A68C78]/40 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {loading ? "Please wait..." : submitLabel}
           </button>
-        </div>
-      </div>
-
-      <div className="hidden lg:block">
-        <div className="sticky top-6">
-          <BrandPreviewCard
-            values={values}
-            logoPreview={logoPreview}
-            existingLogo={existingLogo}
-          />
         </div>
       </div>
     </form>

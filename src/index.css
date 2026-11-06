@@ -43,7 +43,7 @@
   --color-sidebar-ring: var(--sidebar-ring);
 
   /* customs my css */
-  --color-secondary-custom: #f3f4f6;
+  --color-secondary-custom: #f1edea;
   --color-theme-color: #ae0212;
 }
 
@@ -199,31 +199,31 @@
   }
 }
 
-/* Infinite Service Marquee */
+/* Hero Image Infinite Marquee */
 
-.service-marquee {
+.hero-marquee {
   position: relative;
   width: 100%;
+  min-width: 0;
   overflow: hidden;
 }
 
-.service-marquee-track {
+.hero-marquee-track {
+  display: flex;
   width: max-content;
-  animation: service-infinite-scroll 26s linear infinite;
+  animation: hero-infinite-scroll 35s linear infinite;
   will-change: transform;
 }
 
-.service-marquee-group {
+.hero-marquee-group {
+  display: flex;
+  flex-shrink: 0;
   padding-right: 1.5rem;
 }
 
-/* Pause when hovering */
-.service-marquee:hover .service-marquee-track {
-  animation-play-state: paused;
-}
+/* Smooth continuous scrolling */
 
-/* Seamless infinite movement */
-@keyframes service-infinite-scroll {
+@keyframes hero-infinite-scroll {
   from {
     transform: translateX(0);
   }
@@ -233,9 +233,16 @@
   }
 }
 
+/* Pause when hovered */
+
+.hero-marquee:hover .hero-marquee-track {
+  animation-play-state: paused;
+}
+
 /* Accessibility */
+
 @media (prefers-reduced-motion: reduce) {
-  .service-marquee-track {
+  .hero-marquee-track {
     animation: none;
     transform: translateX(0);
   }

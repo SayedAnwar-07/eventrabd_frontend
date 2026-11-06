@@ -115,7 +115,7 @@ const BrandDetailsPage = () => {
     !authInitialized || (publicDetails.loading && Boolean(publicBrandDetails));
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen text-foreground">
       <main className="mx-auto w-full pb-10 sm:px-6">
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
           {/* LEFT */}

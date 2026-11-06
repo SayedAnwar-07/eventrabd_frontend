@@ -1,54 +1,81 @@
-import photographyIcon from "@/assets/service-icon/photography.svg";
-import videographyIcon from "@/assets/service-icon/videography.svg";
-import stageDesignerIcon from "@/assets/service-icon/stage_designer.svg";
-import soundLightingIcon from "@/assets/service-icon/sound_lighting.svg";
-import eventHallIcon from "@/assets/service-icon/event_hall.svg";
-import packagesHandGiftIcon from "@/assets/service-icon/packages_hand_gift.svg";
+import heroImageOne from "@/assets/hero-images/event-management-dhaka-01.png";
+import heroImageTwo from "@/assets/hero-images/event-management-dhaka-02.png";
+import heroImageThree from "@/assets/hero-images/event-management-dhaka-03.png";
+import heroImageFour from "@/assets/hero-images/event-management-dhaka-04.png";
+import heroImageFive from "@/assets/hero-images/event-management-dhaka-05.png";
+import heroImageSix from "@/assets/hero-images/event-management-dhaka-06.png";
+import heroImageSeven from "@/assets/hero-images/event-management-dhaka-07.png";
 
-const services = [
-  { id: 1, title: "Photography", icon: photographyIcon },
-  { id: 2, title: "Videography", icon: videographyIcon },
-  { id: 3, title: "Stage Design", icon: stageDesignerIcon },
-  { id: 4, title: "Sound & Lighting", icon: soundLightingIcon },
-  { id: 5, title: "Event Hall", icon: eventHallIcon },
-  { id: 6, title: "Gifts & Packages", icon: packagesHandGiftIcon },
+const heroImages = [
+  {
+    id: 1,
+    src: heroImageOne,
+    alt: "Event management and celebration in Dhaka - 01",
+  },
+  {
+    id: 2,
+    src: heroImageTwo,
+    alt: "Professional event planning and decoration in Dhaka - 02",
+  },
+  {
+    id: 3,
+    src: heroImageThree,
+    alt: "Premium event setup and venue decoration - 03",
+  },
+  {
+    id: 4,
+    src: heroImageFour,
+    alt: "Creative event design and celebration - 04",
+  },
+  {
+    id: 5,
+    src: heroImageFive,
+    alt: "Professional event photography and celebration - 05",
+  },
+  {
+    id: 6,
+    src: heroImageSix,
+    alt: "Premium event production and management - 06",
+  },
+  {
+    id: 7,
+    src: heroImageSeven,
+    alt: "Elegant event decoration and celebration in Dhaka - 07",
+  },
 ];
 
-const ServiceCategoryCarousel = () => {
+const HeroImageMarquee = () => {
   return (
-    <div
-      className="service-marquee w-full min-w-0 overflow-hidden"
-      aria-label="Available event services"
+    <section
+      className="hero-marquee w-full min-w-0 overflow-hidden"
+      aria-label="Our event highlights"
     >
-      <div className="service-marquee-track flex w-max">
+      <div className="hero-marquee-track flex w-max">
         {[0, 1].map((group) => (
           <div
             key={group}
-            className="service-marquee-group flex shrink-0 items-center gap-5 sm:gap-6"
+            className="hero-marquee-group flex shrink-0 items-center gap-3 sm:gap-4"
             aria-hidden={group === 1}
           >
-            {services.map((service) => (
+            {heroImages.map((image) => (
               <div
-                key={`${group}-${service.id}`}
-                className="flex w-[120px] shrink-0 flex-col items-center justify-center gap-3 text-center sm:w-[145px] lg:w-[150px] xl:w-[165px]"
+                key={`${group}-${image.id}`}
+                className="flex shrink-0 items-center"
               >
                 <img
-                  src={service.icon}
-                  alt={group === 0 ? service.title : ""}
-                  className="h-12 w-12 object-contain transition-transform duration-500 ease-out hover:scale-110 sm:h-14 sm:w-14"
-                  loading="lazy"
+                  src={image.src}
+                  alt={group === 0 ? image.alt : ""}
+                  className="block h-40 w-auto object-contain sm:h-48 lg:h-52 shadow-lg rounded-md"
+                  loading={group === 0 ? "eager" : "lazy"}
+                  decoding="async"
                 />
-
-                <p className="text-[10px] font-semibold uppercase leading-snug tracking-wide text-[#3D3530] sm:text-xs">
-                  {service.title}
-                </p>
               </div>
             ))}
           </div>
         ))}
       </div>
-    </div>
+    </section>
   );
 };
 
-export default ServiceCategoryCarousel;
+export default HeroImageMarquee;

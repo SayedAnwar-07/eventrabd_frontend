@@ -54,7 +54,7 @@ export default function DesktopAndLaptopNav({
     user?.role === "customer" || user?.role === "seller";
 
   return (
-    <header className="fixed inset-x-0 top-0 z-50 hidden border-b border-border/70 bg-background/90 backdrop-blur-xl lg:block">
+    <header className="fixed inset-x-0 top-0 z-50 hidden border-b border-border/70 bg-secondary-custom/90 backdrop-blur-xl lg:block">
       <nav className="mx-auto flex h-16 max-w-400 items-center px-6 xl:px-8">
         {/* Brand */}
         <div className="flex flex-1 items-center">

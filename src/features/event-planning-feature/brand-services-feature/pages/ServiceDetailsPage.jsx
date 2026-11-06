@@ -317,7 +317,7 @@ const ServiceDetailsPage = () => {
   // =====================================================
 
   return (
-    <main className="min-h-screen bg-background text-foreground">
+    <main className="min-h-screen text-foreground">
       <div className="mx-auto w-full max-w-400">
         {/* Breadcrumb */}
         <ServiceBreadcrumb

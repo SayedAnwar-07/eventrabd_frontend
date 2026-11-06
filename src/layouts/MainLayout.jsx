@@ -5,7 +5,7 @@ import { Outlet } from "react-router-dom";
 const MainLayout = () => {
   return (
     <ThemeProvider defaultTheme="light" storageKey="app-theme">
-      <div className="min-h-screen bg-background text-foreground">
+      <div className="min-h-screen bg-secondary-custom text-foreground">
         <Navbar />
 
         {/* Main Content */}
