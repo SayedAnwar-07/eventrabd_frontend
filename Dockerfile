@@ -10,8 +10,8 @@ RUN npm ci
 COPY . .
 
 # Vite production environment variables
-ARG VITE_API_URL=https://eventrabd-backend-1.onrender.com
-ARG VITE_WS_URL=wss://eventrabd-backend-1.onrender.com/ws/notifications/
+ARG VITE_API_URL=https://api.eventrabd.com
+ARG VITE_WS_URL=wss://api.eventrabd.com/ws/notifications/
 ARG VITE_CLOUDINARY_URL=https://res.cloudinary.com/dzlhfnyu4
 
 ENV VITE_API_URL=${VITE_API_URL}
