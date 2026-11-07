@@ -1,6 +1,10 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
-import api, { clearAuthStorage, saveAccessToken } from "@/store/constant/api";
+import api, {
+  clearAuthStorage,
+  saveAccessToken,
+  getFreshAccessToken,
+} from "@/store/constant/api";
 
 import { connectWebSocket } from "@/websocket/websocketClient";
 import getApiErrorMessage from "@/store/constant/getApiErrorMessage";
@@ -115,28 +119,28 @@ export const loginUser = createAsyncThunk(
 // =========================================================
 // Restore session
 // =========================================================
-
 export const restoreSession = createAsyncThunk(
   "auth/restoreSession",
 
   async (_, { rejectWithValue }) => {
     try {
-      const { data } = await api.post("/users/token/refresh/", {});
+      // Share the same refresh request with Axios.
+      // Prevents simultaneous refresh-token rotation.
+      const access = await getFreshAccessToken();
 
-      const access = data?.access;
+      return { access };
+    } catch (error) {
+      const status = error?.response?.status;
 
-      if (!access) {
-        throw new Error("Access token missing from refresh response.");
+      // Clear session only for genuine authentication failure.
+      if (status === 401) {
+        clearAuthStorage();
       }
 
-      // Restore Axios runtime token
-      saveAccessToken(access);
-
-      return data;
-    } catch (error) {
-      clearAuthStorage();
-
-      return rejectWithValue(getApiErrorMessage(error));
+      return rejectWithValue({
+        message: getApiErrorMessage(error),
+        status,
+      });
     }
   },
 );
@@ -144,7 +148,6 @@ export const restoreSession = createAsyncThunk(
 // =========================================================
 // My profile
 // =========================================================
-
 export const getMyProfile = createAsyncThunk(
   "auth/getMyProfile",
 
@@ -154,7 +157,10 @@ export const getMyProfile = createAsyncThunk(
 
       return data;
     } catch (error) {
-      return rejectWithValue(getApiErrorMessage(error));
+      return rejectWithValue({
+        message: getApiErrorMessage(error),
+        status: error?.response?.status,
+      });
     }
   },
 );
@@ -425,18 +431,23 @@ const authSlice = createSlice({
 
         connectWebSocket(access);
       })
-      .addCase(restoreSession.rejected, (state) => {
-        state.user = null;
-
-        state.accessToken = null;
-
-        state.refreshToken = null;
-
-        state.isAuthenticated = false;
-
+      .addCase(restoreSession.rejected, (state, action) => {
+        state.loading = false;
         state.authInitialized = true;
 
-        state.loading = false;
+        state.error = action.payload?.message ?? null;
+
+        if (action.payload?.status === 401) {
+          state.user = null;
+          state.accessToken = null;
+          state.refreshToken = null;
+          state.isAuthenticated = false;
+
+          clearSession();
+        } else {
+          // Preserve the existing session during temporary failures.
+          state.isAuthenticated = Boolean(state.user);
+        }
       })
 
       // Get profile
@@ -446,22 +457,23 @@ const authSlice = createSlice({
       })
       .addCase(getMyProfile.rejected, (state, action) => {
         state.loading = false;
-
-        state.user = null;
-
-        state.accessToken = null;
-
-        state.refreshToken = null;
-
-        state.isAuthenticated = false;
-
         state.authInitialized = true;
 
-        state.error = action.payload ?? {
+        state.error = action.payload?.message ?? {
           message: "Unable to restore user profile.",
         };
 
-        clearSession();
+        if (action.payload?.status === 401) {
+          state.user = null;
+          state.accessToken = null;
+          state.refreshToken = null;
+          state.isAuthenticated = false;
+
+          clearSession();
+        }
+
+        // For 429, 403, 500 or network errors,
+        // do not destroy the existing session.
       })
       .addCase(getMyProfile.fulfilled, (state, action) => {
         state.loading = false;

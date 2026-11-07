@@ -251,7 +251,7 @@ const shouldSkipRefresh = (url = "") => {
 };
 
 // One refresh for multiple 401s
-const getFreshAccessToken = async () => {
+export const getFreshAccessToken = async () => {
   if (!refreshRequestPromise) {
     refreshRequestPromise = refreshAccessToken().finally(() => {
       refreshRequestPromise = null;
@@ -306,11 +306,16 @@ api.interceptors.response.use(
       // Retry once
       return api(originalRequest);
     } catch (refreshError) {
-      clearAuthStorage();
-      clearCsrfToken();
+      const refreshStatus = refreshError?.response?.status;
 
-      redirectToLogin();
+      // Only clear session when refresh token is genuinely invalid.
+      if (refreshStatus === 401) {
+        clearAuthStorage();
+        clearCsrfToken();
+        redirectToLogin();
+      }
 
+      // Do not log out users because of 429, 500 or network errors.
       return Promise.reject(refreshError);
     }
   },

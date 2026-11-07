@@ -13,7 +13,12 @@ export const connectWebSocket = (accessToken) => {
 
   currentAccessToken = accessToken;
 
-  if (socket && socket.readyState === WebSocket.OPEN) {
+  if (
+    socket &&
+    (socket.readyState === WebSocket.OPEN ||
+      socket.readyState === WebSocket.CONNECTING) &&
+    currentAccessToken === accessToken
+  ) {
     return;
   }
 
