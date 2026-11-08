@@ -36,6 +36,7 @@ export const fetchBrands = createAsyncThunk(
 
 export const fetchMyBrand = createAsyncThunk(
   "eventPlanner/fetchMyBrand",
+
   async (_, thunkAPI) => {
     try {
       const response = await api.get("/event-planner/my-brand/");
@@ -46,6 +47,14 @@ export const fetchMyBrand = createAsyncThunk(
         ...getApiErrorPayload(error),
       });
     }
+  },
+
+  {
+    condition: (_, { getState }) => {
+      const { loading, hasFetched } = getState().eventPlanner.myBrand;
+
+      return !loading && !hasFetched;
+    },
   },
 );
 
@@ -144,6 +153,7 @@ const initialState = {
 
   myBrand: {
     loading: false,
+    hasFetched: false,
     errorMessage: "",
   },
 
@@ -166,6 +176,8 @@ const eventPlannerSlice = createSlice({
 
     clearMyBrandDetails(state) {
       state.myBrandDetails = null;
+      state.myBrand.loading = false;
+      state.myBrand.hasFetched = false;
       state.myBrand.errorMessage = "";
     },
 
@@ -225,10 +237,12 @@ const eventPlannerSlice = createSlice({
       })
       .addCase(fetchMyBrand.fulfilled, (state, action) => {
         state.myBrand.loading = false;
+        state.myBrand.hasFetched = true;
         state.myBrandDetails = action.payload;
       })
       .addCase(fetchMyBrand.rejected, (state, action) => {
         state.myBrand.loading = false;
+        state.myBrand.hasFetched = true;
         state.myBrand.errorMessage =
           action.payload?.message || "Failed to fetch my brand.";
       })

@@ -66,7 +66,7 @@ export default function Navbar() {
       !isAuthenticated ||
       !isSeller ||
       myBrand.loading ||
-      sellerBrand
+      myBrand.hasFetched
     ) {
       return;
     }
@@ -78,7 +78,7 @@ export default function Navbar() {
     isAuthenticated,
     isSeller,
     myBrand.loading,
-    sellerBrand,
+    myBrand.hasFetched,
   ]);
 
   // Fetch notification count after auth restore
