@@ -7,50 +7,88 @@ import api, {
 } from "@/store/constant/api";
 
 import { connectWebSocket } from "@/websocket/websocketClient";
+
 import getApiErrorMessage from "@/store/constant/getApiErrorMessage";
 
-// Get stored user only
+import { syncSellerProfile } from "@/store/features/eventService/eventServiceSlice";
+
+// ============================================================
+// HELPERS
+// ============================================================
+
 const getStoredUser = () => {
   try {
     const rawUser = localStorage.getItem("user");
-
     return rawUser ? JSON.parse(rawUser) : null;
   } catch {
     return null;
   }
 };
 
-// Save user only
 const saveUser = (user) => {
   try {
-    localStorage.setItem("user", JSON.stringify(user));
+    if (user) {
+      localStorage.setItem("user", JSON.stringify(user));
+    } else {
+      localStorage.removeItem("user");
+    }
 
-    // Remove old implementation
     localStorage.removeItem("refreshToken");
   } catch (error) {
     console.warn("Unable to save user session:", error);
   }
 };
 
-// Clear local user data
 const clearSession = () => {
   clearAuthStorage();
+
+  try {
+    localStorage.removeItem("user");
+    localStorage.removeItem("refreshToken");
+  } catch (error) {
+    console.warn("Unable to clear stored user:", error);
+  }
 };
 
-// Remove old refresh token
-try {
-  localStorage.removeItem("refreshToken");
-} catch (error) {
-  console.warn("Unable to remove old refresh token:", error);
-}
+const getUserId = (user) => user?.id ?? user?.pk ?? null;
 
-// =========================================================
-// Register
-// =========================================================
+const buildSellerSyncPayload = (profile, fallbackUser = null) => {
+  const user = profile?.user ?? profile;
+  if (!user || typeof user !== "object") {
+    return null;
+  }
+  const id = getUserId(user) ?? getUserId(fallbackUser);
+
+  if (id == null) return null;
+
+  const payload = { id };
+
+  if (Object.prototype.hasOwnProperty.call(user, "full_name")) {
+    payload.full_name = user.full_name;
+  }
+
+  if (Object.prototype.hasOwnProperty.call(user, "profile_image_url")) {
+    payload.profile_image_url = user.profile_image_url;
+  } else if (Object.prototype.hasOwnProperty.call(user, "profile_image")) {
+    const image = user.profile_image;
+
+    payload.profile_image_url =
+      typeof image === "string" ? image : (image?.url ?? null);
+  }
+
+  if (Object.prototype.hasOwnProperty.call(user, "contact_number")) {
+    payload.contact_number = user.contact_number;
+  }
+
+  return Object.keys(payload).length > 1 ? payload : null;
+};
+
+// ============================================================
+// REGISTER
+// ============================================================
 
 export const registerUser = createAsyncThunk(
   "auth/register",
-
   async (userData, { rejectWithValue }) => {
     try {
       const { data } = await api.post("/users/register/", userData);
@@ -62,13 +100,12 @@ export const registerUser = createAsyncThunk(
   },
 );
 
-// =========================================================
-// Verify OTP
-// =========================================================
+// ============================================================
+// VERIFY OTP
+// ============================================================
 
 export const verifyOtp = createAsyncThunk(
   "auth/verifyOtp",
-
   async (otpData, { rejectWithValue }) => {
     try {
       const { data } = await api.post("/users/verify-otp/", otpData);
@@ -79,7 +116,10 @@ export const verifyOtp = createAsyncThunk(
         throw new Error("Access token missing from verify response.");
       }
 
-      // Sync Axios runtime token
+      if (!data?.user) {
+        throw new Error("User information missing from verify response.");
+      }
+
       saveAccessToken(access);
 
       return data;
@@ -89,13 +129,12 @@ export const verifyOtp = createAsyncThunk(
   },
 );
 
-// =========================================================
-// Login
-// =========================================================
+// ============================================================
+// LOGIN
+// ============================================================
 
 export const loginUser = createAsyncThunk(
   "auth/login",
-
   async (loginData, { rejectWithValue }) => {
     try {
       const { data } = await api.post("/users/login/", loginData);
@@ -106,7 +145,10 @@ export const loginUser = createAsyncThunk(
         throw new Error("Access token missing from login response.");
       }
 
-      // Sync Axios runtime token
+      if (!data?.user) {
+        throw new Error("User information missing from login response.");
+      }
+
       saveAccessToken(access);
 
       return data;
@@ -116,25 +158,27 @@ export const loginUser = createAsyncThunk(
   },
 );
 
-// =========================================================
-// Restore session
-// =========================================================
+// ============================================================
+// RESTORE SESSION
+// ============================================================
+
 export const restoreSession = createAsyncThunk(
   "auth/restoreSession",
-
   async (_, { rejectWithValue }) => {
     try {
-      // Share the same refresh request with Axios.
-      // Prevents simultaneous refresh-token rotation.
+      // Uses the shared refresh request.
       const access = await getFreshAccessToken();
+
+      if (!access) {
+        throw new Error("Unable to restore access token.");
+      }
 
       return { access };
     } catch (error) {
       const status = error?.response?.status;
 
-      // Clear session only for genuine authentication failure.
       if (status === 401) {
-        clearAuthStorage();
+        clearSession();
       }
 
       return rejectWithValue({
@@ -145,15 +189,26 @@ export const restoreSession = createAsyncThunk(
   },
 );
 
-// =========================================================
-// My profile
-// =========================================================
+// ============================================================
+// GET CURRENT USER PROFILE
+// ============================================================
+
 export const getMyProfile = createAsyncThunk(
   "auth/getMyProfile",
 
-  async (_, { rejectWithValue }) => {
+  async (_, { rejectWithValue, dispatch, getState }) => {
     try {
       const { data } = await api.get("/users/me/");
+
+      if (!getUserId(data)) {
+        throw new Error("User ID missing from profile response.");
+      }
+
+      const syncPayload = buildSellerSyncPayload(data, getState().auth.user);
+
+      if (syncPayload) {
+        dispatch(syncSellerProfile(syncPayload));
+      }
 
       return data;
     } catch (error) {
@@ -165,16 +220,22 @@ export const getMyProfile = createAsyncThunk(
   },
 );
 
-// =========================================================
-// Update profile
-// =========================================================
+// ============================================================
+// UPDATE PROFILE
+// ============================================================
 
 export const updateProfile = createAsyncThunk(
   "auth/updateProfile",
 
-  async ({ slug, updateData }, { rejectWithValue }) => {
+  async ({ slug, updateData }, { rejectWithValue, dispatch, getState }) => {
     try {
       const { data } = await api.patch(`/users/${slug}/settings/`, updateData);
+
+      const syncPayload = buildSellerSyncPayload(data, getState().auth.user);
+
+      if (syncPayload) {
+        dispatch(syncSellerProfile(syncPayload));
+      }
 
       return data;
     } catch (error) {
@@ -183,13 +244,12 @@ export const updateProfile = createAsyncThunk(
   },
 );
 
-// =========================================================
-// Forgot password
-// =========================================================
+// ============================================================
+// FORGOT PASSWORD
+// ============================================================
 
 export const forgotPassword = createAsyncThunk(
   "auth/forgotPassword",
-
   async (emailData, { rejectWithValue }) => {
     try {
       const { data } = await api.post("/users/forgot-password/", emailData);
@@ -201,13 +261,12 @@ export const forgotPassword = createAsyncThunk(
   },
 );
 
-// =========================================================
-// Reset password
-// =========================================================
+// ============================================================
+// RESET PASSWORD
+// ============================================================
 
 export const resetPassword = createAsyncThunk(
   "auth/resetPassword",
-
   async (passwordData, { rejectWithValue }) => {
     try {
       const { data } = await api.post("/users/reset-password/", passwordData);
@@ -219,53 +278,46 @@ export const resetPassword = createAsyncThunk(
   },
 );
 
-// =========================================================
-// Logout current device
-// =========================================================
+// ============================================================
+// LOGOUT CURRENT DEVICE
+// ============================================================
 
-export const logoutUser = createAsyncThunk(
-  "auth/logout",
+export const logoutUser = createAsyncThunk("auth/logout", async () => {
+  try {
+    await api.post("/users/logout/", {});
+  } finally {
+    clearSession();
+  }
+});
 
-  async () => {
-    try {
-      await api.post("/users/logout/", {});
-    } finally {
-      clearAuthStorage();
-    }
-  },
-);
+// ============================================================
+// LOGOUT ALL DEVICES
+// ============================================================
 
-// =========================================================
-// Logout all devices
-// =========================================================
+export const logoutAll = createAsyncThunk("auth/logoutAll", async () => {
+  try {
+    await api.post("/users/logout/all/", {});
+  } finally {
+    clearSession();
+  }
+});
 
-export const logoutAll = createAsyncThunk(
-  "auth/logoutAll",
-
-  async () => {
-    try {
-      await api.post("/users/logout/all/", {});
-    } finally {
-      clearAuthStorage();
-    }
-  },
-);
-
-// =========================================================
-// Initial state
-// =========================================================
+// ============================================================
+// INITIAL STATE
+// ============================================================
 
 const initialState = {
   user: getStoredUser(),
 
-  // Redux mirror only
   accessToken: null,
 
-  // Refresh token is HttpOnly cookie only
   refreshToken: null,
 
-  // Must restore first after reload
   isAuthenticated: false,
+
+  // Token restoration and identity verification
+  // are separate authentication stages.
+  identityVerified: false,
 
   authInitialized: false,
 
@@ -277,9 +329,9 @@ const initialState = {
   resetSuccess: false,
 };
 
-// =========================================================
-// Shared reducers
-// =========================================================
+// ============================================================
+// SHARED REDUCERS
+// ============================================================
 
 const setPending = (state) => {
   state.loading = true;
@@ -302,6 +354,7 @@ const setLoggedOut = (state) => {
   state.refreshToken = null;
 
   state.isAuthenticated = false;
+  state.identityVerified = false;
   state.authInitialized = true;
 
   state.loading = false;
@@ -314,9 +367,9 @@ const setLoggedOut = (state) => {
   clearSession();
 };
 
-// =========================================================
-// Slice
-// =========================================================
+// ============================================================
+// SLICE
+// ============================================================
 
 const authSlice = createSlice({
   name: "auth",
@@ -336,13 +389,16 @@ const authSlice = createSlice({
       state.resetSuccess = false;
     },
 
-    // Use only when runtime token is also synced
     setAccessToken: (state, action) => {
       const access = action.payload;
 
       saveAccessToken(access);
 
       state.accessToken = access ?? null;
+
+      // A new token must be verified against /users/me/.
+      state.identityVerified = false;
+      state.authInitialized = false;
 
       state.isAuthenticated = Boolean(access);
     },
@@ -351,21 +407,33 @@ const authSlice = createSlice({
   extraReducers: (builder) => {
     builder
 
-      // Register
+      // ======================================================
+      // REGISTER
+      // ======================================================
+
       .addCase(registerUser.pending, setPending)
+
       .addCase(registerUser.rejected, setRejected)
+
       .addCase(registerUser.fulfilled, (state) => {
         state.loading = false;
         state.success = true;
       })
 
-      // Verify OTP
+      // ======================================================
+      // VERIFY OTP
+      // ======================================================
+
       .addCase(verifyOtp.pending, setPending)
+
       .addCase(verifyOtp.rejected, (state, action) => {
         setRejected(state, action);
 
         state.isAuthenticated = false;
+        state.identityVerified = false;
+        state.authInitialized = true;
       })
+
       .addCase(verifyOtp.fulfilled, (state, action) => {
         const { access, user } = action.payload;
 
@@ -374,11 +442,10 @@ const authSlice = createSlice({
 
         state.user = user;
         state.accessToken = access;
-
         state.refreshToken = null;
 
         state.isAuthenticated = true;
-
+        state.identityVerified = true;
         state.authInitialized = true;
 
         saveUser(user);
@@ -386,13 +453,20 @@ const authSlice = createSlice({
         connectWebSocket(access);
       })
 
-      // Login
+      // ======================================================
+      // LOGIN
+      // ======================================================
+
       .addCase(loginUser.pending, setPending)
+
       .addCase(loginUser.rejected, (state, action) => {
         setRejected(state, action);
 
         state.isAuthenticated = false;
+        state.identityVerified = false;
+        state.authInitialized = true;
       })
+
       .addCase(loginUser.fulfilled, (state, action) => {
         const { access, user } = action.payload;
 
@@ -401,11 +475,10 @@ const authSlice = createSlice({
 
         state.user = user;
         state.accessToken = access;
-
         state.refreshToken = null;
 
         state.isAuthenticated = true;
-
+        state.identityVerified = true;
         state.authInitialized = true;
 
         saveUser(user);
@@ -413,10 +486,16 @@ const authSlice = createSlice({
         connectWebSocket(access);
       })
 
-      // Restore session
+      // ======================================================
+      // RESTORE SESSION
+      // ======================================================
+
       .addCase(restoreSession.pending, (state) => {
         state.error = null;
+        state.authInitialized = false;
+        state.identityVerified = false;
       })
+
       .addCase(restoreSession.fulfilled, (state, action) => {
         const access = action.payload?.access;
 
@@ -424,71 +503,95 @@ const authSlice = createSlice({
 
         state.isAuthenticated = true;
 
-        // Profile still needs to be verified.
+        // The user is not verified until getMyProfile succeeds.
+        state.identityVerified = false;
         state.authInitialized = false;
 
         state.error = null;
 
         connectWebSocket(access);
       })
+
       .addCase(restoreSession.rejected, (state, action) => {
         state.loading = false;
         state.authInitialized = true;
+        state.identityVerified = false;
 
         state.error = action.payload?.message ?? null;
 
+        state.isAuthenticated = false;
+
         if (action.payload?.status === 401) {
           state.user = null;
           state.accessToken = null;
           state.refreshToken = null;
-          state.isAuthenticated = false;
 
           clearSession();
-        } else {
-          // Preserve the existing session during temporary failures.
-          state.isAuthenticated = Boolean(state.user);
         }
       })
 
-      // Get profile
+      // ======================================================
+      // GET CURRENT PROFILE
+      // ======================================================
+
       .addCase(getMyProfile.pending, (state) => {
         state.loading = true;
         state.error = null;
+        state.identityVerified = false;
       })
+
       .addCase(getMyProfile.rejected, (state, action) => {
         state.loading = false;
         state.authInitialized = true;
+        state.identityVerified = false;
 
         state.error = action.payload?.message ?? {
-          message: "Unable to restore user profile.",
+          message: "Unable to verify user profile.",
         };
+
+        state.isAuthenticated = false;
 
         if (action.payload?.status === 401) {
           state.user = null;
           state.accessToken = null;
           state.refreshToken = null;
-          state.isAuthenticated = false;
 
           clearSession();
         }
 
-        // For 429, 403, 500 or network errors,
-        // do not destroy the existing session.
+        // Keep the stored profile for possible recovery,
+        // but never treat it as a verified identity.
       })
+
       .addCase(getMyProfile.fulfilled, (state, action) => {
         state.loading = false;
+
         state.user = action.payload;
+
         state.isAuthenticated = true;
+        state.identityVerified = true;
         state.authInitialized = true;
+
         state.error = null;
+
         saveUser(action.payload);
       })
 
-      // Update profile
+      // ======================================================
+      // UPDATE PROFILE
+      // ======================================================
+
       .addCase(updateProfile.pending, setPending)
+
       .addCase(updateProfile.rejected, setRejected)
+
       .addCase(updateProfile.fulfilled, (state, action) => {
-        const updatedUser = action.payload?.user ?? action.payload;
+        const responseUser = action.payload?.user ?? action.payload;
+
+        const updatedUser = {
+          ...(state.user ?? {}),
+          ...responseUser,
+        };
 
         state.loading = false;
         state.success = true;
@@ -498,19 +601,21 @@ const authSlice = createSlice({
         saveUser(updatedUser);
       })
 
-      // Forgot password
+      // ======================================================
+      // FORGOT PASSWORD
+      // ======================================================
+
       .addCase(forgotPassword.pending, setPending)
+
       .addCase(forgotPassword.rejected, setRejected)
+
       .addCase(forgotPassword.fulfilled, (state, action) => {
         state.loading = false;
 
         if (action.payload?.success === false) {
           state.success = false;
-
           state.forgotSuccess = false;
-
           state.error = action.payload;
-
           return;
         }
 
@@ -518,32 +623,51 @@ const authSlice = createSlice({
         state.forgotSuccess = true;
       })
 
-      // Reset password
+      // ======================================================
+      // RESET PASSWORD
+      // ======================================================
+
       .addCase(resetPassword.pending, setPending)
+
       .addCase(resetPassword.rejected, setRejected)
+
       .addCase(resetPassword.fulfilled, (state) => {
         state.loading = false;
         state.success = true;
         state.resetSuccess = true;
       })
 
-      // Logout
+      // ======================================================
+      // LOGOUT
+      // ======================================================
+
       .addCase(logoutUser.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
+
       .addCase(logoutUser.fulfilled, setLoggedOut)
+
       .addCase(logoutUser.rejected, setLoggedOut)
 
-      // Logout all
+      // ======================================================
+      // LOGOUT ALL
+      // ======================================================
+
       .addCase(logoutAll.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
+
       .addCase(logoutAll.fulfilled, setLoggedOut)
+
       .addCase(logoutAll.rejected, setLoggedOut);
   },
 });
+
+// ============================================================
+// EXPORTS
+// ============================================================
 
 export const { clearLocalSession, clearError, clearSuccess, setAccessToken } =
   authSlice.actions;

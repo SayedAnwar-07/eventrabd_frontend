@@ -24,8 +24,8 @@ import {
 
 import PublicServiceCard from "../components/PublicServiceCard";
 
-import SellerSearch from "../components/search/SellerSearch";
-import BrandSearch from "../components/search/BrandSearch";
+import SellerSearch from "../../../../components/search/SellerSearch";
+import BrandSearch from "../../../../components/search/BrandSearch";
 
 import ServiceFilters from "../components/filters/ServiceFilters";
 import MobileFilterSheet from "../components/filters/MobileFilterSheet";

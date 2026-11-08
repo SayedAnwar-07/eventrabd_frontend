@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 
-import SellerSearch from "@/features/event-planning-feature/brand-services-feature/components/search/SellerSearch";
-import BrandSearch from "@/features/event-planning-feature/brand-services-feature/components/search/BrandSearch";
+import SellerSearch from "@/components/search/SellerSearch";
+import BrandSearch from "@/components/search/BrandSearch";
 
 import HeroImageCollage from "./HeroImageCollage";
 import "./Hero.css";

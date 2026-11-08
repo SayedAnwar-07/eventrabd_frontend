@@ -538,7 +538,7 @@ const eventServiceSlice = createSlice({
 
       state.filters.currentPage = 1;
     },
-    
+
     clearBrandSearch(state) {
       state.selectedBrand = null;
 
@@ -591,7 +591,44 @@ const eventServiceSlice = createSlice({
 
       state.brandFilters = initialState.brandFilters;
     },
+    // =====================================================
+    // SYNC UPDATED SELLER PROFILE
+    // =====================================================
 
+    syncSellerProfile(state, action) {
+      const seller = action.payload;
+
+      const sellerId = seller?.id ?? seller?.pk;
+
+      if (sellerId == null) return;
+
+      const updateServiceSeller = (service) => {
+        if (
+          !service?.seller ||
+          String(service.seller.id) !== String(sellerId)
+        ) {
+          return;
+        }
+
+        // Update only fields supplied by the profile response.
+        const fields = ["full_name", "profile_image_url", "contact_number"];
+
+        fields.forEach((field) => {
+          if (Object.prototype.hasOwnProperty.call(seller, field)) {
+            service.seller[field] = seller[field];
+          }
+        });
+      };
+
+      // Public marketplace services
+      state.services.data.forEach(updateServiceSeller);
+
+      // Brand services
+      state.brandServices.data.forEach(updateServiceSeller);
+
+      // Currently opened service
+      updateServiceSeller(state.currentService.data);
+    },
     updateGalleryImageSortOrder(state, action) {
       const { serviceId, serviceName, images } = action.payload;
 
@@ -965,6 +1002,9 @@ export const {
   clearCurrentService,
   clearOperationState,
   resetFilters,
+
+  // seller profile synchronization
+  syncSellerProfile,
 
   // gallery
   updateGalleryImageSortOrder,
