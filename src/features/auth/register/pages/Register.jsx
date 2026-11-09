@@ -2,7 +2,7 @@ import { Outlet } from "react-router-dom";
 
 const Register = () => {
   return (
-    <main className="min-h-screen bg-background text-foreground">
+    <main className="min-h-screen text-foreground">
       <Outlet />
     </main>
   );

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
+import toast from "react-hot-toast";
 
 import PageShell from "@/components/shared/page-shell";
 
@@ -20,6 +21,16 @@ const initialValues = {
   logo: null,
 };
 
+const toastStyle = {
+  background: "#FFFFFF",
+  color: "#3D3530",
+  border: "1px solid #E5DDD5",
+  borderRadius: "8px",
+  padding: "14px 16px",
+  fontSize: "13px",
+  boxShadow: "0 8px 24px -12px rgba(61,53,48,0.20)",
+};
+
 export default function CreateBrandPage() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -29,10 +40,6 @@ export default function CreateBrandPage() {
   const [values, setValues] = useState(initialValues);
   const [logoPreview, setLogoPreview] = useState(null);
 
-  /*
-   * Clear stale create-brand state when entering
-   * and leaving the page.
-   */
   useEffect(() => {
     dispatch(clearCreateBrandState());
 
@@ -41,10 +48,6 @@ export default function CreateBrandPage() {
     };
   }, [dispatch]);
 
-  /*
-   * Revoke browser-generated preview URL when it
-   * changes or when the component unmounts.
-   */
   useEffect(() => {
     return () => {
       if (logoPreview) {
@@ -56,8 +59,8 @@ export default function CreateBrandPage() {
   const handleChange = (event) => {
     const { name, value } = event.target;
 
-    setValues((previousValues) => ({
-      ...previousValues,
+    setValues((prev) => ({
+      ...prev,
       [name]: value,
     }));
   };
@@ -65,12 +68,10 @@ export default function CreateBrandPage() {
   const handleLogoChange = (event) => {
     const file = event.target.files?.[0];
 
-    if (!file) {
-      return;
-    }
+    if (!file) return;
 
-    setValues((previousValues) => ({
-      ...previousValues,
+    setValues((prev) => ({
+      ...prev,
       logo: file,
     }));
 
@@ -78,8 +79,8 @@ export default function CreateBrandPage() {
   };
 
   const handleRemoveLogo = () => {
-    setValues((previousValues) => ({
-      ...previousValues,
+    setValues((prev) => ({
+      ...prev,
       logo: null,
     }));
 
@@ -89,59 +90,91 @@ export default function CreateBrandPage() {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    if (createState.loading) {
-      return;
-    }
+    if (createState.loading) return;
 
     const formData = new FormData();
 
     formData.append("display_name", values.display_name.trim());
-
     formData.append("brand_name", values.brand_name.trim());
-
     formData.append("whatsapp_number", values.whatsapp_number.trim());
 
-    /*
-     * Division is now an ArrayField/ListField.
-     * Send every selected division using the
-     * same multipart field name.
-     */
     values.division.forEach((division) => {
       formData.append("division", division);
     });
 
-    const officeAddress = values.office_address.trim();
+    const optionalFields = [
+      "office_address",
+      "short_description",
+      "portfolio_link",
+    ];
 
-    const shortDescription = values.short_description.trim();
+    optionalFields.forEach((field) => {
+      const value = values[field]?.trim();
 
-    const portfolioLink = values.portfolio_link.trim();
-
-    if (officeAddress) {
-      formData.append("office_address", officeAddress);
-    }
-
-    if (shortDescription) {
-      formData.append("short_description", shortDescription);
-    }
-
-    if (portfolioLink) {
-      formData.append("portfolio_link", portfolioLink);
-    }
+      if (value) {
+        formData.append(field, value);
+      }
+    });
 
     if (values.logo instanceof File) {
       formData.append("logo", values.logo);
     }
 
-    const result = await createBrand(formData);
+    const toastId = toast.loading("Creating your brand...", {
+      id: "create-brand",
+      style: toastStyle,
+    });
 
-    if (result?.meta?.requestStatus === "fulfilled") {
-      const createdSlug = result.payload?.slug;
+    try {
+      const result = await createBrand(formData);
 
-      if (createdSlug) {
-        navigate(`/event-planner/brands/${encodeURIComponent(createdSlug)}`, {
-          replace: true,
+      if (result?.meta?.requestStatus === "fulfilled") {
+        const payload = result.payload;
+
+        // Supports both direct and nested API responses.
+        const createdBrand =
+          payload?.data?.brand ?? payload?.data ?? payload?.brand ?? payload;
+
+        const createdSlug = createdBrand?.slug;
+
+        toast.success(payload?.message || "Brand created successfully!", {
+          id: toastId,
+          duration: 4000,
+          style: toastStyle,
         });
+
+        if (createdSlug) {
+          navigate(`/event-planner/brands/${encodeURIComponent(createdSlug)}`, {
+            replace: true,
+          });
+        } else {
+          console.warn("Brand created, but no slug was returned:", payload);
+        }
+
+        return;
       }
+
+      const errorPayload = result?.payload;
+
+      const errorMessage =
+        typeof errorPayload === "string"
+          ? errorPayload
+          : errorPayload?.message ||
+            errorPayload?.detail ||
+            result?.error?.message ||
+            "Failed to create brand. Please try again.";
+
+      toast.error(errorMessage, {
+        id: toastId,
+        duration: 5000,
+        style: toastStyle,
+      });
+    } catch (error) {
+      toast.error(error?.message || "Something went wrong. Please try again.", {
+        id: toastId,
+        duration: 5000,
+        style: toastStyle,
+      });
     }
   };
 
@@ -165,8 +198,6 @@ export default function CreateBrandPage() {
         submitLabel="Create Brand"
         loading={createState.loading}
         errors={createState.errors}
-        errorMessage={createState.errorMessage}
-        successMessage={createState.success ? createState.message : ""}
         logoPreview={logoPreview}
         existingLogo={null}
         onLogoChange={handleLogoChange}

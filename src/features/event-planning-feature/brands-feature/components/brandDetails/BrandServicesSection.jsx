@@ -18,7 +18,7 @@ const BrandServicesSection = ({ brand, onServiceCreated }) => {
             trigger={
               <button
                 type="button"
-                className="border border-border px-4 py-2 text-sm font-medium text-foreground transition hover:border-foreground"
+                className="border border-border px-4 py-2 text-sm font-medium text-foreground transition hover:border-foreground bg-white rounded-md"
               >
                 + Create Service
               </button>

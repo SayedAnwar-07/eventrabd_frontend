@@ -28,7 +28,7 @@ const RoleCard = ({ roleKey, role }) => {
 
   return (
     <div className="w-full border border-border bg-card p-6 shadow-sm">
-      <div className="mb-5 flex h-12 w-12 items-center justify-center border border-border bg-background text-primary">
+      <div className="mb-5 flex h-12 w-12 items-center justify-center border border-border text-primary">
         <Icon className="h-6 w-6" />
       </div>
 
@@ -64,7 +64,7 @@ const RoleCard = ({ roleKey, role }) => {
 
 const RoleSelector = () => {
   return (
-    <section className="flex min-h-screen items-center justify-center bg-background py-10 text-foreground">
+    <section className="flex min-h-screen items-center justify-center py-10 text-foreground">
       <div className="w-full max-w-md">
         <div className="mb-7 text-center">
           <p className="mb-2 text-sm font-semibold uppercase tracking-[0.22em] text-primary">

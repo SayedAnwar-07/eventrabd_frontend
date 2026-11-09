@@ -32,7 +32,7 @@ export default function BasicInformationFields({ control, user }) {
   };
 
   const inputClassName =
-    "h-12 rounded-md border-gray-200 bg-gray-50 pl-10 pr-12 text-sm shadow-none placeholder:text-gray-400 focus-visible:border-[#b60018] focus-visible:ring-1 focus-visible:ring-[#b60018] read-only:cursor-default read-only:bg-gray-100";
+    "h-12 rounded-md border-gray-200 bg-white pl-10 pr-12 text-sm shadow-none placeholder:text-gray-400 focus-visible:border-[#b60018] focus-visible:ring-1 focus-visible:ring-[#b60018] read-only:cursor-default read-only:bg-gray-100";
 
   return (
     <div className="space-y-6">

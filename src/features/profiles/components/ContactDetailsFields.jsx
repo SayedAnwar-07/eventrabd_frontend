@@ -48,7 +48,7 @@ const PhoneInput = ({
         placeholder={placeholder}
         autoComplete={autoComplete}
         onChange={handleChange}
-        className="h-12 rounded-md border-gray-200 bg-gray-50 pl-16 pr-12 text-sm shadow-none placeholder:text-gray-400 focus-visible:border-[#b60018] focus-visible:ring-1 focus-visible:ring-[#b60018] read-only:cursor-default read-only:bg-gray-100"
+        className="h-12 rounded-md border-gray-200 bg-white pl-16 pr-12 text-sm shadow-none placeholder:text-gray-400 focus-visible:border-[#b60018] focus-visible:ring-1 focus-visible:ring-[#b60018] read-only:cursor-default"
       />
 
       {isEditing ? (

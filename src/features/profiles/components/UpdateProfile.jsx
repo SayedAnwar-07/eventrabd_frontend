@@ -156,7 +156,7 @@ const UpdateProfile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-white py-8">
+    <div className="min-h-screen py-8">
       <div className="">
         {localMessage && (
           <div
