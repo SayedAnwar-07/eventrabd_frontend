@@ -71,7 +71,7 @@ const ServiceFloatingActions = ({
             align="end"
             side="top"
             sideOffset={10}
-            className="w-44 rounded-lg"
+            className="w-44 rounded-md"
           >
             {/* EDIT */}
             <EventServiceSheet

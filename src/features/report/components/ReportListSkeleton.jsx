@@ -2,9 +2,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 function ReportSkeletonItem() {
   return (
-    <div className="rounded-xl border border-border p-4 sm:p-5">
+    <div className="rounded-md border border-border p-4 sm:p-5">
       <div className="flex gap-4">
-        <Skeleton className="hidden h-20 w-24 shrink-0 rounded-lg sm:block" />
+        <Skeleton className="hidden h-20 w-24 shrink-0 rounded-md sm:block" />
 
         <div className="min-w-0 flex-1">
           <div className="flex justify-between gap-4">

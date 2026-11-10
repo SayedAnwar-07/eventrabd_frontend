@@ -7,7 +7,7 @@ export default function StatusAlert({ type = "info", title, message }) {
   };
 
   return (
-    <div className={`rounded-2xl border px-4 py-3 ${styles[type]}`}>
+    <div className={`rounded-md border px-4 py-3 ${styles[type]}`}>
       {title && <h4 className="font-semibold">{title}</h4>}
 
       {message && <p>{message}</p>}

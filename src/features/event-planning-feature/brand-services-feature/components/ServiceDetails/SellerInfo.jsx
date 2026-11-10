@@ -40,7 +40,7 @@ const ContactRow = ({ icon: Icon, label, value, href }) => {
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="-mx-2 block rounded-lg px-2 py-1 transition-colors hover:bg-muted/60"
+      className="-mx-2 block rounded-md px-2 py-1 transition-colors hover:bg-muted/60"
     >
       {content}
     </a>

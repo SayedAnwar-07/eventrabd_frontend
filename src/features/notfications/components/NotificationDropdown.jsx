@@ -28,7 +28,7 @@ export default function NotificationDropdown({
   const hasNotifications = notifications.length > 0;
 
   return (
-    <div className="overflow-hidden rounded-lg bg-popover">
+    <div className="overflow-hidden rounded-md bg-popover">
       <div className="flex items-center justify-between gap-3 px-4 py-3.5">
         <div className="min-w-0">
           <div className="flex items-center gap-2">

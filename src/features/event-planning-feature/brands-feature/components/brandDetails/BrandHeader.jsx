@@ -53,7 +53,7 @@ const BrandHeader = ({ brand, onEdit, actionsLoading = false }) => {
               <DropdownMenuTrigger asChild>
                 <button
                   type="button"
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-background text-foreground shadow-sm transition hover:bg-muted focus:outline-none"
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-border bg-background text-foreground shadow-sm transition hover:bg-muted focus:outline-none"
                   aria-label="Brand actions"
                 >
                   <MoreVertical className="h-5 w-5" />
@@ -63,7 +63,7 @@ const BrandHeader = ({ brand, onEdit, actionsLoading = false }) => {
               <DropdownMenuContent
                 align="end"
                 sideOffset={8}
-                className="w-44 rounded-xl border border-border bg-background p-1.5 shadow-lg"
+                className="w-44 rounded-md border border-border bg-background p-1.5 shadow-lg"
               >
                 {/* EDIT */}
                 <DropdownMenuItem
@@ -71,7 +71,7 @@ const BrandHeader = ({ brand, onEdit, actionsLoading = false }) => {
                     event.preventDefault();
                     onEdit();
                   }}
-                  className="h-10 cursor-pointer gap-3 rounded-lg px-3 text-sm font-medium focus:bg-muted"
+                  className="h-10 cursor-pointer gap-3 rounded-md px-3 text-sm font-medium focus:bg-muted"
                 >
                   <Pencil className="h-4 w-4 text-muted-foreground" />
                   <span>Edit Brand</span>
@@ -80,7 +80,7 @@ const BrandHeader = ({ brand, onEdit, actionsLoading = false }) => {
                 {/* DELETE */}
                 <DropdownMenuItem
                   onSelect={(event) => event.preventDefault()}
-                  className="h-10 cursor-pointer rounded-lg p-0 text-destructive focus:bg-destructive/10 focus:text-destructive"
+                  className="h-10 cursor-pointer rounded-md p-0 text-destructive focus:bg-destructive/10 focus:text-destructive"
                 >
                   <BrandDeleteDialog brand={brand} />
                 </DropdownMenuItem>

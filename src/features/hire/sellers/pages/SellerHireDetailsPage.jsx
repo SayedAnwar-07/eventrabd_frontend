@@ -35,7 +35,7 @@ const SellerHireDetailsPage = () => {
     return (
       <div className="min-h-screen">
         <main className="mx-auto max-w-3xl py-16">
-          <section className="rounded-2xl border border-gray-200 bg-white px-6 py-12 text-center shadow-sm dark:border-gray-800 dark:bg-gray-950">
+          <section className="rounded-md border border-gray-200 bg-white px-6 py-12 text-center shadow-sm dark:border-gray-800 dark:bg-gray-950">
             <h1 className="text-xl font-semibold text-gray-950 dark:text-white">
               Hire request not found
             </h1>
@@ -69,7 +69,7 @@ const SellerHireDetailsPage = () => {
         </Link>
 
         {error?.message && (
-          <div className="mt-5 rounded-xl border border-red-100 bg-red-50 px-5 py-4 dark:border-red-950 dark:bg-red-950/30">
+          <div className="mt-5 rounded-md border border-red-100 bg-red-50 px-5 py-4 dark:border-red-950 dark:bg-red-950/30">
             <p className="text-sm text-red-700 dark:text-red-400">
               {error.message}
             </p>

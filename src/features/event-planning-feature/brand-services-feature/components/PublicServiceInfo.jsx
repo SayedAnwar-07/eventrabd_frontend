@@ -145,7 +145,7 @@ const PublicServiceInfo = ({ service }) => {
       <div className="mt-3.5 flex items-center gap-2.5">
         <Link
           to={detailPath}
-          className="flex flex-1 items-center justify-center gap-2 rounded-md border border-primary bg-background px-3 py-2.5 text-xs font-semibold text-primary transition-all hover:bg-primary/5"
+          className="flex flex-1 items-center justify-center gap-2 rounded-md bg-theme-color px-3 py-2.5 text-xs font-semibold text-white transition-all hover:bg-primary/5"
         >
           View Details
         </Link>
@@ -156,7 +156,7 @@ const PublicServiceInfo = ({ service }) => {
             state={{
               openHireForm: true,
             }}
-            className="flex flex-1 items-center justify-center gap-2 rounded-md bg-primary px-3 py-2.5 text-xs font-semibold text-primary-foreground shadow-sm transition-all hover:bg-primary/90"
+            className="flex flex-1 items-center justify-center gap-2 rounded-md bg-theme-color px-3 py-2.5 text-xs font-semibold text-primary-foreground shadow-sm transition-all hover:bg-primary/90"
           >
             Hire Now
           </Link>

@@ -16,11 +16,11 @@ export default function ReportItem({ report }) {
   return (
     <Link
       to={`/customer/reports/${report.id}`}
-      className="group block rounded-xl border border-border bg-background p-4 transition-colors hover:bg-muted/30 sm:p-5"
+      className="group block rounded-md border border-border bg-background p-4 transition-colors hover:bg-muted/30 sm:p-5"
     >
       <div className="flex gap-4">
         {report.image_url && (
-          <div className="hidden h-20 w-24 shrink-0 overflow-hidden rounded-lg border border-border bg-muted sm:block">
+          <div className="hidden h-20 w-24 shrink-0 overflow-hidden rounded-md border border-border bg-muted sm:block">
             <img
               src={report.image_url}
               alt=""

@@ -14,7 +14,7 @@ export default function SectionHeader({ title, description, ctaLabel, ctaTo }) {
       </div>
 
       {ctaLabel && ctaTo ? (
-        <Button asChild className="h-11 rounded-xl px-5">
+        <Button asChild className="h-11 rounded-md px-5">
           <Link to={ctaTo}>{ctaLabel}</Link>
         </Button>
       ) : null}

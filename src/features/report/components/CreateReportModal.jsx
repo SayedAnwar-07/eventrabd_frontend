@@ -277,7 +277,7 @@ export default function CreateReportModal({
             {!image ? (
               <label
                 htmlFor="report-image"
-                className="flex cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-border bg-muted/20 px-4 py-7 text-center transition-colors hover:bg-muted/40"
+                className="flex cursor-pointer flex-col items-center justify-center rounded-md border border-dashed border-border bg-muted/20 px-4 py-7 text-center transition-colors hover:bg-muted/40"
               >
                 <ImagePlus className="mb-2 h-6 w-6 text-muted-foreground" />
 
@@ -308,7 +308,7 @@ export default function CreateReportModal({
             />
           </div>
 
-          <div className="rounded-lg border border-amber-200/70 bg-amber-50/70 px-3 py-3 text-xs leading-relaxed text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/20 dark:text-amber-200">
+          <div className="rounded-md border border-amber-200/70 bg-amber-50/70 px-3 py-3 text-xs leading-relaxed text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/20 dark:text-amber-200">
             Once submitted, this report becomes read-only. You will still be
             able to view its review status from My Reports.
           </div>

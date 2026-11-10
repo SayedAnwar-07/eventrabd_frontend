@@ -133,7 +133,7 @@ export default function NotificationBell({
       <PopoverContent
         align="end"
         sideOffset={8}
-        className="w-[calc(100vw-1.5rem)] max-w-100 overflow-hidden rounded-xl p-0 shadow-xl sm:w-100"
+        className="w-[calc(100vw-1.5rem)] max-w-100 overflow-hidden rounded-md p-0 shadow-xl sm:w-100"
       >
         <NotificationDropdown
           notifications={notifications}

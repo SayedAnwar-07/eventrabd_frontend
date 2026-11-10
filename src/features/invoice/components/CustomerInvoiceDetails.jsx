@@ -33,7 +33,7 @@ const getInvoiceHireId = (invoice) => {
 
 const InvoiceLoadingState = () => {
   return (
-    <section className="mt-5 animate-pulse overflow-hidden rounded-2xl border border-gray-200 bg-white">
+    <section className="mt-5 animate-pulse overflow-hidden rounded-md border border-gray-200 bg-white">
       <div className="px-6 py-10 sm:px-10">
         <div className="mx-auto h-8 w-44 rounded bg-gray-200" />
 
@@ -147,7 +147,7 @@ const CustomerInvoiceDetails = ({ hire }) => {
       return (
         <div
           role="alert"
-          className="mt-5 rounded-xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700"
+          className="mt-5 rounded-md border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700"
         >
           {getApiErrorMessage(error)}
         </div>
@@ -201,7 +201,7 @@ const CustomerInvoiceDetails = ({ hire }) => {
               type="button"
               onClick={() => handleDecision(false)}
               disabled={decisionLoading}
-              className="h-11 min-w-27.5 rounded-lg border border-gray-300 px-5 text-sm font-medium text-gray-700 transition hover:border-gray-400 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+              className="h-11 min-w-27.5 rounded-md border border-gray-300 px-5 text-sm font-medium text-gray-700 transition hover:border-gray-400 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {decisionLoading && submittingDecision === false
                 ? "Submitting…"
@@ -212,7 +212,7 @@ const CustomerInvoiceDetails = ({ hire }) => {
               type="button"
               onClick={() => handleDecision(true)}
               disabled={decisionLoading}
-              className="h-11 min-w-27.5 rounded-lg bg-[#b60018] px-5 text-sm font-medium text-white transition hover:bg-[#960014] disabled:cursor-not-allowed disabled:opacity-60"
+              className="h-11 min-w-27.5 rounded-md bg-[#b60018] px-5 text-sm font-medium text-white transition hover:bg-[#960014] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {decisionLoading && submittingDecision === true
                 ? "Submitting…"

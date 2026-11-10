@@ -7,7 +7,7 @@ export default function ErrorState({ error, loading, onRetry }) {
       <main className="mx-auto max-w-3xl px-4 py-16">
         <section
           role="alert"
-          className="rounded-2xl border border-red-100 bg-white px-6 py-12 text-center shadow-sm"
+          className="rounded-md border border-red-100 bg-white px-6 py-12 text-center shadow-sm"
         >
           <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-50">
             <XCircle className="h-6 w-6 text-red-600" />

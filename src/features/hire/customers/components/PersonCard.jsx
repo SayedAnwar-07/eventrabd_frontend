@@ -43,11 +43,11 @@ export default function PersonCard({
             <img
               src={person.profile_image_url}
               alt={personName}
-              className="h-16 w-16 rounded-2xl object-cover ring-1 ring-gray-200 dark:ring-gray-700"
+              className="h-16 w-16 rounded-md object-cover ring-1 ring-gray-200 dark:ring-gray-700"
               loading="lazy"
             />
           ) : (
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gray-100 text-base font-semibold text-gray-700 ring-1 ring-gray-200 dark:bg-gray-900 dark:text-gray-300 dark:ring-gray-700">
+            <div className="flex h-16 w-16 items-center justify-center rounded-md bg-gray-100 text-base font-semibold text-gray-700 ring-1 ring-gray-200 dark:bg-gray-900 dark:text-gray-300 dark:ring-gray-700">
               {getInitials(personName)}
             </div>
           )}
@@ -86,7 +86,6 @@ export default function PersonCard({
               </div>
             )}
 
-
             {officeAddress && (
               <div className="flex items-start gap-2 text-xs text-gray-500 dark:text-gray-400">
                 <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-gray-400 dark:text-gray-500" />
@@ -108,7 +107,7 @@ export default function PersonCard({
             </p>
           </div>
 
-          <div className="rounded-xl border border-gray-200 bg-white px-4 py-3.5 dark:border-gray-800 dark:bg-gray-950">
+          <div className="rounded-md border border-gray-200 bg-white px-4 py-3.5 dark:border-gray-800 dark:bg-gray-950">
             <p className="whitespace-pre-wrap text-sm leading-6 text-gray-700 dark:text-gray-300">
               {note}
             </p>

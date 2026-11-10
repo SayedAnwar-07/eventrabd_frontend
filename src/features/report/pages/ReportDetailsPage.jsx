@@ -17,7 +17,7 @@ import ReportDetails from "../components/ReportDetails";
 
 function ReportDetailSkeleton() {
   return (
-    <div className="overflow-hidden rounded-xl border border-border">
+    <div className="overflow-hidden rounded-md border border-border">
       <div className="space-y-3 border-b border-border p-6">
         <Skeleton className="h-4 w-36" />
         <Skeleton className="h-7 w-52" />

@@ -1,28 +1,7 @@
-import { useNavigate } from "react-router-dom";
-
-import SellerSearch from "@/components/search/SellerSearch";
-import BrandSearch from "@/components/search/BrandSearch";
-
 import HeroImageCollage from "./HeroImageCollage";
 import "./Hero.css";
 
 const Hero = () => {
-  const navigate = useNavigate();
-
-  const handleSellerSelect = (seller) => {
-    const params = new URLSearchParams();
-    params.set("seller_id", seller.id);
-
-    navigate(`/services?${params.toString()}`);
-  };
-
-  const handleBrandSelect = (brand) => {
-    const params = new URLSearchParams();
-    params.set("brand_id", brand.id);
-
-    navigate(`/services?${params.toString()}`);
-  };
-
   return (
     <section className="eventra-hero relative w-full overflow-hidden">
       <div className="relative mx-auto w-full max-w-425 px-5 sm:px-0">
@@ -94,26 +73,6 @@ const Hero = () => {
             </p>
           </div>
 
-          {/* RIGHT SIDE SEARCH */}
-
-          <div className="hero-search-dock">
-            {/* SELLER SEARCH */}
-
-            <div className="hero-search-unit">
-              <div className="hero-search-card">
-                <SellerSearch onSelect={handleSellerSelect} />
-              </div>
-            </div>
-
-            {/* BRAND SEARCH */}
-
-            <div className="hero-search-unit">
-              <div className="hero-search-card">
-                <BrandSearch onSelect={handleBrandSelect} />
-              </div>
-            </div>
-          </div>
-
           {/* DECORATIVE ELEMENTS */}
 
           <div className="hero-decoration decoration-one" />
@@ -141,18 +100,6 @@ const Hero = () => {
               Discover trusted event brands, services and experiences for your
               special moments.
             </p>
-          </div>
-
-          {/* MOBILE SEARCH */}
-
-          <div className="mobile-search-wrapper">
-            <div className="mobile-search-card">
-              <SellerSearch onSelect={handleSellerSelect} />
-            </div>
-
-            <div className="mobile-search-card">
-              <BrandSearch onSelect={handleBrandSelect} />
-            </div>
           </div>
         </div>
       </div>

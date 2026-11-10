@@ -135,7 +135,7 @@ const SellerSearch = ({ onSelect }) => {
       {open &&
         query.trim() &&
         (loading || hasSearched || suggestions.length > 0) && (
-          <div className="absolute left-0 right-0 top-full z-50 mt-2 max-h-64 overflow-y-auto rounded-lg border border-[#E5DDD5] bg-white p-1 shadow-[0_12px_30px_rgba(61,53,48,0.12)]">
+          <div className="absolute left-0 right-0 top-full z-50 mt-2 max-h-64 overflow-y-auto rounded-md border border-[#E5DDD5] bg-white p-1 shadow-[0_12px_30px_rgba(61,53,48,0.12)]">
             {loading ? (
               <p className="px-3 py-3 text-sm text-[#8C7B6E]">
                 Searching sellers...

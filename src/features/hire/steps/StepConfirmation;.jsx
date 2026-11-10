@@ -25,7 +25,7 @@ const StepConfirmation = ({
         </p>
       </div>
 
-      <div className="rounded-2xl border border-gray-200 bg-white p-5 space-y-4">
+      <div className="rounded-md border border-gray-200 bg-white p-5 space-y-4">
         <div className="flex items-center gap-3">
           <CheckCircle2 className="text-green-700" size={22} />
           <h3 className="font-semibold text-gray-950">Booking Selection</h3>
@@ -38,7 +38,7 @@ const StepConfirmation = ({
             return (
               <div
                 key={item.key}
-                className="rounded-xl border border-gray-200 p-4"
+                className="rounded-md border border-gray-200 p-4"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div>
@@ -70,12 +70,12 @@ const StepConfirmation = ({
         </div>
       </div>
 
-      <div className="rounded-2xl border border-gray-200 bg-white p-5 space-y-4">
+      <div className="rounded-md border border-gray-200 bg-white p-5 space-y-4">
         <h3 className="font-semibold text-gray-950">Event Information</h3>
 
         {bookingItems.map((item) =>
           item.bookingSlots.map((slot, index) => (
-            <div key={index} className="rounded-xl bg-gray-50 p-4 space-y-2">
+            <div key={index} className="rounded-md bg-gray-50 p-4 space-y-2">
               <div className="flex items-center gap-2 text-sm text-gray-700">
                 <CalendarDays size={16} />
                 {slot.starts_at
@@ -95,7 +95,7 @@ const StepConfirmation = ({
         )}
       </div>
 
-      <div className="rounded-2xl border border-gray-200 bg-white p-5 space-y-3">
+      <div className="rounded-md border border-gray-200 bg-white p-5 space-y-3">
         <h3 className="font-semibold text-gray-950">Contact Information</h3>
 
         <div className="flex items-center gap-2 text-sm text-gray-700">
@@ -104,13 +104,13 @@ const StepConfirmation = ({
         </div>
 
         {customerNote && (
-          <p className="rounded-xl bg-gray-50 p-3 text-sm text-gray-600">
+          <p className="rounded-md bg-gray-50 p-3 text-sm text-gray-600">
             {customerNote}
           </p>
         )}
       </div>
 
-      <div className="flex items-center justify-between rounded-2xl border border-green-200 bg-green-50 p-5">
+      <div className="flex items-center justify-between rounded-md border border-green-200 bg-green-50 p-5">
         <p className="font-semibold text-green-900">Total Amount</p>
 
         <p className="text-2xl font-bold text-green-800">
@@ -122,7 +122,7 @@ const StepConfirmation = ({
         type="button"
         disabled={loading}
         onClick={onConfirm}
-        className="w-full rounded-xl bg-green-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-green-800 disabled:cursor-not-allowed disabled:bg-gray-400"
+        className="w-full rounded-md bg-green-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-green-800 disabled:cursor-not-allowed disabled:bg-gray-400"
       >
         {loading ? "Submitting..." : "Confirm Hire"}
       </button>

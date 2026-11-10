@@ -114,28 +114,10 @@ export default function MobileAndTabNav({
               onClick={() => setSearchOpen(true)}
               aria-label="Open search"
               aria-haspopup="dialog"
-              className="
-          group relative flex h-9 w-9
-          items-center justify-center
-          rounded-full text-foreground
-          outline-none
-          transition-all duration-300
-          hover:bg-[#F8F5F2]
-          hover:text-[#9C2135]
-          active:scale-90
-          focus-visible:ring-2
-          focus-visible:ring-[#A68C78]
-          dark:hover:bg-muted
-        "
+              className="flex h-8 w-40 items-center gap-2 rounded-md border border-[#E5DDD5] bg-[#F8F5F2] px-3 text-[#756A62] transition-all duration-300 hover:border-[#A68C78] hover:bg-white active:scale-[0.98] sm:w-40"
             >
-              <Search
-                className="
-            h-5 w-5
-            transition-transform duration-300
-            group-hover:scale-110
-          "
-                strokeWidth={1.9}
-              />
+              <Search className="h-4 w-4 shrink-0" strokeWidth={1.9} />
+              <span className="truncate text-xs font-medium">Search...</span>
             </button>
 
             {/* Existing Notification Bell */}

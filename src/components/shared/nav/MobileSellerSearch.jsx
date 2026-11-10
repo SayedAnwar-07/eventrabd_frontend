@@ -110,7 +110,7 @@ const MobileSellerSearch = ({ onSelect }) => {
           Find an Event Professional
         </label>
 
-        <div className="group flex h-12 items-center gap-3 rounded-xl border border-[#E5DDD5] bg-[#FFFCF9] px-3 transition-all duration-300 focus-within:border-[#A68C78] focus-within:bg-white focus-within:ring-4 focus-within:ring-[#A68C78]/10">
+        <div className="group flex h-12 items-center gap-3 rounded-md border border-[#E5DDD5] bg-[#FFFCF9] px-3 transition-all duration-300 focus-within:border-[#A68C78] focus-within:bg-white focus-within:ring-4 focus-within:ring-[#A68C78]/10">
           <Search className="h-4.5 w-4.5 shrink-0 text-[#A69B91] transition-colors duration-200 group-focus-within:text-[#9C2135]" />
 
           <input
@@ -140,7 +140,7 @@ const MobileSellerSearch = ({ onSelect }) => {
         {query.trim() && (
           <button
             type="submit"
-            className="group mt-3 flex w-full items-center justify-between gap-3 rounded-xl bg-[#3D3530] px-4 py-3 text-left text-white transition-all duration-200 hover:bg-[#51463E] active:scale-[0.98]"
+            className="group mt-3 flex w-full items-center justify-between gap-3 rounded-md bg-[#3D3530] px-4 py-3 text-left text-white transition-all duration-200 hover:bg-[#51463E] active:scale-[0.98]"
           >
             <span className="min-w-0 truncate text-xs font-medium">
               Search for "{query.trim()}"
@@ -151,7 +151,7 @@ const MobileSellerSearch = ({ onSelect }) => {
       </form>
 
       {open && query.trim() && (
-        <div className="mt-3 overflow-hidden rounded-xl border border-[#E5DDD5] bg-white shadow-[0_8px_24px_rgba(61,53,48,0.06)]">
+        <div className="mt-3 overflow-hidden rounded-md border border-[#E5DDD5] bg-white shadow-[0_8px_24px_rgba(61,53,48,0.06)]">
           <div className="border-b border-[#F0EAE4] px-3 py-2.5">
             <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#8C7B6E]">
               Suggested Professionals
@@ -170,9 +170,9 @@ const MobileSellerSearch = ({ onSelect }) => {
                   key={seller.id}
                   type="button"
                   onClick={() => handleSelect(seller)}
-                  className="group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-all duration-200 hover:bg-[#F8F5F2] active:scale-[0.99]"
+                  className="group flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left transition-all duration-200 hover:bg-[#F8F5F2] active:scale-[0.99]"
                 >
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#F8F5F2] text-[#756A62] transition-colors group-hover:bg-[#9C2135]/10 group-hover:text-[#9C2135]">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-[#F8F5F2] text-[#756A62] transition-colors group-hover:bg-[#9C2135]/10 group-hover:text-[#9C2135]">
                     <UserRound className="h-4 w-4" />
                   </div>
 

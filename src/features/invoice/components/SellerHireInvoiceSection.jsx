@@ -48,7 +48,7 @@ const getErrorMessage = (error) => {
 
 const InvoiceLoadingState = () => {
   return (
-    <section className="animate-pulse overflow-hidden rounded-2xl border border-gray-200 bg-white">
+    <section className="animate-pulse overflow-hidden rounded-md border border-gray-200 bg-white">
       <div className="px-6 py-10 sm:px-10">
         <div className="mx-auto h-8 w-44 rounded bg-gray-200" />
 
@@ -239,7 +239,7 @@ const SellerHireInvoiceSection = ({ hire }) => {
     return (
       <div
         role="alert"
-        className="rounded-xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700"
+        className="rounded-md border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700"
       >
         {getErrorMessage(error)}
       </div>
@@ -257,7 +257,7 @@ const SellerHireInvoiceSection = ({ hire }) => {
   }
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white px-6 py-8 text-center">
+    <div className="rounded-md border border-gray-200 bg-white px-6 py-8 text-center">
       <FileCheck2 className="mx-auto h-8 w-8 text-gray-300" />
 
       <h3 className="mt-3 font-semibold text-gray-950">Invoice unavailable</h3>

@@ -636,7 +636,7 @@ const EditInvoiceDialog = ({ invoice }) => {
               type="button"
               disabled={updateLoading}
               onClick={() => handleOpenChange(false)}
-              className="h-11 rounded-lg border border-gray-300 px-6 text-sm font-semibold text-gray-700"
+              className="h-11 rounded-md border border-gray-300 px-6 text-sm font-semibold text-gray-700"
             >
               Cancel
             </button>
@@ -644,7 +644,7 @@ const EditInvoiceDialog = ({ invoice }) => {
             <button
               type="submit"
               disabled={updateLoading || !invoice?.can_edit}
-              className="inline-flex h-11 items-center gap-2 rounded-lg bg-[#b60018] px-6 text-sm font-semibold text-white"
+              className="inline-flex h-11 items-center gap-2 rounded-md bg-[#b60018] px-6 text-sm font-semibold text-white"
             >
               <Save className="h-4 w-4" />
 

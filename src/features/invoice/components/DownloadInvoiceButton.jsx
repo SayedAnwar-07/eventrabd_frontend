@@ -193,7 +193,7 @@ const DownloadInvoiceButton = ({
       type="button"
       onClick={handleDownload}
       disabled={disabled || downloading}
-      className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-[#b60018] px-4 text-xs font-semibold text-white transition hover:bg-[#960014] disabled:cursor-not-allowed disabled:opacity-60 sm:h-11 sm:w-auto sm:px-6 sm:text-sm"
+      className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md bg-[#b60018] px-4 text-xs font-semibold text-white transition hover:bg-[#960014] disabled:cursor-not-allowed disabled:opacity-60 sm:h-11 sm:w-auto sm:px-6 sm:text-sm"
     >
       <Download className="h-4 w-4 shrink-0" />
 

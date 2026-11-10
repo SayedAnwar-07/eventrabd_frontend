@@ -110,7 +110,7 @@ export default function BookingSlotCard({ slot, brand }) {
                 )}
 
                 {row.type === "image" ? (
-                  <span className="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-800">
+                  <span className="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-md bg-gray-100 dark:bg-gray-800">
                     {row.image ? (
                       <img
                         src={`${CLOUDINARY_URL}/${row.image}`}
@@ -124,7 +124,7 @@ export default function BookingSlotCard({ slot, brand }) {
                     )}
                   </span>
                 ) : (
-                  <span className="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-red-50 dark:bg-red-950/30">
+                  <span className="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-red-50 dark:bg-red-950/30">
                     <Icon className="h-4 w-4 text-red-600" />
                   </span>
                 )}
@@ -148,7 +148,7 @@ export default function BookingSlotCard({ slot, brand }) {
             href={mapLink || undefined}
             target={mapLink ? "_blank" : undefined}
             rel={mapLink ? "noopener noreferrer" : undefined}
-            className={`group relative block overflow-hidden rounded-xl border border-gray-200 dark:border-gray-800 ${
+            className={`group relative block overflow-hidden rounded-md border border-gray-200 dark:border-gray-800 ${
               mapLink ? "cursor-pointer" : "cursor-default"
             }`}
           >
@@ -168,7 +168,7 @@ export default function BookingSlotCard({ slot, brand }) {
               </div>
             </div>
 
-            <div className="absolute bottom-3 left-3 rounded-lg bg-white/90 px-3 py-1 text-xs font-medium text-gray-700 shadow">
+            <div className="absolute bottom-3 left-3 rounded-md bg-white/90 px-3 py-1 text-xs font-medium text-gray-700 shadow">
               {mapLink ? "Open Google Map" : "Map link unavailable"}
             </div>
           </a>

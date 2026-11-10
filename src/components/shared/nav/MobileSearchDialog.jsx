@@ -19,6 +19,7 @@ export default function MobileSearchDialog({ open, onOpenChange }) {
 
   useEffect(() => {
     onOpenChange(false);
+
     // Close the modal after route navigation.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname, location.search]);
@@ -27,10 +28,10 @@ export default function MobileSearchDialog({ open, onOpenChange }) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         showCloseButton={false}
-        className="top-[12%] w-[calc(100%-24px)] max-w-115 translate-y-0 gap-0 overflow-hidden rounded-2xl border border-[#E5DDD5] bg-white p-0 shadow-[0_24px_80px_rgba(32,24,20,0.18)] duration-300 data-[state=open]:zoom-in-95 data-[state=closed]:zoom-out-95 data-[state=open]:slide-in-from-top-4 data-[state=closed]:slide-out-to-top-4 sm:top-[50%] sm:-translate-y-1/2 dark:border-border dark:bg-background"
+        className="top-[12%] max-h-[85dvh] w-[calc(100%-24px)] max-w-115 translate-y-0 gap-0 overflow-y-auto rounded-md border border-[#E5DDD5] bg-white p-0 shadow-[0_24px_80px_rgba(32,24,20,0.18)] duration-300 data-[state=open]:zoom-in-95 data-[state=closed]:zoom-out-95 data-[state=open]:slide-in-from-top-4 data-[state=closed]:slide-out-to-top-4 sm:top-1/2 sm:-translate-y-1/2 dark:border-border dark:bg-background"
       >
         {/* Header */}
-        <DialogHeader className="px-5 pb-4 pt-5 text-left dark:border-border">
+        <DialogHeader className="px-5 pb-4 pt-5 text-left">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <div className="mb-2 flex items-center gap-1.5 text-[#9C2135]">
@@ -61,17 +62,23 @@ export default function MobileSearchDialog({ open, onOpenChange }) {
           </div>
         </DialogHeader>
 
+        {/* Search Content */}
         <div className="space-y-5 px-5 pb-6">
+          {/* Existing Seller Search */}
           <MobileSellerSearch onSelect={() => onOpenChange(false)} />
 
+          {/* Divider */}
           <div className="flex items-center gap-3">
             <div className="h-px flex-1 bg-[#EEE8E2]" />
+
             <span className="text-[10px] font-semibold uppercase tracking-widest text-[#A69B91]">
               Or
             </span>
+
             <div className="h-px flex-1 bg-[#EEE8E2]" />
           </div>
 
+          {/* Existing Brand Search */}
           <MobileBrandSearch onSelect={() => onOpenChange(false)} />
         </div>
       </DialogContent>
