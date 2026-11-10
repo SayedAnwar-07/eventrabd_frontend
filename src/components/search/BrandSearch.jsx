@@ -26,7 +26,7 @@ const BrandSearch = ({ onSelect }) => {
   const selectedQuery = useRef(null);
 
   const inputClass =
-    "h-11 w-full rounded-md border border-[#E5DDD5] bg-gray-50 px-3 pr-10 text-sm text-[#3D3530] shadow-none outline-none transition-colors placeholder:text-[#A69B91] focus-visible:border-[#A68C78] focus-visible:ring-2 focus-visible:ring-[#A68C78]/20 disabled:cursor-not-allowed disabled:bg-[#F8F5F2] disabled:opacity-70";
+    "h-11 w-full rounded-md border border-[#E5DDD5] bg-gray-50 px-3 pr-10 text-sm text-theme-color shadow-none outline-none transition-colors placeholder:text-[#A69B91] focus-visible:border-[#A68C78] focus-visible:ring-2 focus-visible:ring-[#A68C78]/20 disabled:cursor-not-allowed disabled:bg-[#F8F5F2] disabled:opacity-70";
 
   useEffect(() => {
     if (!query.trim()) return;
@@ -58,6 +58,7 @@ const BrandSearch = ({ onSelect }) => {
     setHasSearched(false);
 
     // Optional callback for Home page navigation
+    // eslint-disable-next-line no-undef
     onSelect?.(seller);
   };
 
@@ -112,7 +113,7 @@ const BrandSearch = ({ onSelect }) => {
             type="button"
             onClick={handleClear}
             aria-label="Clear brand search"
-            className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md px-2 py-1 text-xs font-medium text-[#8C7B6E] transition hover:bg-[#F0EAE4] hover:text-[#3D3530]"
+            className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md px-2 py-1 text-xs font-medium text-[#8C7B6E] transition hover:bg-[#F0EAE4] hover:text-theme-color"
           >
             Clear
           </button>
@@ -146,7 +147,7 @@ const BrandSearch = ({ onSelect }) => {
                   key={brand.id}
                   type="button"
                   onClick={() => handleSelect(brand)}
-                  className="block w-full rounded-md px-3 py-3 text-left text-sm text-[#3D3530] transition-colors hover:bg-[#F8F5F2] focus:bg-[#F8F5F2] focus:outline-none"
+                  className="block w-full rounded-md px-3 py-3 text-left text-sm text-theme-color transition-colors hover:bg-[#F8F5F2] focus:bg-[#F8F5F2] focus:outline-none"
                 >
                   <span className="font-medium">{brand.display_name}</span>
                 </button>

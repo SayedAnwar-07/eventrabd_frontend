@@ -25,10 +25,10 @@ import {
 // ============================================
 
 const fieldClass =
-  "h-11 w-full rounded-md border border-[#E5DDD5] bg-gray-50 px-3 text-sm text-[#3D3530] shadow-none transition-colors placeholder:text-[#A69B91] focus-visible:border-[#A68C78] focus-visible:ring-2 focus-visible:ring-[#A68C78]/20 disabled:cursor-not-allowed disabled:bg-[#F8F5F2] disabled:opacity-70";
+  "h-11 w-full rounded-md border border-[#E5DDD5] bg-gray-50 px-3 text-sm text-theme-color shadow-none transition-colors placeholder:text-[#A69B91] focus-visible:border-[#A68C78] focus-visible:ring-2 focus-visible:ring-[#A68C78]/20 disabled:cursor-not-allowed disabled:bg-[#F8F5F2] disabled:opacity-70";
 
 const buttonClass =
-  "inline-flex h-11 w-full items-center justify-center gap-2 rounded-md border border-[#3D3530] bg-[#3D3530] px-6 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:border-[#51463E] hover:bg-[#51463E] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A68C78]/40 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60";
+  "inline-flex h-11 w-full items-center justify-center gap-2 rounded-md border border-theme-color bg-theme-color px-6 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:border-[#51463E] hover:bg-[#51463E] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A68C78]/40 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60";
 
 const toastStyle = {
   background: "#FFFFFF",
@@ -146,14 +146,14 @@ const LoginForm = () => {
   };
 
   return (
-    <section className="flex min-h-screen w-full justify-center py-12 text-[#3D3530]">
+    <section className="flex min-h-screen w-full justify-center py-12 text-theme-color">
       <div className="w-full max-w-110">
         {/* ===================================
             PAGE HEADING
         =================================== */}
 
         <div className="mb-7 text-center">
-          <h1 className="text-2xl font-bold tracking-tight text-[#3D3530] sm:text-[28px]">
+          <h1 className="text-2xl font-bold tracking-tight text-theme-color sm:text-[28px]">
             Welcome Back
           </h1>
 
@@ -167,7 +167,6 @@ const LoginForm = () => {
         =================================== */}
 
         <div className="overflow-hidden rounded-md border border-[#E5DDD5] bg-white shadow-[0_1px_2px_rgba(61,53,48,0.04),0_8px_24px_-12px_rgba(61,53,48,0.10)]">
-
           {/* Form */}
 
           <form onSubmit={handleSubmit} className="space-y-5 p-5 sm:p-7">
@@ -222,7 +221,7 @@ const LoginForm = () => {
 
                 <Link
                   to="/forgot-password"
-                  className="text-xs font-medium text-[#756A62] transition-colors hover:text-[#3D3530] hover:underline"
+                  className="text-xs font-medium text-[#756A62] transition-colors hover:text-theme-color hover:underline"
                 >
                   Forgot password?
                 </Link>
@@ -254,7 +253,7 @@ const LoginForm = () => {
                   disabled={loading}
                   aria-label={showPassword ? "Hide password" : "Show password"}
                   aria-pressed={showPassword}
-                  className="absolute right-3 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-[#9B9087] transition-colors hover:text-[#3D3530] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A68C78]/40 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="absolute right-3 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-[#9B9087] transition-colors hover:text-theme-color focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A68C78]/40 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {showPassword ? (
                     <EyeOff size={18} aria-hidden="true" />
@@ -296,7 +295,7 @@ const LoginForm = () => {
                 Don't have an account?{" "}
                 <Link
                   to="/register"
-                  className="font-semibold text-[#3D3530] underline-offset-4 transition-colors hover:text-[#A68C78] hover:underline"
+                  className="font-semibold text-theme-color underline-offset-4 transition-colors hover:text-[#A68C78] hover:underline"
                 >
                   Create an account
                 </Link>

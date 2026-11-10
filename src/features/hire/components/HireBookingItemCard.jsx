@@ -42,7 +42,7 @@ const HireBookingItemCard = ({
                 </span>
               </div>
 
-              <h4 className="text-base font-semibold leading-6 text-[#3D3530] sm:text-lg">
+              <h4 className="text-base font-semibold leading-6 text-theme-color sm:text-lg">
                 {title || "Photography Package"}
               </h4>
 
@@ -56,7 +56,7 @@ const HireBookingItemCard = ({
                 Total
               </p>
 
-              <p className="mt-1 text-base font-bold text-[#3D3530] sm:text-lg">
+              <p className="mt-1 text-base font-bold text-theme-color sm:text-lg">
                 {itemTotal !== null ? formatPrice(itemTotal) : "Unavailable"}
               </p>
             </div>
@@ -67,7 +67,7 @@ const HireBookingItemCard = ({
           {/* Quantity */}
           <div className="mt-4 flex items-center justify-between gap-4">
             <div className="min-w-0">
-              <p className="text-xs font-semibold text-[#3D3530]">Quantity</p>
+              <p className="text-xs font-semibold text-theme-color">Quantity</p>
 
               <p className="mt-1 text-[11px] text-[#8A817A]">
                 Maximum {MAX_BOOKING_SLOTS} bookings
@@ -88,7 +88,7 @@ const HireBookingItemCard = ({
                   <Minus size={15} />
                 </button>
 
-                <span className="flex h-9 min-w-10 items-center justify-center border-x border-[#E5DDD5] px-3 text-sm font-semibold text-[#3D3530]">
+                <span className="flex h-9 min-w-10 items-center justify-center border-x border-[#E5DDD5] px-3 text-sm font-semibold text-theme-color">
                   {item.quantity}
                 </span>
 
@@ -105,7 +105,7 @@ const HireBookingItemCard = ({
                 </button>
               </div>
             ) : (
-              <span className="shrink-0 text-sm font-semibold text-[#3D3530]">
+              <span className="shrink-0 text-sm font-semibold text-theme-color">
                 {item.quantity}
               </span>
             )}

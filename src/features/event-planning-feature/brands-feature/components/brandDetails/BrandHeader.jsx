@@ -160,7 +160,7 @@ const BrandHeader = ({ brand, onEdit, actionsLoading = false }) => {
         <div className="mt-10 max-w-6xl">
           <h2 className="mb-4 text-xl font-semibold text-foreground">
             About This Brand
-            <span className="mt-2 block h-1 w-12 rounded-full bg-[#ae0212]" />
+            <span className="mt-2 block h-1 w-12 rounded-full bg-theme-color" />
           </h2>
 
           <div

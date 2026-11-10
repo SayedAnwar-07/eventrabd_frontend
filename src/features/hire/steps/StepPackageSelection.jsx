@@ -38,7 +38,7 @@ const StepPackageSelection = ({
           Step 02 · Package Selection
         </p>
 
-        <h2 className="text-xl font-semibold tracking-tight text-[#3D3530] sm:text-2xl">
+        <h2 className="text-xl font-semibold tracking-tight text-theme-color sm:text-2xl">
           Select Packages
         </h2>
 
@@ -53,7 +53,7 @@ const StepPackageSelection = ({
           role="status"
           className="flex items-center gap-2.5 rounded-md border border-[#E5DDD5] bg-[#FFFCF9] px-3.5 py-2.5"
         >
-          <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#3D3530] text-white">
+          <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-theme-color text-white">
             <Check size={12} strokeWidth={2.5} />
           </span>
 
@@ -157,7 +157,7 @@ const StepPackageSelection = ({
                     aria-pressed={isSelected}
                     className={`mt-4 flex h-5 w-5 shrink-0 items-center justify-center rounded-[5px] border transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A68C78]/30 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${
                       isSelected
-                        ? "border-[#3D3530] bg-[#3D3530] text-white"
+                        ? "border-theme-color bg-theme-color text-white"
                         : "border-[#CFC2B6] bg-white text-transparent hover:border-[#A68C78]"
                     }`}
                   >
@@ -170,7 +170,7 @@ const StepPackageSelection = ({
                       <div className="flex min-w-0 flex-1 items-start justify-between gap-3">
                         {/* PACKAGE INFORMATION */}
                         <div className="min-w-0 flex-1">
-                          <h3 className="wrap-break-word text-sm font-semibold leading-5 text-[#3D3530]">
+                          <h3 className="wrap-break-word text-sm font-semibold leading-5 text-theme-color">
                             {item?.package_title || "Untitled Package"}
                           </h3>
 

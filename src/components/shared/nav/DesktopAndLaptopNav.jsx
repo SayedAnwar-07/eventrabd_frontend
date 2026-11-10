@@ -83,7 +83,7 @@ export default function DesktopAndLaptopNav({
                   "rounded-full px-4 py-2",
                   "text-sm font-medium transition-all duration-200",
                   isActive
-                    ? "bg-background text-foreground shadow-sm"
+                    ? "bg-theme-color text-white shadow-sm"
                     : "text-muted-foreground hover:bg-background/70 hover:text-foreground",
                 ].join(" ")
               }
@@ -118,7 +118,7 @@ export default function DesktopAndLaptopNav({
           {!user ? (
             <div className="ml-2 flex items-center gap-2">
               <Button
-                variant="ghost"
+                variant="secondary"
                 size="sm"
                 asChild
                 className="rounded-full px-4"

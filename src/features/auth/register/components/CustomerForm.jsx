@@ -26,14 +26,14 @@ import GlobalErrorMessage from "@/components/common/GlobalErrorMessage";
 // ============================================
 
 const fieldClass =
-  "h-11 w-full rounded-md border border-[#E5DDD5] bg-gray-50 px-3 text-sm text-[#3D3530] shadow-none transition-colors placeholder:text-[#A69B91] focus-visible:border-[#A68C78] focus-visible:ring-2 focus-visible:ring-[#A68C78]/20";
+  "h-11 w-full rounded-md border border-[#E5DDD5] bg-gray-50 px-3 text-sm text-theme-color shadow-none transition-colors placeholder:text-[#A69B91] focus-visible:border-[#A68C78] focus-visible:ring-2 focus-visible:ring-[#A68C78]/20";
 
 const labelClass = "mb-1.5 block text-xs font-medium text-[#51463E]";
 
 const errorClass = "mt-1.5 text-xs font-medium leading-relaxed text-red-600";
 
 const passwordToggleClass =
-  "absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-[#9B9087] transition-colors hover:text-[#3D3530] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A68C78]/30";
+  "absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-[#9B9087] transition-colors hover:text-theme-color focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A68C78]/30";
 
 // ============================================
 // CUSTOMER REGISTRATION COMPONENT
@@ -96,14 +96,14 @@ const CustomerForm = () => {
   }, [dispatch]);
 
   return (
-    <section className="min-h-screen py-10 text-[#3D3530] sm:px-6 sm:py-14">
+    <section className="min-h-screen py-10 text-theme-color sm:px-6 sm:py-14">
       <div className="mx-auto w-full max-w-2xl">
         {/* Back Navigation */}
 
         <button
           type="button"
           onClick={() => navigate("/register")}
-          className="mb-6 inline-flex items-center gap-2 text-xs font-medium text-[#756A62] transition-colors hover:text-[#3D3530]"
+          className="mb-6 inline-flex items-center gap-2 text-xs font-medium text-[#756A62] transition-colors hover:text-theme-color"
         >
           <ArrowLeft className="h-4 w-4" />
           Choose a different role
@@ -118,7 +118,7 @@ const CustomerForm = () => {
             </span>
           </div>
 
-          <h1 className="text-2xl font-bold tracking-tight text-[#3D3530] sm:text-3xl">
+          <h1 className="text-2xl font-bold tracking-tight text-theme-color sm:text-3xl">
             Create Your Customer Account
           </h1>
 
@@ -131,7 +131,7 @@ const CustomerForm = () => {
 
         <div className="overflow-hidden rounded-md border border-[#E5DDD5] bg-white shadow-[0_1px_2px_rgba(61,53,48,0.04),0_8px_24px_-12px_rgba(61,53,48,0.10)]">
           {/* Card Body */}
-          
+
           <div className="p-4 sm:p-6">
             {/* Global Error */}
 
@@ -243,7 +243,7 @@ const CustomerForm = () => {
                   <Checkbox
                     id="terms-customer"
                     onCheckedChange={(v) => setValue("terms_accept", v)}
-                    className="mt-0.5 h-4 w-4 rounded border-[#CFC2B6] data-[state=checked]:border-[#3D3530] data-[state=checked]:bg-[#3D3530] data-[state=checked]:text-white"
+                    className="mt-0.5 h-4 w-4 rounded border-[#CFC2B6] data-[state=checked]:border-theme-color data-[state=checked]:bg-theme-color data-[state=checked]:text-white"
                   />
 
                   <Label
@@ -264,7 +264,7 @@ const CustomerForm = () => {
               <Button
                 type="submit"
                 disabled={loading}
-                className="h-11 w-full rounded-md border border-[#3D3530] bg-[#3D3530] px-6 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:border-[#51463E] hover:bg-[#51463E] focus-visible:ring-2 focus-visible:ring-[#A68C78]/40 disabled:cursor-not-allowed disabled:opacity-60"
+                className="h-11 w-full rounded-md border border-theme-color bg-theme-color px-6 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:border-[#51463E] hover:bg-[#51463E] focus-visible:ring-2 focus-visible:ring-[#A68C78]/40 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {loading ? (
                   <>
@@ -283,7 +283,7 @@ const CustomerForm = () => {
                   Already have an account?{" "}
                   <Link
                     to="/login"
-                    className="font-semibold text-[#3D3530] underline-offset-4 transition-colors hover:text-[#A68C78] hover:underline"
+                    className="font-semibold text-theme-color underline-offset-4 transition-colors hover:text-[#A68C78] hover:underline"
                   >
                     Login
                   </Link>

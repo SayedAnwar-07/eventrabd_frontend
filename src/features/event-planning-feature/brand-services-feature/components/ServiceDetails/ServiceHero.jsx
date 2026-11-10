@@ -172,7 +172,7 @@ const ServiceHero = ({ service, formatServiceName }) => {
       <div className="">
         <h2 className="mb-4 text-xl font-semibold text-foreground">
           About This Service
-          <span className="mt-2 block h-1 w-12 rounded-full bg-[#ae0212]" />
+          <span className="mt-2 block h-1 w-12 rounded-full bg-theme-color" />
         </h2>
 
         {service?.description ? (

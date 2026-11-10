@@ -8,7 +8,7 @@ import RichTextEditor from "@/components/common/RichTextEditor";
 import { useState } from "react";
 
 const fieldClass =
-  "h-11 w-full rounded-md border border-[#E5DDD5] bg-gray-50 px-3 text-sm text-[#3D3530] shadow-none transition-colors placeholder:text-[#A69B91] focus-visible:border-[#A68C78] focus-visible:ring-2 focus-visible:ring-[#A68C78]/20 disabled:cursor-not-allowed disabled:bg-[#F8F5F2] disabled:opacity-70";
+  "h-11 w-full rounded-md border border-[#E5DDD5] bg-gray-50 px-3 text-sm text-theme-color shadow-none transition-colors placeholder:text-[#A69B91] focus-visible:border-[#A68C78] focus-visible:ring-2 focus-visible:ring-[#A68C78]/20 disabled:cursor-not-allowed disabled:bg-[#F8F5F2] disabled:opacity-70";
 
 function FieldLabel({ htmlFor, children }) {
   return (
@@ -24,7 +24,7 @@ function FieldLabel({ htmlFor, children }) {
 function SectionHeader({ title, description }) {
   return (
     <div className="border-b border-[#F0EAE4] bg-[#FFFCF9] px-4 py-3.5 sm:px-6">
-      <h3 className="text-sm font-semibold text-[#3D3530]">{title}</h3>
+      <h3 className="text-sm font-semibold text-theme-color">{title}</h3>
       <p className="mt-1 text-xs text-[#756A62]">{description}</p>
     </div>
   );
@@ -250,7 +250,7 @@ export default function BrandFormFields({
                 required
                 disabled={loading}
                 aria-invalid={Boolean(errors.whatsapp_number)}
-                className="h-full w-full min-w-0 border-0 bg-transparent p-0 font-mono text-sm tracking-wide text-[#3D3530] outline-none placeholder:text-[#A69B91] focus-visible:ring-0 disabled:cursor-not-allowed"
+                className="h-full w-full min-w-0 border-0 bg-transparent p-0 font-mono text-sm tracking-wide text-theme-color outline-none placeholder:text-[#A69B91] focus-visible:ring-0 disabled:cursor-not-allowed"
               />
             </div>
 
@@ -290,7 +290,7 @@ export default function BrandFormFields({
               maxLength={500}
               disabled={loading}
               aria-invalid={Boolean(errors.office_address)}
-              className={`min-h-24 w-full resize-none rounded-md border border-[#E5DDD5] bg-gray-50 px-3 py-3 text-sm leading-relaxed text-[#3D3530] shadow-none transition-colors placeholder:text-[#A69B91] focus-visible:border-[#A68C78] focus-visible:ring-2 focus-visible:ring-[#A68C78]/20 disabled:bg-[#F8F5F2] ${
+              className={`min-h-24 w-full resize-none rounded-md border border-[#E5DDD5] bg-gray-50 px-3 py-3 text-sm leading-relaxed text-theme-color shadow-none transition-colors placeholder:text-[#A69B91] focus-visible:border-[#A68C78] focus-visible:ring-2 focus-visible:ring-[#A68C78]/20 disabled:bg-[#F8F5F2] ${
                 errors.office_address ? "border-red-500" : ""
               }`}
             />
@@ -343,7 +343,7 @@ export default function BrandFormFields({
                   <span
                     className={`text-sm ${
                       checked
-                        ? "font-semibold text-[#3D3530]"
+                        ? "font-semibold text-theme-color"
                         : "font-medium text-[#51463E]"
                     }`}
                   >

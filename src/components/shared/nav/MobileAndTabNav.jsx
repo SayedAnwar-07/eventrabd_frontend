@@ -8,6 +8,7 @@ import {
   Sparkles,
   // Moon,
   // Sun,
+  Search,
   UserPlus,
   UserRound,
 } from "lucide-react";
@@ -30,6 +31,8 @@ import NotificationBell from "@/features/notfications/components/NotificationBel
 import SellerBrandNav from "./SellerBrandNav";
 
 import eventraBDLogo from "@/assets/logo/logo.png";
+import MobileSearchDialog from "./MobileSearchDialog";
+import { useState } from "react";
 
 const getInitial = (user) => {
   const name = user?.full_name || user?.first_name || user?.email || "User";
@@ -80,6 +83,8 @@ export default function MobileAndTabNav({
   const isSeller = user?.role === "seller";
   const isCustomer = user?.role === "customer";
 
+  const [searchOpen, setSearchOpen] = useState(false);
+
   const bottomGridClass =
     isSeller || isCustomer ? "grid-cols-5" : "grid-cols-4";
 
@@ -102,20 +107,38 @@ export default function MobileAndTabNav({
           </Link>
 
           {/* Right Actions */}
-          <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
-            {/* <Button
+          <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+            {/* Search Button */}
+            <button
               type="button"
-              variant="ghost"
-              size="icon"
-              onClick={onThemeToggle}
-              className="h-9 w-9 rounded-full"
-              aria-label="Toggle theme"
+              onClick={() => setSearchOpen(true)}
+              aria-label="Open search"
+              aria-haspopup="dialog"
+              className="
+          group relative flex h-9 w-9
+          items-center justify-center
+          rounded-full text-foreground
+          outline-none
+          transition-all duration-300
+          hover:bg-[#F8F5F2]
+          hover:text-[#9C2135]
+          active:scale-90
+          focus-visible:ring-2
+          focus-visible:ring-[#A68C78]
+          dark:hover:bg-muted
+        "
             >
-              <Sun className="h-4.5 w-4.5 dark:hidden" />
+              <Search
+                className="
+            h-5 w-5
+            transition-transform duration-300
+            group-hover:scale-110
+          "
+                strokeWidth={1.9}
+              />
+            </button>
 
-              <Moon className="hidden h-4.5 w-4.5 dark:block" />
-            </Button> */}
-
+            {/* Existing Notification Bell */}
             {canReceiveNotifications && (
               <NotificationBell
                 userRole={user.role}
@@ -124,6 +147,7 @@ export default function MobileAndTabNav({
               />
             )}
 
+            {/* Existing User Dropdown */}
             {user && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -190,8 +214,11 @@ export default function MobileAndTabNav({
         </div>
       </header>
 
+      {/* Search Popup */}
+      <MobileSearchDialog open={searchOpen} onOpenChange={setSearchOpen} />
+
       {/* BOTTOM APP NAVIGATION */}
-      <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-[#ae0212] bg-[#ae0212] text-white shadow-[0_-4px_16px_rgba(0,0,0,0.08)]">
+      <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-theme-color bg-theme-color text-white shadow-[0_-4px_16px_rgba(0,0,0,0.08)]">
         <div
           className={[
             "grid min-h-16",

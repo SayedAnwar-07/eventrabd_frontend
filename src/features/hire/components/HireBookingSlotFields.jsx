@@ -48,10 +48,10 @@ const HireBookingSlotFields = ({
   const [calendarMonths, setCalendarMonths] = useState({});
 
   const fieldTriggerClass =
-    "flex! h-11! min-h-11! w-full! min-w-0! items-center justify-between gap-2 rounded-md! border! border-[#E5DDD5]! bg-gray-50! px-3! py-0! text-left text-sm font-normal text-[#3D3530] shadow-none! outline-none transition-colors hover:border-[#CFC2B6]! focus-visible:border-[#A68C78]! focus-visible:ring-2! focus-visible:ring-[#A68C78]/20! disabled:cursor-not-allowed disabled:bg-[#F8F5F2]! disabled:opacity-70 data-[placeholder]:text-[#A69B91]";
+    "flex! h-11! min-h-11! w-full! min-w-0! items-center justify-between gap-2 rounded-md! border! border-[#E5DDD5]! bg-gray-50! px-3! py-0! text-left text-sm font-normal text-theme-color shadow-none! outline-none transition-colors hover:border-[#CFC2B6]! focus-visible:border-[#A68C78]! focus-visible:ring-2! focus-visible:ring-[#A68C78]/20! disabled:cursor-not-allowed disabled:bg-[#F8F5F2]! disabled:opacity-70 data-[placeholder]:text-[#A69B91]";
 
   const inputClass =
-    "h-11 w-full rounded-md border border-[#E5DDD5] bg-gray-50 px-3 text-sm text-[#3D3530] shadow-none outline-none transition-colors placeholder:text-[#A69B91] focus-visible:border-[#A68C78] focus-visible:ring-2 focus-visible:ring-[#A68C78]/20 disabled:cursor-not-allowed disabled:bg-[#F8F5F2] disabled:opacity-70";
+    "h-11 w-full rounded-md border border-[#E5DDD5] bg-gray-50 px-3 text-sm text-theme-color shadow-none outline-none transition-colors placeholder:text-[#A69B91] focus-visible:border-[#A68C78] focus-visible:ring-2 focus-visible:ring-[#A68C78]/20 disabled:cursor-not-allowed disabled:bg-[#F8F5F2] disabled:opacity-70";
 
   const labelClass = "mb-1.5 block text-xs font-medium text-[#51463E]";
 
@@ -224,7 +224,7 @@ const HireBookingSlotFields = ({
                 <span
                   className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-sm font-semibold ${
                     isFirstBooking
-                      ? "bg-[#3D3530] text-white"
+                      ? "bg-theme-color text-white"
                       : "bg-[#A68C78] text-[#2B2420]"
                   }`}
                 >
@@ -232,7 +232,7 @@ const HireBookingSlotFields = ({
                 </span>
 
                 <div className="min-w-0">
-                  <h3 className="text-base font-semibold text-[#3D3530]">
+                  <h3 className="text-base font-semibold text-theme-color">
                     Event {slotIndex + 1}
                   </h3>
 
@@ -336,7 +336,7 @@ const HireBookingSlotFields = ({
                       >
                         <span
                           className={`min-w-0 truncate text-sm ${
-                            datePart ? "text-[#3D3530]" : "text-[#A69B91]"
+                            datePart ? "text-theme-color" : "text-[#A69B91]"
                           }`}
                         >
                           {formatDate(datePart)}

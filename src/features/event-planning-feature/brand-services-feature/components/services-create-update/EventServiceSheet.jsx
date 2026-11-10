@@ -24,18 +24,18 @@ import { ImagePlus, Upload, X, Check, Loader2 } from "lucide-react";
 // ============================================
 
 const inputClass =
-  "h-11 w-full rounded-md border border-[#E5DDD5] bg-gray-50 px-3 text-sm text-[#3D3530] shadow-none outline-none transition-colors placeholder:text-[#A69B91] focus:border-[#A68C78] focus:ring-2 focus:ring-[#A68C78]/20 disabled:cursor-not-allowed disabled:bg-[#F8F5F2] disabled:opacity-70";
+  "h-11 w-full rounded-md border border-[#E5DDD5] bg-gray-50 px-3 text-sm text-theme-color shadow-none outline-none transition-colors placeholder:text-[#A69B91] focus:border-[#A68C78] focus:ring-2 focus:ring-[#A68C78]/20 disabled:cursor-not-allowed disabled:bg-[#F8F5F2] disabled:opacity-70";
 
 const labelClass = "mb-1.5 block text-xs font-medium text-[#51463E]";
 
 const primaryButtonClass =
-  "inline-flex h-11 items-center justify-center gap-2 rounded-md border border-[#3D3530] bg-[#3D3530] px-6 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:border-[#51463E] hover:bg-[#51463E] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A68C78]/40 disabled:cursor-not-allowed disabled:opacity-60";
+  "inline-flex h-11 items-center justify-center gap-2 rounded-md border border-theme-color bg-theme-color px-6 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:border-[#51463E] hover:bg-[#51463E] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A68C78]/40 disabled:cursor-not-allowed disabled:opacity-60";
 
 const secondaryButtonClass =
   "inline-flex h-11 items-center justify-center gap-2 rounded-md border border-[#E5DDD5] bg-white px-6 text-sm font-semibold text-[#51463E] transition-colors hover:border-[#CFC2B6] hover:bg-[#FFFCF9] disabled:cursor-not-allowed disabled:opacity-60";
 
 const smallPrimaryButtonClass =
-  "inline-flex min-h-9 shrink-0 items-center justify-center gap-2 rounded-md border border-[#3D3530] bg-[#3D3530] px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#51463E] disabled:cursor-not-allowed disabled:opacity-50";
+  "inline-flex min-h-9 shrink-0 items-center justify-center gap-2 rounded-md border border-theme-color bg-theme-color px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#51463E] disabled:cursor-not-allowed disabled:opacity-50";
 
 const smallSecondaryButtonClass =
   "inline-flex min-h-9 items-center justify-center gap-2 rounded-md border border-[#E5DDD5] bg-white px-3 py-2 text-xs font-semibold text-[#51463E] transition-colors hover:bg-[#FFFCF9] disabled:cursor-not-allowed disabled:opacity-50";
@@ -142,13 +142,13 @@ const EventServiceSheet = ({
     <Sheet open={open} onOpenChange={handleOpenChange}>
       <SheetTrigger asChild>{trigger}</SheetTrigger>
 
-      <SheetContent className="flex h-full w-full flex-col gap-0 overflow-hidden border-l border-[#E5DDD5] bg-white p-0 text-[#3D3530] sm:max-w-2xl">
+      <SheetContent className="flex h-full w-full flex-col gap-0 overflow-hidden border-l border-[#E5DDD5] bg-white p-0 text-theme-color sm:max-w-2xl">
         {/* ===================================
             SHEET HEADER
         =================================== */}
 
         <SheetHeader className="shrink-0 border-b border-[#E5DDD5] bg-white px-5 py-5 text-left sm:px-6">
-          <SheetTitle className="text-xl font-bold tracking-tight text-[#3D3530]">
+          <SheetTitle className="text-xl font-bold tracking-tight text-theme-color">
             {isEdit ? "Update Event Service" : "Create Event Service"}
           </SheetTitle>
 
@@ -171,7 +171,7 @@ const EventServiceSheet = ({
 
             <section className={sectionClass}>
               <div className={sectionHeaderClass}>
-                <h3 className="text-sm font-semibold text-[#3D3530]">
+                <h3 className="text-sm font-semibold text-theme-color">
                   Service Information
                 </h3>
 
@@ -290,7 +290,7 @@ const EventServiceSheet = ({
 
             <section className={sectionClass}>
               <div className={sectionHeaderClass}>
-                <h3 className="text-sm font-semibold text-[#3D3530]">
+                <h3 className="text-sm font-semibold text-theme-color">
                   Service Description
                 </h3>
 
@@ -318,7 +318,7 @@ const EventServiceSheet = ({
                 <div className={sectionHeaderClass}>
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div className="min-w-0">
-                      <h3 className="text-sm font-semibold text-[#3D3530]">
+                      <h3 className="text-sm font-semibold text-theme-color">
                         Cover Photo
                       </h3>
 
@@ -359,7 +359,7 @@ const EventServiceSheet = ({
                         <button
                           type="button"
                           onClick={removeSelectedCoverPhoto}
-                          className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-md border border-[#E5DDD5] bg-white px-3 py-2 text-xs font-semibold text-[#3D3530] shadow-sm transition-colors hover:bg-[#F8F5F2]"
+                          className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-md border border-[#E5DDD5] bg-white px-3 py-2 text-xs font-semibold text-theme-color shadow-sm transition-colors hover:bg-[#F8F5F2]"
                         >
                           <X size={13} />
                           Remove
@@ -378,7 +378,7 @@ const EventServiceSheet = ({
                         <ImagePlus size={20} className="text-[#756A62]" />
                       </div>
 
-                      <p className="text-sm font-semibold text-[#3D3530]">
+                      <p className="text-sm font-semibold text-theme-color">
                         No cover photo selected
                       </p>
 
@@ -410,7 +410,7 @@ const EventServiceSheet = ({
                 <div className={sectionHeaderClass}>
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div className="min-w-0">
-                      <h3 className="text-sm font-semibold text-[#3D3530]">
+                      <h3 className="text-sm font-semibold text-theme-color">
                         Gallery Images
                       </h3>
 
@@ -437,28 +437,28 @@ const EventServiceSheet = ({
                   <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-[#F0EAE4] pb-4 text-xs text-[#756A62]">
                     <span>
                       Limit:{" "}
-                      <strong className="font-semibold text-[#3D3530]">
+                      <strong className="font-semibold text-theme-color">
                         {selectedImageLimit}
                       </strong>
                     </span>
 
                     <span>
                       Active:{" "}
-                      <strong className="font-semibold text-[#3D3530]">
+                      <strong className="font-semibold text-theme-color">
                         {currentExistingImageCount}
                       </strong>
                     </span>
 
                     <span>
                       New:{" "}
-                      <strong className="font-semibold text-[#3D3530]">
+                      <strong className="font-semibold text-theme-color">
                         {newGalleryImageCount}
                       </strong>
                     </span>
 
                     <span>
                       Remaining:{" "}
-                      <strong className="font-semibold text-[#3D3530]">
+                      <strong className="font-semibold text-theme-color">
                         {availableGallerySlots}
                       </strong>
                     </span>
@@ -496,7 +496,7 @@ const EventServiceSheet = ({
                             <button
                               type="button"
                               onClick={() => removeNewGalleryImage(preview.id)}
-                              className="absolute right-2 top-2 inline-flex h-7 w-7 items-center justify-center rounded-md border border-[#E5DDD5] bg-white text-[#3D3530] shadow-sm transition-colors hover:bg-[#F8F5F2]"
+                              className="absolute right-2 top-2 inline-flex h-7 w-7 items-center justify-center rounded-md border border-[#E5DDD5] bg-white text-theme-color shadow-sm transition-colors hover:bg-[#F8F5F2]"
                               aria-label="Remove image"
                             >
                               <X size={14} />
@@ -550,7 +550,7 @@ const EventServiceSheet = ({
                                 onClick={() =>
                                   toggleRemoveGalleryImage(imageId)
                                 }
-                                className="absolute right-2 top-2 inline-flex min-h-7 items-center justify-center gap-1 rounded-md border border-[#E5DDD5] bg-white px-2 text-[11px] font-semibold text-[#3D3530] shadow-sm transition-colors hover:bg-[#F8F5F2]"
+                                className="absolute right-2 top-2 inline-flex min-h-7 items-center justify-center gap-1 rounded-md border border-[#E5DDD5] bg-white px-2 text-[11px] font-semibold text-theme-color shadow-sm transition-colors hover:bg-[#F8F5F2]"
                               >
                                 {isSelectedForRemove ? (
                                   <>
@@ -583,7 +583,7 @@ const EventServiceSheet = ({
                         <ImagePlus size={20} className="text-[#756A62]" />
                       </div>
 
-                      <p className="text-sm font-semibold text-[#3D3530]">
+                      <p className="text-sm font-semibold text-theme-color">
                         No gallery images selected
                       </p>
 

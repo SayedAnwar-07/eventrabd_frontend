@@ -9,7 +9,7 @@
    ========================================================= */
 
 .eventra-hero {
-  --hero-accent: var(--color-theme-color, #ae0212);
+  --hero-accent: var(--color-theme-color, #602230);
   --hero-text: #171513;
   --hero-muted: #77716c;
   --hero-border: #e9e5e2;

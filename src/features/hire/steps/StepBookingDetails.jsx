@@ -18,7 +18,7 @@ const StepBookingDetails = ({
   const labelClass = "mb-1.5 block text-xs font-medium text-[#51463E]";
 
   const inputClass =
-    "h-11 w-full rounded-md border border-[#E5DDD5] bg-gray-50 px-3 text-sm text-[#3D3530] shadow-none outline-none transition-colors placeholder:text-[#A69B91] hover:border-[#CFC2B6] focus-visible:border-[#A68C78] focus-visible:ring-2 focus-visible:ring-[#A68C78]/20 disabled:cursor-not-allowed disabled:bg-[#F8F5F2] disabled:opacity-70";
+    "h-11 w-full rounded-md border border-[#E5DDD5] bg-gray-50 px-3 text-sm text-theme-color shadow-none outline-none transition-colors placeholder:text-[#A69B91] hover:border-[#CFC2B6] focus-visible:border-[#A68C78] focus-visible:ring-2 focus-visible:ring-[#A68C78]/20 disabled:cursor-not-allowed disabled:bg-[#F8F5F2] disabled:opacity-70";
 
   const optionalClass = "ml-1 text-[11px] font-normal text-[#9B9087]";
 
@@ -101,7 +101,7 @@ const StepBookingDetails = ({
               }
               onChange={(e) => onWhatsappChange(e.target.value)}
               placeholder="01XXXXXXXXX"
-              className="h-full min-w-0 flex-1 bg-gray-100 pr-3 text-sm text-[#3D3530] outline-none placeholder:text-[#A69B91] disabled:cursor-not-allowed disabled:opacity-70"
+              className="h-full min-w-0 flex-1 bg-gray-100 pr-3 text-sm text-theme-color outline-none placeholder:text-[#A69B91] disabled:cursor-not-allowed disabled:opacity-70"
             />
           </div>
 

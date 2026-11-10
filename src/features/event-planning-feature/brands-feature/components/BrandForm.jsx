@@ -34,7 +34,7 @@ export default function BrandForm({
           <button
             type="submit"
             disabled={loading}
-            className="inline-flex h-11 items-center justify-center rounded-md border border-[#3D3530] bg-[#3D3530] px-6 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:border-[#51463E] hover:bg-[#51463E] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A68C78]/40 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex h-11 items-center justify-center rounded-md border border-theme-color bg-theme-color px-6 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:border-[#51463E] hover:bg-[#51463E] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A68C78]/40 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {loading ? "Creating Brand..." : submitLabel}
           </button>

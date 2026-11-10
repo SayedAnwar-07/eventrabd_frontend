@@ -44,7 +44,8 @@
 
   /* customs my css */
   --color-secondary-custom: #f1edea;
-  --color-theme-color: #ae0212;
+  --color-theme-color: #602230;
+  --color-theme-secondary-color: #451d25;
 }
 
 :root {

@@ -1,4 +1,3 @@
-
 import {
   ArrowRight,
   CalendarDays,
@@ -10,10 +9,7 @@ import {
   Loader2,
 } from "lucide-react";
 
-import {
-  formatPrice,
-  getEventTypeLabel,
-} from "../utils/hireFormUtils";
+import { formatPrice, getEventTypeLabel } from "../utils/hireFormUtils";
 
 // Format local date/time without timezone conversion
 const formatEventDate = (value) => {
@@ -47,13 +43,7 @@ const formatEventDate = (value) => {
     return formattedDate;
   }
 
-  const time = new Date(
-    year,
-    month - 1,
-    day,
-    hour,
-    minute
-  );
+  const time = new Date(year, month - 1, day, hour, minute);
 
   const formattedTime = new Intl.DateTimeFormat("en", {
     hour: "2-digit",
@@ -84,10 +74,7 @@ const getSafeMapUrl = (value) => {
   try {
     const url = new URL(value);
 
-    if (
-      url.protocol !== "https:" &&
-      url.protocol !== "http:"
-    ) {
+    if (url.protocol !== "https:" && url.protocol !== "http:") {
       return null;
     }
 
@@ -98,29 +85,15 @@ const getSafeMapUrl = (value) => {
 };
 
 // Reusable section heading
-const SectionHeading = ({
-  icon: Icon,
-  title,
-  meta,
-}) => (
+const SectionHeading = ({ icon: Icon, title, meta }) => (
   <div className="flex items-center justify-between gap-3 border-b border-[#F0EAE4] px-4 py-3.5 sm:px-5">
     <div className="flex items-center gap-2.5">
-      <Icon
-        size={17}
-        strokeWidth={1.8}
-        className="shrink-0 text-[#756A62]"
-      />
+      <Icon size={17} strokeWidth={1.8} className="shrink-0 text-[#756A62]" />
 
-      <h3 className="text-sm font-semibold text-[#3D3530]">
-        {title}
-      </h3>
+      <h3 className="text-sm font-semibold text-theme-color">{title}</h3>
     </div>
 
-    {meta && (
-      <span className="shrink-0 text-xs text-[#9B9087]">
-        {meta}
-      </span>
-    )}
+    {meta && <span className="shrink-0 text-xs text-[#9B9087]">{meta}</span>}
   </div>
 );
 
@@ -136,16 +109,13 @@ const StepConfirmation = ({
   // Flatten booking slots into one event list.
   // This ensures event numbering stays sequential
   // across different services and packages.
-  const allEvents = bookingItems.flatMap(
-    (item, itemIndex) =>
-      (item.bookingSlots || []).map(
-        (slot, slotIndex) => ({
-          item,
-          itemIndex,
-          slot,
-          slotIndex,
-        })
-      )
+  const allEvents = bookingItems.flatMap((item, itemIndex) =>
+    (item.bookingSlots || []).map((slot, slotIndex) => ({
+      item,
+      itemIndex,
+      slot,
+      slotIndex,
+    })),
   );
 
   const totalEvents = allEvents.length;
@@ -160,14 +130,13 @@ const StepConfirmation = ({
 
   return (
     <section className="mx-auto w-full space-y-5 pb-3">
-
       {/* HEADER */}
       <div className="space-y-1.5">
         <p className="text-[11px] font-semibold uppercase tracking-widest text-[#756A62]">
           Final Step
         </p>
 
-        <h2 className="text-xl font-semibold tracking-tight text-[#3D3530] sm:text-2xl">
+        <h2 className="text-xl font-semibold tracking-tight text-theme-color sm:text-2xl">
           Review & Confirm
         </h2>
 
@@ -181,154 +150,131 @@ const StepConfirmation = ({
         <SectionHeading
           icon={CalendarDays}
           title="Event details"
-          meta={`${totalEvents} ${
-            totalEvents === 1 ? "event" : "events"
-          }`}
+          meta={`${totalEvents} ${totalEvents === 1 ? "event" : "events"}`}
         />
 
         <div className="divide-y divide-[#F0EAE4]">
-          {allEvents.map(
-            (
-              { item, itemIndex, slot, slotIndex },
-              eventIndex
-            ) => {
-              const { title } = getBookingItemInfo(item);
+          {allEvents.map(({ item, itemIndex, slot, slotIndex }, eventIndex) => {
+            const { title } = getBookingItemInfo(item);
 
-              const quantity =
-                Number(item.quantity) || 1;
+            const quantity = Number(item.quantity) || 1;
 
-              const eventType =
-                item.eventTypes?.[slotIndex];
+            const eventType = item.eventTypes?.[slotIndex];
 
-              const eventLabel = eventType
-                ? getEventTypeLabel(eventType)
-                : "Event not selected";
+            const eventLabel = eventType
+              ? getEventTypeLabel(eventType)
+              : "Event not selected";
 
-              const mapUrl = getSafeMapUrl(
-                slot.google_map_link
-              );
+            const mapUrl = getSafeMapUrl(slot.google_map_link);
 
-              return (
-                <div
-                  key={`${item.key}-${slotIndex}`}
-                  className="px-4 py-4 sm:px-5"
-                >
-                  {/* EVENT TITLE + SERVICE NAME */}
-                  <div className="flex items-start gap-3">
-                    {/* Global event number */}
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-[#F5F0EB] text-xs font-semibold text-[#51463E]">
-                      {String(eventIndex + 1).padStart(
-                        2,
-                        "0"
-                      )}
-                    </div>
+            return (
+              <div
+                key={`${item.key}-${slotIndex}`}
+                className="px-4 py-4 sm:px-5"
+              >
+                {/* EVENT TITLE + SERVICE NAME */}
+                <div className="flex items-start gap-3">
+                  {/* Global event number */}
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-[#F5F0EB] text-xs font-semibold text-[#51463E]">
+                    {String(eventIndex + 1).padStart(2, "0")}
+                  </div>
 
-                    <div className="min-w-0 flex-1 space-y-1">
-                      <h4 className="text-sm font-semibold text-[#3D3530]">
-                        {eventLabel}
-                      </h4>
+                  <div className="min-w-0 flex-1 space-y-1">
+                    <h4 className="text-sm font-semibold text-theme-color">
+                      {eventLabel}
+                    </h4>
 
-                      <p className="break-words text-xs leading-relaxed text-[#756A62]">
-                        {title}
+                    <p className="break-words text-xs leading-relaxed text-[#756A62]">
+                      {title}
+                    </p>
+
+                    {bookingItems.length > 1 && (
+                      <p className="text-[11px] text-[#9B9087]">
+                        Booking {itemIndex + 1}
                       </p>
-
-                      {bookingItems.length > 1 && (
-                        <p className="text-[11px] text-[#9B9087]">
-                          Booking {itemIndex + 1}
-                        </p>
-                      )}
-                    </div>
-
-                    {quantity > 1 && (
-                      <span className="shrink-0 rounded-md bg-[#F3ECE5] px-2 py-1 text-[11px] font-medium text-[#51463E]">
-                        Qty {quantity}
-                      </span>
                     )}
                   </div>
 
-                  {/* EVENT SCHEDULE AND VENUE */}
-                  <div className="mt-4 space-y-4 border-t border-[#F0EAE4] pt-4 sm:ml-12">
+                  {quantity > 1 && (
+                    <span className="shrink-0 rounded-md bg-[#F3ECE5] px-2 py-1 text-[11px] font-medium text-[#51463E]">
+                      Qty {quantity}
+                    </span>
+                  )}
+                </div>
 
-                    {/* DATE & TIME */}
-                    <div className="flex items-start gap-3">
-                      <Clock3
-                        size={16}
-                        strokeWidth={1.8}
-                        className="mt-0.5 shrink-0 text-[#9B9087]"
-                      />
+                {/* EVENT SCHEDULE AND VENUE */}
+                <div className="mt-4 space-y-4 border-t border-[#F0EAE4] pt-4 sm:ml-12">
+                  {/* DATE & TIME */}
+                  <div className="flex items-start gap-3">
+                    <Clock3
+                      size={16}
+                      strokeWidth={1.8}
+                      className="mt-0.5 shrink-0 text-[#9B9087]"
+                    />
 
-                      <div className="min-w-0 space-y-1">
-                        <p className="text-[11px] font-medium uppercase tracking-[0.06em] text-[#9B9087]">
-                          Date & Time
-                        </p>
+                    <div className="min-w-0 space-y-1">
+                      <p className="text-[11px] font-medium uppercase tracking-[0.06em] text-[#9B9087]">
+                        Date & Time
+                      </p>
 
-                        <p className="text-sm font-medium text-[#3D3530]">
-                          {formatEventDate(
-                            slot.starts_at
-                          )}
-                        </p>
-                      </div>
+                      <p className="text-sm font-medium text-theme-color">
+                        {formatEventDate(slot.starts_at)}
+                      </p>
                     </div>
+                  </div>
 
-                    {/* VENUE */}
-                    <div className="flex items-start gap-3">
-                      <MapPin
-                        size={16}
-                        strokeWidth={1.8}
-                        className="mt-0.5 shrink-0 text-[#9B9087]"
-                      />
+                  {/* VENUE */}
+                  <div className="flex items-start gap-3">
+                    <MapPin
+                      size={16}
+                      strokeWidth={1.8}
+                      className="mt-0.5 shrink-0 text-[#9B9087]"
+                    />
 
-                      <div className="min-w-0 space-y-1">
-                        <p className="text-[11px] font-medium uppercase tracking-[0.06em] text-[#9B9087]">
-                          Venue
+                    <div className="min-w-0 space-y-1">
+                      <p className="text-[11px] font-medium uppercase tracking-[0.06em] text-[#9B9087]">
+                        Venue
+                      </p>
+
+                      <p className="text-sm font-medium text-theme-color">
+                        {slot.venue_name || "Not provided"}
+                      </p>
+
+                      {slot.venue_address && (
+                        <p className="break-words text-xs leading-relaxed text-[#756A62]">
+                          {slot.venue_address}
                         </p>
+                      )}
 
-                        <p className="text-sm font-medium text-[#3D3530]">
-                          {slot.venue_name ||
-                            "Not provided"}
-                        </p>
-
-                        {slot.venue_address && (
-                          <p className="break-words text-xs leading-relaxed text-[#756A62]">
-                            {slot.venue_address}
-                          </p>
-                        )}
-
-                        {mapUrl && (
-                          <a
-                            href={mapUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1.5 pt-1 text-xs font-medium text-[#8B735F] transition-colors hover:text-[#3D3530] hover:underline"
-                          >
-                            View on Google Maps
-                            <ExternalLink size={12} />
-                          </a>
-                        )}
-                      </div>
+                      {mapUrl && (
+                        <a
+                          href={mapUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 pt-1 text-xs font-medium text-[#8B735F] transition-colors hover:text-theme-color hover:underline"
+                        >
+                          View on Google Maps
+                          <ExternalLink size={12} />
+                        </a>
+                      )}
                     </div>
                   </div>
                 </div>
-              );
-            }
-          )}
+              </div>
+            );
+          })}
         </div>
       </div>
 
       {/* CONTACT DETAILS */}
       <div className={cardClass}>
-        <SectionHeading
-          icon={Phone}
-          title="Contact details"
-        />
+        <SectionHeading icon={Phone} title="Contact details" />
 
         <div className="space-y-4 px-4 py-4 sm:px-5">
           <div>
-            <p className="mb-1 text-[11px] text-[#9B9087]">
-              WhatsApp number
-            </p>
+            <p className="mb-1 text-[11px] text-[#9B9087]">WhatsApp number</p>
 
-            <p className="text-sm font-medium text-[#3D3530]">
+            <p className="text-sm font-medium text-theme-color">
               {formatWhatsapp(customerWhatsappNumber)}
             </p>
           </div>
@@ -336,14 +282,9 @@ const StepConfirmation = ({
           {customerNote?.trim() && (
             <div className="border-t border-[#F0EAE4] pt-3">
               <div className="mb-2 flex items-center gap-2">
-                <StickyNote
-                  size={14}
-                  className="text-[#9B9087]"
-                />
+                <StickyNote size={14} className="text-[#9B9087]" />
 
-                <p className="text-[11px] text-[#9B9087]">
-                  Customer note
-                </p>
+                <p className="text-[11px] text-[#9B9087]">Customer note</p>
               </div>
 
               <p className="whitespace-pre-wrap break-words text-sm leading-relaxed text-[#51463E]">
@@ -356,23 +297,18 @@ const StepConfirmation = ({
 
       {/* TOTAL + CONFIRM */}
       <div className="space-y-4 rounded-md border border-[#E5DDD5] bg-[#FFFCF9] p-4 sm:p-5">
-
         {/* TOTAL */}
         <div className="flex items-center justify-between gap-3">
           <div>
-            <p className="text-sm font-semibold text-[#3D3530]">
+            <p className="text-sm font-semibold text-theme-color">
               Total amount
             </p>
 
-            <p className="mt-1 text-xs text-[#756A62]">
-              Final booking total
-            </p>
+            <p className="mt-1 text-xs text-[#756A62]">Final booking total</p>
           </div>
 
-          <p className="text-2xl font-bold tracking-tight tabular-nums text-[#3D3530]">
-            {totalAvailable
-              ? formatPrice(Number(grandTotal))
-              : "Unavailable"}
+          <p className="text-2xl font-bold tracking-tight tabular-nums text-theme-color">
+            {totalAvailable ? formatPrice(Number(grandTotal)) : "Unavailable"}
           </p>
         </div>
 
@@ -383,14 +319,11 @@ const StepConfirmation = ({
           type="button"
           disabled={loading || !totalAvailable}
           onClick={onConfirm}
-          className="flex h-12 w-full items-center justify-center gap-2 rounded-md bg-[#3D3530] px-5 text-sm font-semibold text-white transition-colors hover:bg-[#51463E] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A68C78] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+          className="flex h-12 w-full items-center justify-center gap-2 rounded-md bg-theme-color px-5 text-sm font-semibold text-white transition-colors hover:bg-[#51463E] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A68C78] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {loading ? (
             <>
-              <Loader2
-                size={17}
-                className="animate-spin"
-              />
+              <Loader2 size={17} className="animate-spin" />
               Submitting...
             </>
           ) : (
