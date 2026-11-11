@@ -13,6 +13,7 @@ import BrandPageState from "../components/brandDetails/BrandPageState";
 import BrandSidebarPanel from "../components/brandDetails/BrandSidebarPanel";
 
 import LoadingSpinner from "@/components/common/LoadingSpinner";
+import SEO from "@/components/seo/SEO";
 
 const BrandDetailsPage = () => {
   const { slug } = useParams();
@@ -94,6 +95,17 @@ const BrandDetailsPage = () => {
     return <BrandPageState>{publicDetails.errorMessage}</BrandPageState>;
   }
 
+  const brandName =
+    publicBrandDetails?.brand_name?.trim() ||
+    publicBrandDetails?.display_name?.trim() ||
+    "Event Service Provider";
+
+  const brandDescription = publicBrandDetails?.short_description?.trim();
+
+  const seoDescription = brandDescription
+    ? `Explore ${brandName} on EventraBD. ${brandDescription} Discover event services and plan your next event in Bangladesh.`
+    : `Explore ${brandName} on EventraBD. Discover professional event planning services, available packages, and service details for your next event in Bangladesh.`;
+
   // ─────────────────────────────────────────────
   // Not found
   // ─────────────────────────────────────────────
@@ -115,44 +127,52 @@ const BrandDetailsPage = () => {
     !authInitialized || (publicDetails.loading && Boolean(publicBrandDetails));
 
   return (
-    <div className="min-h-screen text-foreground">
-      <main className="mx-auto w-full pb-10 sm:px-6">
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
-          {/* LEFT */}
-          <div className="min-w-0">
-            <BrandHeader
-              brand={publicBrandDetails}
-              actionsLoading={actionsLoading}
-              onEdit={() =>
-                navigate(
-                  `/event-planner/brands/${publicBrandDetails.slug}/edit`,
-                )
-              }
-            />
+    <>
+      <SEO
+        title={`${brandName} | Event Services in Bangladesh`}
+        description={seoDescription.slice(0, 160)}
+        noIndex={false}
+      />
+
+      <div className="min-h-screen text-foreground">
+        <main className="mx-auto w-full pb-10 sm:px-6">
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
+            {/* LEFT */}
+            <div className="min-w-0">
+              <BrandHeader
+                brand={publicBrandDetails}
+                actionsLoading={actionsLoading}
+                onEdit={() =>
+                  navigate(
+                    `/event-planner/brands/${publicBrandDetails.slug}/edit`,
+                  )
+                }
+              />
+            </div>
+
+            {/* RIGHT */}
+            <aside className="w-full lg:sticky lg:top-24">
+              <BrandSidebarPanel
+                brand={publicBrandDetails}
+                services={
+                  Array.isArray(publicBrandDetails.services)
+                    ? publicBrandDetails.services
+                    : []
+                }
+              />
+            </aside>
           </div>
 
-          {/* RIGHT */}
-          <aside className="w-full lg:sticky lg:top-24">
-            <BrandSidebarPanel
+          {/* SERVICES */}
+          <div>
+            <BrandServicesSection
               brand={publicBrandDetails}
-              services={
-                Array.isArray(publicBrandDetails.services)
-                  ? publicBrandDetails.services
-                  : []
-              }
+              onServiceCreated={handleServiceCreated}
             />
-          </aside>
-        </div>
-
-        {/* SERVICES */}
-        <div>
-          <BrandServicesSection
-            brand={publicBrandDetails}
-            onServiceCreated={handleServiceCreated}
-          />
-        </div>
-      </main>
-    </div>
+          </div>
+        </main>
+      </div>
+    </>
   );
 };
 

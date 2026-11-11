@@ -9,6 +9,7 @@ import BrandForm from "@/features/event-planning-feature/brands-feature/componen
 import { useBrandActions } from "@/features/event-planning-feature/brands-feature/hooks/use-brand-actions";
 
 import { clearCreateBrandState } from "@/store/features/eventPlanner/eventPlannerSlice";
+import SEO from "@/components/seo/SEO";
 
 const initialValues = {
   display_name: "",
@@ -179,30 +180,37 @@ export default function CreateBrandPage() {
   };
 
   return (
-    <PageShell className="space-y-8">
-      <header className="mb-6">
-        <p className="text-sm font-medium text-muted-foreground">
-          Build a strong public identity for your event business with a clean,
-          professional profile.
-        </p>
-
-        <h1 className="mt-2 text-3xl font-bold tracking-tight">
-          Create Your Event Brand
-        </h1>
-      </header>
-
-      <BrandForm
-        values={values}
-        onChange={handleChange}
-        onSubmit={handleSubmit}
-        submitLabel="Create Brand"
-        loading={createState.loading}
-        errors={createState.errors}
-        logoPreview={logoPreview}
-        existingLogo={null}
-        onLogoChange={handleLogoChange}
-        onRemoveLogo={handleRemoveLogo}
+    <>
+      <SEO
+        title="Create Your Event Brand"
+        description="Create your event brand on EventraBD. Set up your brand profile, add contact details, service areas, portfolio, and logo to showcase your event business to potential customers in Bangladesh."
+        noIndex={true}
       />
-    </PageShell>
+      <PageShell className="space-y-8">
+        <header className="mb-6">
+          <p className="text-sm font-medium text-muted-foreground">
+            Build a strong public identity for your event business with a clean,
+            professional profile.
+          </p>
+
+          <h1 className="mt-2 text-3xl font-bold tracking-tight">
+            Create Your Event Brand
+          </h1>
+        </header>
+
+        <BrandForm
+          values={values}
+          onChange={handleChange}
+          onSubmit={handleSubmit}
+          submitLabel="Create Brand"
+          loading={createState.loading}
+          errors={createState.errors}
+          logoPreview={logoPreview}
+          existingLogo={null}
+          onLogoChange={handleLogoChange}
+          onRemoveLogo={handleRemoveLogo}
+        />
+      </PageShell>
+    </>
   );
 }

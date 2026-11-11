@@ -31,6 +31,7 @@ import ServiceFilters from "../components/filters/ServiceFilters";
 import MobileFilterSheet from "../components/filters/MobileFilterSheet";
 
 import GlobalErrorMessage from "@/components/common/GlobalErrorMessage";
+import SEO from "@/components/seo/SEO";
 
 const ServicesPage = () => {
   const dispatch = useDispatch();
@@ -141,6 +142,12 @@ const ServicesPage = () => {
 
   return (
     <main className="min-h-screen">
+      {/* SEO content */}
+      <SEO
+        title="Explore Event Services in Bangladesh"
+        description="Explore event services on EventraBD. Discover professional service providers, browse their offerings, and connect with experts to plan your next event in Bangladesh."
+      />
+
       <div className="mx-auto max-w-400">
         <section className="mb-8 grid gap-4 md:grid-cols-2">
           <SellerSearch />

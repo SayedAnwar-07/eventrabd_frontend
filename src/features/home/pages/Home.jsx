@@ -16,6 +16,7 @@ import GlobalErrorMessage from "@/components/common/GlobalErrorMessage";
 
 import PublicServiceCard from "@/features/event-planning-feature/brand-services-feature/components/PublicServiceCard";
 import Hero from "../components/Hero";
+import SEO from "@/components/seo/SEO";
 
 const Home = () => {
   const dispatch = useDispatch();
@@ -39,6 +40,13 @@ const Home = () => {
 
   return (
     <main className="min-h-screen">
+
+      {/* SEO content */}
+      <SEO
+        title="Event Planning Services in Bangladesh"
+        description="Discover the best event planning services in Bangladesh with EventraBD. Explore professional service providers, compare offerings, and find the right services for your next event."
+      />
+
       {/* Hero Section */}
       <Hero />
 

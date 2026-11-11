@@ -6,6 +6,7 @@ import { getMyProfile } from "@/store/features/auth/authSlice";
 import ProfileCard from "../components/ProfileCard";
 import api from "@/store/constant/api";
 import UpdateProfile from "../components/UpdateProfile";
+import SEO from "@/components/seo/SEO";
 
 const ProfilePage = () => {
   const dispatch = useDispatch();
@@ -16,6 +17,15 @@ const ProfilePage = () => {
   const [checkingBrand, setCheckingBrand] = useState(false);
   const [brandRedirectUrl, setBrandRedirectUrl] = useState(null);
   const [brandChecked, setBrandChecked] = useState(false);
+
+  const profileName =
+    user?.full_name?.trim() ||
+    [user?.first_name, user?.last_name].filter(Boolean).join(" ").trim() ||
+    user?.name?.trim() ||
+    user?.username?.trim() ||
+    "Your";
+
+  // const profileName = user?.username?.trim() || "Your";
 
   useEffect(() => {
     dispatch(getMyProfile());
@@ -86,20 +96,35 @@ const ProfilePage = () => {
   }
 
   return (
-    <div className="container mx-auto px-2 py-8">
-      <div className="mb-6 flex flex-col gap-4 border-b border-gray-200 pb-5 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="mb-2 text-3xl font-bold">User Profile</h1>
+    <>
+      <SEO
+        title={
+          profileName === "Your" ? "Your Profile" : `${profileName}'s Profile`
+        }
+        description={
+          profileName === "Your"
+            ? "View and manage your EventraBD profile, personal information, and contact details."
+            : `View and manage ${profileName}'s EventraBD profile, including personal information and contact details.`
+        }
+        noIndex={true}
+      />
 
-          <p className="mb-8 text-muted-foreground">
-            View and manage your profile information
-          </p>
+      <div className="container mx-auto px-2 py-8">
+        <div className="mb-6 flex flex-col gap-4 border-b border-gray-200 pb-5 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="mb-2 text-3xl font-bold">User Profile</h1>
+
+            <p className="mb-8 text-muted-foreground">
+              View and manage your profile information
+            </p>
+          </div>
+
+          <ProfileCard />
         </div>
 
-        <ProfileCard />
+        <UpdateProfile showSEO={false} />
       </div>
-      <UpdateProfile />
-    </div>
+    </>
   );
 };
 

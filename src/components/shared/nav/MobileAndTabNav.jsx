@@ -11,6 +11,8 @@ import {
   Search,
   UserPlus,
   UserRound,
+  TextAlignJustify,
+  Headset,
 } from "lucide-react";
 
 import { Link, NavLink } from "react-router-dom";
@@ -51,19 +53,40 @@ const AppNavLink = ({ to, icon, label, end = false }) => {
       end={end}
       className={({ isActive }) =>
         [
-          "flex min-w-0 flex-col items-center justify-center",
-          "gap-1 px-1 py-2 text-white transition-colors",
+          "group relative isolate overflow-hidden flex min-w-0 flex-col items-center justify-center",
+          "m-2 mb-0! gap-1 px-1 py-2 rounded-md border",
+          "transition-[background-color,border-color,transform] duration-300 ease-out",
+          "outline-none focus-visible:ring-2 focus-visible:ring-white/40",
+          "active:scale-[0.97] motion-reduce:transition-none",
           isActive
-            ? "bg-white/15 text-white"
-            : "text-white hover:bg-white/10 hover:text-white active:bg-white/15",
+            ? "bg-theme-secondary-color border-white/20 text-white shadow-lg"
+            : "border-transparent text-white/80 hover:text-white hover:border-white/10",
         ].join(" ")
       }
     >
-      {icon}
+      {({ isActive }) => (
+        <>
+          {/* Sliding hover fill (only for inactive items) */}
+          {!isActive && (
+            <span
+              aria-hidden="true"
+              className={[
+                "absolute inset-0 -z-10 bg-theme-secondary-color origin-left",
+                "transition-transform duration-300 ease-out",
+                isActive ? "scale-x-100" : "scale-x-0",
+              ].join(" ")}
+            />
+          )}
 
-      <span className="max-w-19 truncate text-[10px] font-medium text-white">
-        {label}
-      </span>
+          <span className="transition-transform duration-300 ease-out group-hover:scale-105">
+            {icon}
+          </span>
+
+          <span className="max-w-19 truncate text-[10px] font-medium">
+            {label}
+          </span>
+        </>
+      )}
     </NavLink>
   );
 };
@@ -216,8 +239,8 @@ export default function MobileAndTabNav({
           />
 
           <AppNavLink
-            to="/services"
-            label="Services"
+            to="/events"
+            label="All Events"
             icon={<Sparkles className="h-5 w-5 shrink-0 text-white" />}
           />
 
@@ -225,14 +248,13 @@ export default function MobileAndTabNav({
           {!user && (
             <>
               <AppNavLink
+                to={`/contact`}
+                label="Contact"
+                icon={<Headset className="h-5 w-5 shrink-0 text-white" />}
+              />
+              <AppNavLink
                 to="/login"
                 label="Login"
-                icon={<LogIn className="h-5 w-5 shrink-0 text-white" />}
-              />
-
-              <AppNavLink
-                to="/register"
-                label="Sign Up"
                 icon={<UserPlus className="h-5 w-5 shrink-0 text-white" />}
               />
             </>
@@ -254,9 +276,11 @@ export default function MobileAndTabNav({
               />
 
               <AppNavLink
-                to={`/profile/${user.slug}`}
-                label="Profile"
-                icon={<UserRound className="h-5 w-5 shrink-0 text-white" />}
+                to={`/menu`}
+                label="Menu"
+                icon={
+                  <TextAlignJustify className="h-5 w-5 shrink-0 text-white" />
+                }
               />
             </>
           )}
@@ -279,11 +303,12 @@ export default function MobileAndTabNav({
                   variant="app"
                 />
               </div>
-
               <AppNavLink
-                to={`/profile/${user.slug}`}
-                label="Profile"
-                icon={<UserRound className="h-5 w-5 shrink-0 text-white" />}
+                to={`/`}
+                label="Menu"
+                icon={
+                  <TextAlignJustify className="h-5 w-5 shrink-0 text-white" />
+                }
               />
             </>
           )}

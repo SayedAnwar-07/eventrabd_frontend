@@ -9,94 +9,126 @@ import HireTimeline from "../components/sellerHireDetails/HireTimeline";
 import LoadingState from "../components/sellerHireDetails/LoadingState";
 import PeopleInformation from "../components/sellerHireDetails/PeopleInformation";
 import useHireDetails from "../hooks/useHireDetails";
+import SEO from "@/components/seo/SEO";
 
 const SellerHireDetailsPage = () => {
   const { hire, loading, error, retry } = useHireDetails();
 
+  // Dynamic SEO information
+  const hireReference = hire?.id ? String(hire.id) : null;
+
+  const seoTitle = hireReference
+    ? `Hire Request #${hireReference}`
+    : "Hire Request Details";
+
+  const seoDescription = hireReference
+    ? `Review and manage hire request #${hireReference} on EventraBD, including booking status, scheduled slots, customer information, and invoice details.`
+    : "View and manage customer hire request details, booking information, scheduled slots, and invoices on EventraBD.";
+
+  const pageSEO = (
+    <SEO title={seoTitle} description={seoDescription} noIndex={true} />
+  );
+
   // console.log(hire);
 
   if (loading && !hire) {
-    return <LoadingState />;
+    return (
+      <>
+        {pageSEO}
+        <LoadingState />
+      </>
+    );
   }
 
   if (error && !hire) {
     return (
-      <ErrorState
-        error={error}
-        loading={loading}
-        onRetry={retry}
-        backTo="/seller/hire-requests"
-        backLabel="Back to Hire Requests"
-      />
+      <>
+        {pageSEO}
+
+        <ErrorState
+          error={error}
+          loading={loading}
+          onRetry={retry}
+          backTo="/seller/hire-requests"
+          backLabel="Back to Hire Requests"
+        />
+      </>
     );
   }
 
   if (!hire) {
     return (
-      <div className="min-h-screen">
-        <main className="mx-auto max-w-3xl py-16">
-          <section className="rounded-md border border-gray-200 bg-white px-6 py-12 text-center shadow-sm dark:border-gray-800 dark:bg-gray-950">
-            <h1 className="text-xl font-semibold text-gray-950 dark:text-white">
-              Hire request not found
-            </h1>
+      <>
+        {pageSEO}
+        <div className="min-h-screen">
+          <main className="mx-auto max-w-3xl py-16">
+            <section className="rounded-md border border-gray-200 bg-white px-6 py-12 text-center shadow-sm dark:border-gray-800 dark:bg-gray-950">
+              <h1 className="text-xl font-semibold text-gray-950 dark:text-white">
+                Hire request not found
+              </h1>
 
-            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-              This hire request may have been removed or you may not have
-              permission to view it.
-            </p>
+              <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                This hire request may have been removed or you may not have
+                permission to view it.
+              </p>
 
-            <Link
-              to="/seller/hire-requests"
-              className="mt-6 inline-flex rounded-full border border-red-600 px-5 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-600 hover:text-white"
-            >
-              Back to Hire Requests
-            </Link>
-          </section>
-        </main>
-      </div>
+              <Link
+                to="/seller/hire-requests"
+                className="mt-6 inline-flex rounded-full border border-red-600 px-5 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-600 hover:text-white"
+              >
+                Back to Hire Requests
+              </Link>
+            </section>
+          </main>
+        </div>
+      </>
     );
   }
 
   return (
-    <div className="min-h-screen">
-      <main className="mx-auto max-w-6xl py-8 lg:py-10">
-        <Link
-          to="/seller/hire-requests"
-          className="inline-flex items-center gap-2 text-sm font-medium text-gray-600 transition hover:text-gray-950 dark:text-gray-400 dark:hover:text-white"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to Hire Requests
-        </Link>
+    <>
+      {pageSEO}
 
-        {error?.message && (
-          <div className="mt-5 rounded-md border border-red-100 bg-red-50 px-5 py-4 dark:border-red-950 dark:bg-red-950/30">
-            <p className="text-sm text-red-700 dark:text-red-400">
-              {error.message}
-            </p>
-          </div>
-        )}
+      <div className="min-h-screen">
+        <main className="mx-auto max-w-6xl py-8 lg:py-10">
+          <Link
+            to="/seller/hire-requests"
+            className="inline-flex items-center gap-2 text-sm font-medium text-gray-600 transition hover:text-gray-950 dark:text-gray-400 dark:hover:text-white"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Hire Requests
+          </Link>
 
-        <section className="mt-6">
-          <HireTimeline hire={hire} />
-        </section>
+          {error?.message && (
+            <div className="mt-5 rounded-md border border-red-100 bg-red-50 px-5 py-4 dark:border-red-950 dark:bg-red-950/30">
+              <p className="text-sm text-red-700 dark:text-red-400">
+                {error.message}
+              </p>
+            </div>
+          )}
 
-        <section className="mt-12">
-          <BookingSlots hire={hire} />
-        </section>
+          <section className="mt-6">
+            <HireTimeline hire={hire} />
+          </section>
 
-        <section className="mt-10 grid grid-cols-1 items-start gap-6 xl:grid-cols-[360px_210mm] xl:justify-center">
-          {/* Left side */}
-          <div className="min-w-0">
-            <PeopleInformation hire={hire} />
-          </div>
+          <section className="mt-12">
+            <BookingSlots hire={hire} />
+          </section>
 
-          {/* Right side */}
-          <div className="min-w-0">
-            <SellerHireInvoiceSection key={hire.id} hire={hire} />
-          </div>
-        </section>
-      </main>
-    </div>
+          <section className="mt-10 grid grid-cols-1 items-start gap-6 xl:grid-cols-[360px_210mm] xl:justify-center">
+            {/* Left side */}
+            <div className="min-w-0">
+              <PeopleInformation hire={hire} />
+            </div>
+
+            {/* Right side */}
+            <div className="min-w-0">
+              <SellerHireInvoiceSection key={hire.id} hire={hire} />
+            </div>
+          </section>
+        </main>
+      </div>
+    </>
   );
 };
 

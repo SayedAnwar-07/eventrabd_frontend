@@ -29,6 +29,7 @@ import SellerInfo from "../components/ServiceDetails/SellerInfo";
 // Feature Components
 import PackagesDetails from "@/features/packages/components/PackagesDetails";
 import ServiceReviews from "@/features/review/components/ServiceReviews";
+import SEO from "@/components/seo/SEO";
 
 const formatServiceName = (name = "") =>
   name.replaceAll("_", " ").replace(/\b\w/g, (char) => char.toUpperCase());
@@ -64,7 +65,7 @@ const ServiceDetailsPage = () => {
    * that successfully completed an authenticated fetch.
    */
   const [verifiedOwnershipKey, setVerifiedOwnershipKey] = useState(null);
-  
+
   // Stores the package selected for direct booking.
   const [directBookPackageId, setDirectBookPackageId] = useState(null);
 
@@ -190,12 +191,7 @@ const ServiceDetailsPage = () => {
 
   // Automatically opens the hire sheet after a package is selected.
   useEffect(() => {
-    if (
-      directBookPackageId === null ||
-      actionsLoading ||
-      !service ||
-      isOwner
-    ) {
+    if (directBookPackageId === null || actionsLoading || !service || isOwner) {
       return;
     }
 
@@ -312,67 +308,91 @@ const ServiceDetailsPage = () => {
     return null;
   }
 
+  // Dynamic SEO information
+  const seoServiceName =
+    service?.service_name?.trim() || formatServiceName(serviceName);
+
+  const seoBrandName =
+    service?.brand?.display_name?.trim() ||
+    publicBrandDetails?.brand_name?.trim() ||
+    "Event Service Provider";
+
+  const seoTitle = `${seoServiceName} by ${seoBrandName}`;
+
+  const seoDescription =
+    `Explore ${seoServiceName} by ${seoBrandName} on EventraBD. ` +
+    `Discover service details, packages, photos, and customer reviews. ` +
+    `Find the right event services for your next event in Bangladesh.`;
+
   // =====================================================
   // PAGE
   // =====================================================
 
   return (
-    <main className="min-h-screen text-foreground">
-      <div className="mx-auto w-full max-w-400">
-        {/* Breadcrumb */}
-        <ServiceBreadcrumb
-          brandSlug={brandSlug}
-          brandName={service?.brand?.display_name}
-          serviceName={formatServiceName(service?.service_name)}
-        />
+    <>
+      <SEO
+        title={seoTitle}
+        description={seoDescription.slice(0, 160)}
+        noIndex={false}
+      />
 
-        {/* Gallery */}
-        <ServiceGalleryCarousel
-          service={service}
-          galleryImages={galleryImages}
-        />
+      <main className="min-h-screen text-foreground">
+        <div className="mx-auto w-full max-w-400">
+          {/* Breadcrumb */}
+          <ServiceBreadcrumb
+            brandSlug={brandSlug}
+            brandName={service?.brand?.display_name}
+            serviceName={formatServiceName(service?.service_name)}
+          />
 
-        <div className="mt-10 grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
-          {/* LEFT */}
-          <div className="min-w-0">
-            <ServiceHero
-              service={service}
-              formatServiceName={formatServiceName}
-            />
+          {/* Gallery */}
+          <ServiceGalleryCarousel
+            service={service}
+            galleryImages={galleryImages}
+          />
+
+          <div className="mt-10 grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
+            {/* LEFT */}
+            <div className="min-w-0">
+              <ServiceHero
+                service={service}
+                formatServiceName={formatServiceName}
+              />
+            </div>
+
+            {/* RIGHT */}
+            <aside className="w-full lg:sticky lg:top-6">
+              <SellerInfo brand={publicBrandDetails} />
+            </aside>
           </div>
 
-          {/* RIGHT */}
-          <aside className="w-full lg:sticky lg:top-6">
-            <SellerInfo brand={publicBrandDetails} />
-          </aside>
+          {/* Packages */}
+          <PackagesDetails
+            service={service}
+            onBookPackage={handleBookPackage}
+          />
+
+          {/* Reviews */}
+          <div className="mt-12">
+            <ServiceReviews service={service} />
+          </div>
+
+          {/* Floating Actions */}
+          <ServiceFloatingActions
+            service={service}
+            brandSlug={brandSlug}
+            isOwner={isOwner}
+            actionsLoading={actionsLoading}
+            hireSheetRef={hireSheetRef}
+            selectedPackageId={directBookPackageId}
+            onServiceUpdated={refreshServiceDetail}
+            onServiceDeleted={() =>
+              navigate(`/event-planner/brands/${brandSlug}`)
+            }
+          />
         </div>
-
-        {/* Packages */}
-        <PackagesDetails
-          service={service}
-          onBookPackage={handleBookPackage}
-        />
-
-        {/* Reviews */}
-        <div className="mt-12">
-          <ServiceReviews service={service} />
-        </div>
-
-        {/* Floating Actions */}
-        <ServiceFloatingActions
-          service={service}
-          brandSlug={brandSlug}
-          isOwner={isOwner}
-          actionsLoading={actionsLoading}
-          hireSheetRef={hireSheetRef}
-          selectedPackageId={directBookPackageId}
-          onServiceUpdated={refreshServiceDetail}
-          onServiceDeleted={() =>
-            navigate(`/event-planner/brands/${brandSlug}`)
-          }
-        />
-      </div>
-    </main>
+      </main>
+    </>
   );
 };
 

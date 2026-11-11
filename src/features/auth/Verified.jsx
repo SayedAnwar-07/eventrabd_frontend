@@ -58,6 +58,14 @@ const VerifyOtp = () => {
   if (!email) {
     return (
       <section className="flex min-h-screen items-center justify-center bg-background px-4 py-10 text-foreground">
+
+        {/* SEO content */}
+        <SEO
+          title="Verify Your Account"
+          description="Verify your EventraBD account using the OTP sent to your registered email address and complete your account verification securely."
+          noIndex={true}
+        />
+        
         <div className="w-full max-w-md border border-border bg-card px-6 py-8 text-center shadow-sm sm:px-8">
           <p className="mb-2 text-sm font-semibold uppercase tracking-[0.22em] text-primary">
             Verification

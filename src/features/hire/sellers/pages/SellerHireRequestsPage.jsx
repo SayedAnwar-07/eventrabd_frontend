@@ -11,6 +11,7 @@ import {
 
 import SellerHireRequestCard from "../components/SellerHireRequestCard";
 import GlobalErrorMessage from "@/components/common/GlobalErrorMessage";
+import SEO from "@/components/seo/SEO";
 
 const HIRE_TABS = [
   {
@@ -109,137 +110,154 @@ const SellerHireRequestsPage = () => {
     }
   };
 
+  const pageSEO = (
+    <SEO
+      title="Manage Seller Hire Requests"
+      description="Manage customer booking requests on EventraBD. Review pending, accepted, rejected, cancelled, and completed hire requests for your event services from your seller dashboard."
+      noIndex={true}
+    />
+  );
+
   if (loading && hires.length === 0) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-white">
-        <p className="text-sm text-gray-600">Loading hire requests...</p>
-      </div>
+      <>
+        {pageSEO}
+
+        <div className="flex min-h-screen items-center justify-center bg-white">
+          <p className="text-sm text-gray-600">Loading hire requests...</p>
+        </div>
+      </>
     );
   }
 
   return (
-    <div className="min-h-screen bg-white text-gray-950">
-      <main className="mx-auto max-w-400 px-4 py-8 sm:px-6 lg:px-8">
-        <header className="flex flex-col gap-5 border-b border-gray-200 pb-8 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="text-xs font-medium uppercase tracking-[0.2em] text-gray-500">
-              Seller Dashboard
-            </p>
+    <>
+      {/* SEO content */}
+      {pageSEO}
 
-            <h1 className="mt-2 text-3xl font-semibold tracking-tight text-gray-950 sm:text-4xl">
-              Hire Requests
-            </h1>
+      <div className="min-h-screen bg-white text-gray-950">
+        <main className="mx-auto max-w-400 px-4 py-8 sm:px-6 lg:px-8">
+          <header className="flex flex-col gap-5 border-b border-gray-200 pb-8 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-xs font-medium uppercase tracking-[0.2em] text-gray-500">
+                Seller Dashboard
+              </p>
 
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-gray-600">
-              Review all booking requests received for your event services.
-            </p>
-          </div>
+              <h1 className="mt-2 text-3xl font-semibold tracking-tight text-gray-950 sm:text-4xl">
+                Hire Requests
+              </h1>
 
-          <button
-            type="button"
-            onClick={handleRefresh}
-            disabled={loading}
-            className="border border-gray-950 bg-white px-5 py-2.5 text-sm font-semibold text-gray-950 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {loading ? "Refreshing..." : "Refresh Requests"}
-          </button>
-        </header>
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-gray-600">
+                Review all booking requests received for your event services.
+              </p>
+            </div>
 
-        <section
-          role="tablist"
-          aria-label="Filter hire requests by status"
-          className="grid grid-cols-2 gap-3 py-8 sm:grid-cols-3 lg:grid-cols-6"
-        >
-          {HIRE_TABS.map((tab) => {
-            const isActive = activeTab === tab.key;
-            const count = counts[tab.countKey];
+            <button
+              type="button"
+              onClick={handleRefresh}
+              disabled={loading}
+              className="border border-gray-950 bg-white px-5 py-2.5 text-sm font-semibold text-gray-950 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {loading ? "Refreshing..." : "Refresh Requests"}
+            </button>
+          </header>
 
-            return (
-              <button
-                key={tab.key}
-                type="button"
-                role="tab"
-                aria-selected={isActive}
-                onClick={() => setActiveTab(tab.key)}
-                className={`border px-4 py-4 text-left transition ${
-                  isActive
-                    ? tab.activeClass
-                    : "border-gray-200 bg-white hover:border-gray-400 hover:bg-gray-50"
-                }`}
-              >
-                <span
-                  className={`block text-xs font-medium uppercase tracking-wide ${
-                    isActive ? "text-current" : "text-gray-500"
-                  }`}
-                >
-                  {tab.label}
-                </span>
-
-                <span
-                  className={`mt-2 block text-2xl font-semibold ${
-                    isActive ? "text-current" : tab.countClass
-                  }`}
-                >
-                  {count}
-                </span>
-              </button>
-            );
-          })}
-        </section>
-
-        {/* Error message */}
-        {error ? <GlobalErrorMessage error={error} /> : null}
-
-        {hires.length > 0 ? (
-          <div className="mb-5 flex items-center justify-between border-b border-gray-200 pb-3">
-            <h2 className="text-lg font-semibold text-gray-950">
-              {activeTabLabel} Requests
-            </h2>
-
-            <p className="text-sm text-gray-500">
-              {filteredHires.length}{" "}
-              {filteredHires.length === 1 ? "request" : "requests"}
-            </p>
-          </div>
-        ) : null}
-
-        {!loading && hires.length === 0 ? (
-          <section className="border border-dashed border-gray-300 px-6 py-16 text-center">
-            <p className="text-lg font-semibold text-gray-950">
-              No hire requests yet
-            </p>
-
-            <p className="mt-2 text-sm text-gray-600">
-              Customer booking requests for your services will appear here.
-            </p>
-          </section>
-        ) : null}
-
-        {!loading && hires.length > 0 && filteredHires.length === 0 ? (
-          <section className="border border-dashed border-gray-300 px-6 py-16 text-center">
-            <p className="text-lg font-semibold text-gray-950">
-              No {activeTabLabel.toLowerCase()} requests
-            </p>
-
-            <p className="mt-2 text-sm text-gray-600">
-              There are currently no hire requests with this status.
-            </p>
-          </section>
-        ) : null}
-
-        {filteredHires.length > 0 ? (
           <section
-            role="tabpanel"
-            className="space-y-5"
-            aria-label={`${activeTabLabel} hire requests`}
+            role="tablist"
+            aria-label="Filter hire requests by status"
+            className="grid grid-cols-2 gap-3 py-8 sm:grid-cols-3 lg:grid-cols-6"
           >
-            {filteredHires.map((hire) => (
-              <SellerHireRequestCard key={hire.id} hire={hire} />
-            ))}
+            {HIRE_TABS.map((tab) => {
+              const isActive = activeTab === tab.key;
+              const count = counts[tab.countKey];
+
+              return (
+                <button
+                  key={tab.key}
+                  type="button"
+                  role="tab"
+                  aria-selected={isActive}
+                  onClick={() => setActiveTab(tab.key)}
+                  className={`border px-4 py-4 text-left transition ${
+                    isActive
+                      ? tab.activeClass
+                      : "border-gray-200 bg-white hover:border-gray-400 hover:bg-gray-50"
+                  }`}
+                >
+                  <span
+                    className={`block text-xs font-medium uppercase tracking-wide ${
+                      isActive ? "text-current" : "text-gray-500"
+                    }`}
+                  >
+                    {tab.label}
+                  </span>
+
+                  <span
+                    className={`mt-2 block text-2xl font-semibold ${
+                      isActive ? "text-current" : tab.countClass
+                    }`}
+                  >
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
           </section>
-        ) : null}
-      </main>
-    </div>
+
+          {/* Error message */}
+          {error ? <GlobalErrorMessage error={error} /> : null}
+
+          {hires.length > 0 ? (
+            <div className="mb-5 flex items-center justify-between border-b border-gray-200 pb-3">
+              <h2 className="text-lg font-semibold text-gray-950">
+                {activeTabLabel} Requests
+              </h2>
+
+              <p className="text-sm text-gray-500">
+                {filteredHires.length}{" "}
+                {filteredHires.length === 1 ? "request" : "requests"}
+              </p>
+            </div>
+          ) : null}
+
+          {!loading && hires.length === 0 ? (
+            <section className="border border-dashed border-gray-300 px-6 py-16 text-center">
+              <p className="text-lg font-semibold text-gray-950">
+                No hire requests yet
+              </p>
+
+              <p className="mt-2 text-sm text-gray-600">
+                Customer booking requests for your services will appear here.
+              </p>
+            </section>
+          ) : null}
+
+          {!loading && hires.length > 0 && filteredHires.length === 0 ? (
+            <section className="border border-dashed border-gray-300 px-6 py-16 text-center">
+              <p className="text-lg font-semibold text-gray-950">
+                No {activeTabLabel.toLowerCase()} requests
+              </p>
+
+              <p className="mt-2 text-sm text-gray-600">
+                There are currently no hire requests with this status.
+              </p>
+            </section>
+          ) : null}
+
+          {filteredHires.length > 0 ? (
+            <section
+              role="tabpanel"
+              className="space-y-5"
+              aria-label={`${activeTabLabel} hire requests`}
+            >
+              {filteredHires.map((hire) => (
+                <SellerHireRequestCard key={hire.id} hire={hire} />
+              ))}
+            </section>
+          ) : null}
+        </main>
+      </div>
+    </>
   );
 };
 

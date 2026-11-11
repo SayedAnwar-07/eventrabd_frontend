@@ -22,6 +22,7 @@ import {
 import { useForm } from "react-hook-form";
 import { sellerRegisterSchema } from "@/validation/registerSchema";
 import GlobalErrorMessage from "@/components/common/GlobalErrorMessage";
+import SEO from "@/components/seo/SEO";
 
 // ============================================
 // UI STYLES
@@ -115,6 +116,13 @@ const SellerForm = () => {
 
   return (
     <section className="min-h-screen py-10 text-theme-color sm:px-6 sm:py-14">
+      {/* SEO content */}
+      <SEO
+        title="Register as a Seller"
+        description="Join EventraBD as a professional event service provider. Create your seller account, showcase your services, connect with potential customers, and grow your event business in Bangladesh."
+        noIndex={true}
+      />
+
       <div className="mx-auto w-full max-w-2xl">
         {/* ===================================
             BACK NAVIGATION

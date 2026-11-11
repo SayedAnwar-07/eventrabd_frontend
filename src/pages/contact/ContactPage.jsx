@@ -9,10 +9,18 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 
 import { Label } from "@/components/ui/label";
+import SEO from "@/components/seo/SEO";
 
 const ContactPage = () => {
   return (
     <section className="container mx-auto px-4 py-16">
+
+      {/* SEO content */}
+      <SEO
+        title="Contact EventraBD"
+        description="Have questions about EventraBD? Contact our team for assistance with event services, professional providers, account support, and your event planning needs."
+      />
+
       {/* Header */}
       <div className="mx-auto mb-12 max-w-2xl text-center">
         <h1 className="text-4xl font-bold tracking-tight">

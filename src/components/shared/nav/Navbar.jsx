@@ -23,7 +23,7 @@ import {
 
 const NAV_ITEMS = [
   { label: "Home", to: "/" },
-  { label: "Services", to: "/services" },
+  { label: "All Events", to: "/events" },
   { label: "Contact", to: "/contact" },
 ];
 

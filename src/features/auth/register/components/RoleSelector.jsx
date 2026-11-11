@@ -2,6 +2,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Store, ShoppingBag, ArrowRight } from "lucide-react";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import SEO from "@/components/seo/SEO";
 
 const roles = {
   seller: {
@@ -65,6 +66,14 @@ const RoleCard = ({ roleKey, role }) => {
 const RoleSelector = () => {
   return (
     <section className="flex min-h-screen items-center justify-center py-10 text-foreground">
+
+      {/* SEO content */}
+      <SEO
+        title="Choose Your Role"
+        description="Join EventraBD as a seller or customer. Choose your role to get started with discovering event services, connecting with professionals, and planning events in Bangladesh."
+        noIndex={true}
+      />
+      
       <div className="w-full max-w-md">
         <div className="mb-7 text-center">
           <p className="mb-2 text-sm font-semibold uppercase tracking-[0.22em] text-primary">

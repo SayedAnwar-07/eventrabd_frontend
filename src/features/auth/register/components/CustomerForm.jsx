@@ -20,6 +20,7 @@ import {
 import { useForm } from "react-hook-form";
 import { customerRegisterSchema } from "@/validation/registerSchema";
 import GlobalErrorMessage from "@/components/common/GlobalErrorMessage";
+import SEO from "@/components/seo/SEO";
 
 // ============================================
 // EVENTRABD UI STYLES
@@ -97,6 +98,14 @@ const CustomerForm = () => {
 
   return (
     <section className="min-h-screen py-10 text-theme-color sm:px-6 sm:py-14">
+
+      {/* SEO content */}
+      <SEO
+        title="Create a Customer Account"
+        description="Create your EventraBD customer account to discover professional event services, explore service providers, connect with sellers, and find the right solutions for your next event."
+        noIndex={true}
+      />
+
       <div className="mx-auto w-full max-w-2xl">
         {/* Back Navigation */}
 

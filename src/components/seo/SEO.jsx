@@ -21,7 +21,7 @@ export default function SEO({
 
       <meta
         name="robots"
-        content={noIndex ? "noindex, nofollow" : "index, follow"}
+        content={noIndex ? "noindex, follow" : "index, follow"}
       />
 
       {canonical && (

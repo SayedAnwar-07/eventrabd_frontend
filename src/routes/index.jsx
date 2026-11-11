@@ -89,7 +89,7 @@ const router = createBrowserRouter([
 
       // services
       {
-        path: "services",
+        path: "events",
         element: <ServicesPage />,
       },
 
@@ -130,15 +130,6 @@ const router = createBrowserRouter([
           <PrivateRoute element={<EditBrandPage />} allowedRoles={["seller"]} />
         ),
       },
-      // {
-      //   path: "event-planner/seller/brands/:slug",
-      //   element: (
-      //     <PrivateRoute
-      //       element={<SellerBrandDetails />}
-      //       allowedRoles={["seller"]}
-      //     />
-      //   ),
-      // },
 
       // =========================
       // Public Event Planner Routes

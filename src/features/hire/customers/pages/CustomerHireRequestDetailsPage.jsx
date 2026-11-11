@@ -19,6 +19,7 @@ import LoadingState from "../components/LoadingState";
 import PeopleInformation from "../components/PeopleInformation";
 
 import { useHireDetails } from "../hooks/useHireDetails";
+import SEO from "@/components/seo/SEO";
 
 export default function CustomerHireRequestDetailsPage() {
   const { id } = useParams();
@@ -37,106 +38,144 @@ export default function CustomerHireRequestDetailsPage() {
 
   const existingReport = findReportByHireId(reports, hire?.id);
 
+  // Dynamic SEO information
+  const serviceName =
+    hire?.service?.service_display_name ||
+    hire?.service_display_name ||
+    hire?.service?.service_name ||
+    "Event Service";
+
+  const hireReference = hire?.id ? ` #${hire.id}` : "";
+
+  const pageSEO = (
+    <SEO
+      title={hire?.id ? `${serviceName} Booking Details` : "Booking Details"}
+      description={
+        `View your ${serviceName} booking details on EventraBD. ` +
+        `Track booking status, review scheduled slots, manage invoices, ` +
+        `and check your service request information.${hireReference}`
+      }
+      noIndex={true}
+    />
+  );
+
   // Refresh hire after invoice decision.
   const handleInvoiceDecisionSuccess = async () => {
     await retry();
   };
 
   if (loading && !hire) {
-    return <LoadingState />;
+    return (
+      <>
+        {pageSEO}
+        <LoadingState />
+      </>
+    );
   }
 
   if (error && !hire) {
-    return <ErrorState error={error} loading={loading} onRetry={retry} />;
+    return (
+      <>
+        {pageSEO}
+        <ErrorState error={error} loading={loading} onRetry={retry} />
+      </>
+    );
   }
 
   if (!hire) {
     return (
-      <div className="min-h-screen bg-background">
-        <main className="mx-auto max-w-3xl py-16">
-          <section className="rounded-md border border-border bg-card px-6 py-12 text-center">
-            <h1 className="text-xl font-semibold text-foreground">
-              Hire request not found
-            </h1>
+      <>
+        {pageSEO}
+        <div className="min-h-screen bg-background">
+          <main className="mx-auto max-w-3xl py-16">
+            <section className="rounded-md border border-border bg-card px-6 py-12 text-center">
+              <h1 className="text-xl font-semibold text-foreground">
+                Hire request not found
+              </h1>
 
-            <p className="mt-2 text-sm text-muted-foreground">
-              This booking may have been removed or you may not have permission
-              to view it.
-            </p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                This booking may have been removed or you may not have
+                permission to view it.
+              </p>
 
-            <Link
-              to="/customer/hire-requests"
-              className="mt-6 inline-flex rounded-md border border-primary px-5 py-2.5 text-sm font-semibold text-primary"
-            >
-              Back to Bookings
-            </Link>
-          </section>
-        </main>
-      </div>
+              <Link
+                to="/customer/hire-requests"
+                className="mt-6 inline-flex rounded-md border border-primary px-5 py-2.5 text-sm font-semibold text-primary"
+              >
+                Back to Bookings
+              </Link>
+            </section>
+          </main>
+        </div>
+      </>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <main className="mx-auto max-w-6xl py-8 lg:py-10">
-        {/* Back navigation */}
-        <Link
-          to="/customer/hire-requests"
-          className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to My Bookings
-        </Link>
+    <>
+      {pageSEO}
 
-        {/* Background refresh error */}
-        {error?.message && (
-          <GlobalErrorMessage error={error} className="mt-5 rounded-md" />
-        )}
+      <div className="min-h-screen bg-background text-foreground">
+        <main className="mx-auto max-w-6xl py-8 lg:py-10">
+          {/* Back navigation */}
+          <Link
+            to="/customer/hire-requests"
+            className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to My Bookings
+          </Link>
 
-        {/* Hire timeline */}
-        <section className="mt-5 flex justify-end">
-          <HireTimeline hire={hire} />
-        </section>
+          {/* Background refresh error */}
+          {error?.message && (
+            <GlobalErrorMessage error={error} className="mt-5 rounded-md" />
+          )}
 
-        {/* Customer review */}
-        <CustomerReviewSection hire={hire} />
-
-        {/* Customer report */}
-        {hire.status === "completed" && (
-          <section className="mt-6 flex justify-end">
-            <CreateReportModal
-              hire={hire}
-              invoice={hire?.invoice}
-              existingReport={existingReport}
-              serviceName={
-                hire?.service?.service_display_name ||
-                hire?.service_display_name ||
-                hire?.service?.service_name ||
-                "this service"
-              }
-            />
+          {/* Hire timeline */}
+          <section className="mt-5 flex justify-end">
+            <HireTimeline hire={hire} />
           </section>
-        )}
 
-        {/* Booking slots */}
-        <section className="mt-12">
-          <BookingSlots hire={hire} />
-        </section>
+          {/* Customer review */}
+          <CustomerReviewSection hire={hire} />
 
-        {/* Customer, seller and invoice information */}
-        <section className="mt-10 grid grid-cols-1 items-start gap-6 xl:grid-cols-[360px_210mm] xl:justify-center">
-          <div className="min-w-0">
-            <PeopleInformation hire={hire} />
-          </div>
+          {/* Customer report */}
+          {hire.status === "completed" && (
+            <section className="mt-6 flex justify-end">
+              <CreateReportModal
+                hire={hire}
+                invoice={hire?.invoice}
+                existingReport={existingReport}
+                serviceName={
+                  hire?.service?.service_display_name ||
+                  hire?.service_display_name ||
+                  hire?.service?.service_name ||
+                  "this service"
+                }
+              />
+            </section>
+          )}
 
-          <div className="min-w-0">
-            <CustomerInvoiceDetails
-              hire={hire}
-              onDecisionSuccess={handleInvoiceDecisionSuccess}
-            />
-          </div>
-        </section>
-      </main>
-    </div>
+          {/* Booking slots */}
+          <section className="mt-12">
+            <BookingSlots hire={hire} />
+          </section>
+
+          {/* Customer, seller and invoice information */}
+          <section className="mt-10 grid grid-cols-1 items-start gap-6 xl:grid-cols-[360px_210mm] xl:justify-center">
+            <div className="min-w-0">
+              <PeopleInformation hire={hire} />
+            </div>
+
+            <div className="min-w-0">
+              <CustomerInvoiceDetails
+                hire={hire}
+                onDecisionSuccess={handleInvoiceDecisionSuccess}
+              />
+            </div>
+          </section>
+        </main>
+      </div>
+    </>
   );
 }

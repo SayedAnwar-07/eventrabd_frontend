@@ -45,7 +45,7 @@ const LoginForm = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const { loading, error, isAuthenticated } = useSelector(
+  const { loading, isAuthenticated } = useSelector(
     (state) => state.auth,
   );
 

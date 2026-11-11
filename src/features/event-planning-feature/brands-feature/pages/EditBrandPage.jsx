@@ -11,6 +11,7 @@ import {
   clearPublicBrandDetails,
   clearUpdateBrandState,
 } from "@/store/features/eventPlanner/eventPlannerSlice";
+import SEO from "@/components/seo/SEO";
 
 const EMPTY_FORM_VALUES = {
   display_name: "",
@@ -331,6 +332,8 @@ export default function EditBrandPage() {
     }
   };
 
+  const brandName = publicBrandDetails?.brand_name?.trim();
+
   useEffect(() => {
     loadBrand();
 
@@ -410,24 +413,38 @@ export default function EditBrandPage() {
   }
 
   return (
-    <section className="min-h-screen sm:py-8">
-      <div className="">
-        <header className="mb-6">
-          <p className="text-sm font-medium text-muted-foreground">
-            Update your event planner brand
-          </p>
+    <>
+      <SEO
+        title={brandName ? `Edit ${brandName}` : "Edit Your Event Brand"}
+        description={
+          brandName
+            ? `Update ${brandName} on EventraBD. Manage your brand information, contact details, service areas, portfolio, and logo.`
+            : "Update your event brand information on EventraBD. Manage your brand profile, contact details, service areas, portfolio, and logo."
+        }
+        noIndex={true}
+      />
 
-          <h1 className="mt-2 text-3xl font-bold tracking-tight">Edit Brand</h1>
-        </header>
+      <section className="min-h-screen sm:py-8">
+        <div className="">
+          <header className="mb-6">
+            <p className="text-sm font-medium text-muted-foreground">
+              Update your event planner brand
+            </p>
 
-        <EditBrandFormContent
-          key={`${publicBrandDetails.id}-${publicBrandDetails.updated_at}`}
-          initialValues={initialValues}
-          existingLogo={publicBrandDetails.logo_url || null}
-          updateState={update}
-          onUpdate={handleUpdate}
-        />
-      </div>
-    </section>
+            <h1 className="mt-2 text-3xl font-bold tracking-tight">
+              Edit Brand
+            </h1>
+          </header>
+
+          <EditBrandFormContent
+            key={`${publicBrandDetails.id}-${publicBrandDetails.updated_at}`}
+            initialValues={initialValues}
+            existingLogo={publicBrandDetails.logo_url || null}
+            updateState={update}
+            onUpdate={handleUpdate}
+          />
+        </div>
+      </section>
+    </>
   );
 }

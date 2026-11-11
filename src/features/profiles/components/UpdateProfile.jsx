@@ -24,7 +24,7 @@ import {
   getProfileErrorMessage,
 } from "../utils/profileUtils";
 
-const UpdateProfile = () => {
+const UpdateProfile = ({ showSEO = true }) => {
   const { slug: routeSlug } = useParams();
 
   const navigate = useNavigate();
@@ -35,6 +35,13 @@ const UpdateProfile = () => {
   const [profileImageFile, setProfileImageFile] = useState(null);
   const [localMessage, setLocalMessage] = useState("");
   const [localError, setLocalError] = useState("");
+
+  const profileName =
+    user?.full_name?.trim() ||
+    [user?.first_name, user?.last_name].filter(Boolean).join(" ").trim() ||
+    user?.name?.trim() ||
+    user?.username?.trim() ||
+    "Your";
 
   const form = useForm({
     defaultValues: getInitialProfileValues(null),
@@ -156,56 +163,73 @@ const UpdateProfile = () => {
   }
 
   return (
-    <div className="min-h-screen py-8">
-      <div className="">
-        {localMessage && (
-          <div
-            role="status"
-            className="mb-5 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700"
-          >
-            {localMessage}
-          </div>
-        )}
-
-        {localError && (
-          <div
-            role="alert"
-            className="mb-5 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
-          >
-            {localError}
-          </div>
-        )}
-
-        <Form {...form}>
-          <form onSubmit={handleSubmit(onSubmit)}>
-            <div className="">
-              <div className="grid grid-cols-1 gap-8 sm:p-6 lg:grid-cols-[280px_minmax(0,1fr)] lg:gap-10">
-                <aside>
-                  <ProfileImageUploader
-                    currentImageUrl={user?.profile_image_url}
-                    onImageChange={handleProfileImageChange}
-                  />
-                </aside>
-
-                <main className="min-w-0">
-                  <div className="space-y-6">
-                    <BasicInformationFields control={control} user={user} />
-
-                    <ContactDetailsFields control={control} />
-                  </div>
-                </main>
-              </div>
-
-              <ProfileFormActions
-                loading={loading}
-                hasChanges={hasChanges}
-                onCancel={handleCancel}
-              />
+    <>
+      {showSEO && (
+        <SEO
+          title={
+            profileName === "Your"
+              ? "Edit Your Profile"
+              : `Edit ${profileName}'s Profile`
+          }
+          description={
+            profileName === "Your"
+              ? "Update your EventraBD profile, edit your personal information, and manage your contact details."
+              : `Update ${profileName}'s EventraBD profile, edit personal information, and manage contact details.`
+          }
+          noIndex={true}
+        />
+      )}
+      <div className="min-h-screen py-8">
+        <div className="">
+          {localMessage && (
+            <div
+              role="status"
+              className="mb-5 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700"
+            >
+              {localMessage}
             </div>
-          </form>
-        </Form>
+          )}
+
+          {localError && (
+            <div
+              role="alert"
+              className="mb-5 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+            >
+              {localError}
+            </div>
+          )}
+
+          <Form {...form}>
+            <form onSubmit={handleSubmit(onSubmit)}>
+              <div className="">
+                <div className="grid grid-cols-1 gap-8 sm:p-6 lg:grid-cols-[280px_minmax(0,1fr)] lg:gap-10">
+                  <aside>
+                    <ProfileImageUploader
+                      currentImageUrl={user?.profile_image_url}
+                      onImageChange={handleProfileImageChange}
+                    />
+                  </aside>
+
+                  <main className="min-w-0">
+                    <div className="space-y-6">
+                      <BasicInformationFields control={control} user={user} />
+
+                      <ContactDetailsFields control={control} />
+                    </div>
+                  </main>
+                </div>
+
+                <ProfileFormActions
+                  loading={loading}
+                  hasChanges={hasChanges}
+                  onCancel={handleCancel}
+                />
+              </div>
+            </form>
+          </Form>
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 
