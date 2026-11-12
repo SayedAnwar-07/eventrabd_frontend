@@ -14,6 +14,7 @@ import {
 } from "@/store/features/report/reportSlice";
 
 import ReportDetails from "../components/ReportDetails";
+import SEO from "@/components/seo/SEO";
 
 function ReportDetailSkeleton() {
   return (
@@ -67,28 +68,36 @@ export default function ReportDetailsPage() {
   };
 
   return (
-    <main className="mx-auto w-full px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
-      <Button variant="ghost" size="sm" asChild className="mb-5 -ml-2">
-        <Link to="/customer/reports">
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          My Reports
-        </Link>
-      </Button>
+    <>
+      <SEO
+        title="Customer Service Report Details & Status"
+        description="View your customer service report details on EventraBD, review submitted concerns, and track the latest status of your event service report."
+        noIndex={true}
+      />
 
-      {detailLoading ? (
-        <ReportDetailSkeleton />
-      ) : error ? (
-        <div className="space-y-4">
-          <GlobalErrorMessage error={error} />
+      <main className="mx-auto w-full px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+        <Button variant="ghost" size="sm" asChild className="mb-5 -ml-2">
+          <Link to="/customer/reports">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            My Reports
+          </Link>
+        </Button>
 
-          <Button type="button" variant="outline" onClick={handleRetry}>
-            <RefreshCw className="mr-2 h-4 w-4" />
-            Try Again
-          </Button>
-        </div>
-      ) : (
-        <ReportDetails report={currentReport} />
-      )}
-    </main>
+        {detailLoading ? (
+          <ReportDetailSkeleton />
+        ) : error ? (
+          <div className="space-y-4">
+            <GlobalErrorMessage error={error} />
+
+            <Button type="button" variant="outline" onClick={handleRetry}>
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Try Again
+            </Button>
+          </div>
+        ) : (
+          <ReportDetails report={currentReport} />
+        )}
+      </main>
+    </>
   );
 }

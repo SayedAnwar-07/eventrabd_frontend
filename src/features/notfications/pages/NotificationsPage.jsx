@@ -26,6 +26,7 @@ import NotificationItem from "../components/NotificationItem";
 import NotificationListSkeleton from "../components/NotificationListSkeleton";
 
 import { handleNotificationClick } from "../utils/notificationUtils";
+import SEO from "@/components/seo/SEO";
 
 const EMPTY_NOTIFICATIONS = Object.freeze([]);
 
@@ -201,151 +202,163 @@ export default function NotificationsPage() {
   const hasMore = Boolean(next) && !(filter === "unread" && unreadCount === 0);
 
   return (
-    <div className="mx-auto w-full py-6 sm:py-8 lg:py-10">
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div className="flex items-center gap-3">
-          <div className="flex size-10 items-center justify-center text-primary">
-            <Bell className="size-5" />
-          </div>
+    <>
+      <SEO
+        title={`Event Notifications - ${
+          user?.full_name ? ` for ${user.full_name}` : ""
+        }`}
+        description="Manage your EventraBD notifications in one place. Stay informed about event planning hire requests, invoice updates, service reviews, and important account activity."
+        noIndex={true}
+      />
 
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
-                Notifications
-              </h1>
-
-              {!countLoading && unreadCount > 0 && (
-                <Badge variant="secondary" className="rounded-md">
-                  {unreadCount} unread
-                </Badge>
-              )}
+      <div className="mx-auto w-full py-6 sm:py-8 lg:py-10">
+        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex size-10 items-center justify-center text-primary">
+              <Bell className="size-5" />
             </div>
 
-            <p className="mt-0.5 text-sm text-muted-foreground">
-              Stay updated with your Hire, Invoice, and Review activity.
-            </p>
-          </div>
-        </div>
-
-        {unreadCount > 0 && (
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => dispatch(markAllNotificationsRead())}
-            disabled={markAllReadLoading}
-            className="self-start sm:self-auto"
-          >
-            {markAllReadLoading ? (
-              <Loader2 className="size-4 animate-spin" />
-            ) : (
-              <CheckCheck className="size-4" />
-            )}
-            Mark all as read
-          </Button>
-        )}
-      </div>
-
-      <div className="overflow-hidden">
-        <div className="space-y-4 px-4 py-4 sm:px-5">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h2 className="text-sm font-semibold">Activity</h2>
+              <div className="flex items-center gap-2">
+                <h1 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
+                  Notifications
+                </h1>
 
-              {!countLoading && (
-                <p className="mt-0.5 text-xs text-muted-foreground">
-                  {totalCount}{" "}
-                  {totalCount === 1 ? "notification" : "notifications"}
-                </p>
-              )}
-            </div>
-
-            <div
-              className="flex w-full gap-1 p-1 sm:w-auto"
-              role="group"
-              aria-label="Notification filters"
-            >
-              {FILTERS.map((item) => {
-                const active = filter === item.key;
-
-                return (
-                  <Button
-                    key={item.key}
-                    type="button"
-                    variant={active ? "secondary" : "ghost"}
-                    size="sm"
-                    aria-pressed={active}
-                    onClick={() => setFilter(item.key)}
-                    className="h-8 flex-1 rounded-md px-4 text-xs sm:flex-none"
-                  >
-                    {item.label}
-
-                    {item.key === "unread" && unreadCount > 0 && (
-                      <span className="ml-1.5 text-[10px] font-semibold">
-                        {unreadCount}
-                      </span>
-                    )}
-                  </Button>
-                );
-              })}
-            </div>
-          </div>
-
-          {error && <GlobalErrorMessage error={error} className="rounded-md" />}
-        </div>
-
-        <Separator />
-
-        <div className="p-0">
-          {listLoading ? (
-            <NotificationListSkeleton rows={6} />
-          ) : visibleNotifications.length === 0 ? (
-            <NotificationEmptyState filter={filter} userRole={user?.role} />
-          ) : (
-            <>
-              <div>
-                {visibleNotifications.map((notification, index) => (
-                  <div key={notification.id}>
-                    <NotificationItem
-                      notification={notification}
-                      onClick={handleItemClick}
-                      isMarkingRead={Boolean(
-                        markReadLoadingIds[notification.id],
-                      )}
-                      className="px-4 py-5 sm:px-5"
-                    />
-
-                    {index < visibleNotifications.length - 1 && (
-                      <Separator className="ml-18" />
-                    )}
-                  </div>
-                ))}
+                {!countLoading && unreadCount > 0 && (
+                  <Badge variant="secondary" className="rounded-md">
+                    {unreadCount} unread
+                  </Badge>
+                )}
               </div>
 
-              {hasMore && (
-                <>
-                  <Separator />
+              <p className="mt-0.5 text-sm text-muted-foreground">
+                Stay updated with your Hire, Invoice, and Review activity.
+              </p>
+            </div>
+          </div>
 
-                  <div className="flex justify-center p-5">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => dispatch(fetchMoreNotifications())}
-                      disabled={loadingMore}
-                      className="min-w-32"
-                    >
-                      {loadingMore && (
-                        <Loader2 className="size-4 animate-spin" />
-                      )}
-
-                      {loadingMore ? "Loading..." : "Load more"}
-                    </Button>
-                  </div>
-                </>
+          {unreadCount > 0 && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => dispatch(markAllNotificationsRead())}
+              disabled={markAllReadLoading}
+              className="self-start sm:self-auto"
+            >
+              {markAllReadLoading ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <CheckCheck className="size-4" />
               )}
-            </>
+              Mark all as read
+            </Button>
           )}
         </div>
+
+        <div className="overflow-hidden">
+          <div className="space-y-4 px-4 py-4 sm:px-5">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="text-sm font-semibold">Activity</h2>
+
+                {!countLoading && (
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    {totalCount}{" "}
+                    {totalCount === 1 ? "notification" : "notifications"}
+                  </p>
+                )}
+              </div>
+
+              <div
+                className="flex w-full gap-1 p-1 sm:w-auto"
+                role="group"
+                aria-label="Notification filters"
+              >
+                {FILTERS.map((item) => {
+                  const active = filter === item.key;
+
+                  return (
+                    <Button
+                      key={item.key}
+                      type="button"
+                      variant={active ? "secondary" : "ghost"}
+                      size="sm"
+                      aria-pressed={active}
+                      onClick={() => setFilter(item.key)}
+                      className="h-8 flex-1 rounded-md px-4 text-xs sm:flex-none"
+                    >
+                      {item.label}
+
+                      {item.key === "unread" && unreadCount > 0 && (
+                        <span className="ml-1.5 text-[10px] font-semibold">
+                          {unreadCount}
+                        </span>
+                      )}
+                    </Button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {error && (
+              <GlobalErrorMessage error={error} className="rounded-md" />
+            )}
+          </div>
+
+          <Separator />
+
+          <div className="p-0">
+            {listLoading ? (
+              <NotificationListSkeleton rows={6} />
+            ) : visibleNotifications.length === 0 ? (
+              <NotificationEmptyState filter={filter} userRole={user?.role} />
+            ) : (
+              <>
+                <div>
+                  {visibleNotifications.map((notification, index) => (
+                    <div key={notification.id}>
+                      <NotificationItem
+                        notification={notification}
+                        onClick={handleItemClick}
+                        isMarkingRead={Boolean(
+                          markReadLoadingIds[notification.id],
+                        )}
+                        className="px-4 py-5 sm:px-5"
+                      />
+
+                      {index < visibleNotifications.length - 1 && (
+                        <Separator className="ml-18" />
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                {hasMore && (
+                  <>
+                    <Separator />
+
+                    <div className="flex justify-center p-5">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => dispatch(fetchMoreNotifications())}
+                        disabled={loadingMore}
+                        className="min-w-32"
+                      >
+                        {loadingMore && (
+                          <Loader2 className="size-4 animate-spin" />
+                        )}
+
+                        {loadingMore ? "Loading..." : "Load more"}
+                      </Button>
+                    </div>
+                  </>
+                )}
+              </>
+            )}
+          </div>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

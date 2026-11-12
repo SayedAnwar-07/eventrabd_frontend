@@ -145,7 +145,7 @@ const PublicServiceInfo = ({ service }) => {
       <div className="mt-3.5 flex items-center gap-2.5">
         <Link
           to={detailPath}
-          className="flex flex-1 items-center justify-center gap-2 rounded-md bg-theme-color px-3 py-2.5 text-xs font-semibold text-white transition-all hover:bg-primary/5"
+          className="flex flex-1 items-center justify-center gap-2 rounded-md bg-theme-color px-3 py-2.5 text-xs font-semibold text-primary-foreground shadow-sm transition-all duration-300 ease-out hover:-translate-y-0.5 hover:bg-theme-secondary-color hover:shadow-md active:translate-y-0 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-color/30 focus-visible:ring-offset-2 motion-reduce:transform-none motion-reduce:transition-none"
         >
           View Details
         </Link>
@@ -156,7 +156,7 @@ const PublicServiceInfo = ({ service }) => {
             state={{
               openHireForm: true,
             }}
-            className="flex flex-1 items-center justify-center gap-2 rounded-md bg-theme-color px-3 py-2.5 text-xs font-semibold text-primary-foreground shadow-sm transition-all hover:bg-primary/90"
+            className="flex flex-1 items-center justify-center gap-2 rounded-md bg-theme-color px-3 py-2.5 text-xs font-semibold text-primary-foreground shadow-sm transition-all duration-300 ease-out hover:-translate-y-0.5 hover:bg-theme-secondary-color hover:shadow-md active:translate-y-0 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-color/30 focus-visible:ring-offset-2 motion-reduce:transform-none motion-reduce:transition-none"
           >
             Hire Now
           </Link>
