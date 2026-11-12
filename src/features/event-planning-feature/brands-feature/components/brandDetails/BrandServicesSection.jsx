@@ -8,7 +8,7 @@ const BrandServicesSection = ({ brand, onServiceCreated }) => {
   return (
     <section>
       <div className="my-6 flex items-center justify-between gap-4">
-        <h2 className="text-xl font-semibold text-foreground">
+        <h2 className="mb-2.5 text-sm font-medium text-foreground">
           Available Services
         </h2>
 
@@ -18,7 +18,7 @@ const BrandServicesSection = ({ brand, onServiceCreated }) => {
             trigger={
               <button
                 type="button"
-                className="border border-border px-4 py-2 text-sm font-medium text-foreground transition hover:border-foreground bg-white rounded-md"
+                className="border border-border px-4 py-2 text-sm font-medium transition hover:border-foreground bg-theme-color text-white rounded-md cursor-pointer"
               >
                 + Create Service
               </button>
@@ -35,7 +35,7 @@ const BrandServicesSection = ({ brand, onServiceCreated }) => {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
           {services.map((service) => (
             <ServiceCard
               key={service.id}

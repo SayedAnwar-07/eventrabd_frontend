@@ -10,8 +10,9 @@ import {
   ChevronLeft,
   ChevronRight,
   Clapperboard,
-  ExternalLink,
+  Clock,
   Lightbulb,
+  ArrowUpRight,
 } from "lucide-react";
 
 import ImageModal from "@/components/common/ImageModal";
@@ -32,28 +33,20 @@ const SERVICE_ICONS = {
   event_hall: Building2,
 };
 
-const ServiceTypeIcon = ({ serviceName }) => {
+const ServiceTypeIcon = ({ serviceName, className = "h-4 w-4" }) => {
   const Icon = SERVICE_ICONS[serviceName] || BriefcaseBusiness;
-
-  return <Icon className="h-3.5 w-3.5 shrink-0" />;
+  return <Icon className={className} />;
 };
 
-const formatServiceName = (value = "") => {
-  return value
-    .replaceAll("_", " ")
-    .replace(/\b\w/g, (char) => char.toUpperCase());
-};
+const formatServiceName = (value = "") =>
+  value.replaceAll("_", " ").replace(/\b\w/g, (char) => char.toUpperCase());
 
 const getGalleryImages = (service) => {
-  if (!service) return [];
-
-  if (!GALLERY_ONLY_SERVICE_TYPES.includes(service.service_name)) {
+  if (!service || !GALLERY_ONLY_SERVICE_TYPES.includes(service.service_name)) {
     return [];
   }
 
-  if (!Array.isArray(service.gallery_images)) {
-    return [];
-  }
+  if (!Array.isArray(service.gallery_images)) return [];
 
   return [...service.gallery_images]
     .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
@@ -66,15 +59,14 @@ const getGalleryImages = (service) => {
 };
 
 const getCoverPhotoImage = (service) => {
-  if (!service) return [];
-
-  if (!COVER_PHOTO_ONLY_SERVICE_TYPES.includes(service.service_name)) {
+  if (
+    !service ||
+    !COVER_PHOTO_ONLY_SERVICE_TYPES.includes(service.service_name)
+  ) {
     return [];
   }
 
-  if (!service.cover_photo_url) {
-    return [];
-  }
+  if (!service.cover_photo_url) return [];
 
   return [
     {
@@ -90,7 +82,6 @@ const ServiceCard = ({ service, brandSlug }) => {
   const [dragStart, setDragStart] = useState(null);
 
   const serviceName = service?.service_name || "";
-
   const resolvedBrandSlug = brandSlug || service?.brand?.slug || "";
 
   const isGalleryOnlyService = GALLERY_ONLY_SERVICE_TYPES.includes(serviceName);
@@ -117,6 +108,10 @@ const ServiceCard = ({ service, brandSlug }) => {
       ? `/event-planner/brands/${resolvedBrandSlug}/services/${service.id}/${serviceName}`
       : "#";
 
+  const shiftHour = Number(service?.shift_hour);
+
+  const price = Number(service?.shift_charge || 0);
+
   const goPrevious = () => {
     if (!hasMultipleImages) return;
 
@@ -131,34 +126,26 @@ const ServiceCard = ({ service, brandSlug }) => {
 
   const handleDragStart = (clientX) => {
     if (!hasMultipleImages) return;
-
     setDragStart(clientX);
   };
 
   const handleDragEnd = (clientX) => {
-    if (!hasMultipleImages || dragStart === null) {
-      return;
-    }
+    if (!hasMultipleImages || dragStart === null) return;
 
     const distance = dragStart - clientX;
 
-    if (distance > 50) {
-      goNext();
-    }
-
-    if (distance < -50) {
-      goPrevious();
-    }
+    if (distance > 50) goNext();
+    if (distance < -50) goPrevious();
 
     setDragStart(null);
   };
 
   return (
     <>
-      <article className="group overflow-hidden rounded-md border bg-background shadow-sm">
+      <article className="group flex h-full flex-col overflow-hidden rounded-md border border-gray-300 bg-card shadow-sm transition-all duration-300 hover:shadow-md">
         {/* IMAGE */}
         <div
-          className="relative aspect-4/2.75 w-full cursor-grab select-none overflow-hidden bg-muted active:cursor-grabbing"
+          className="relative w-full cursor-grab select-none overflow-hidden bg-muted active:cursor-grabbing"
           onMouseDown={(e) => handleDragStart(e.clientX)}
           onMouseUp={(e) => handleDragEnd(e.clientX)}
           onMouseLeave={() => setDragStart(null)}
@@ -171,38 +158,25 @@ const ServiceCard = ({ service, brandSlug }) => {
               alt={`${serviceTitle} ${safeIndex + 1}`}
               onClick={() => setModalImage(activeImage.url)}
               draggable="false"
-              className="h-full w-full cursor-pointer object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+              className="h-60 w-full cursor-pointer object-cover transition-transform duration-500"
               loading="lazy"
               decoding="async"
             />
           ) : (
-            <div className="flex h-full w-full items-center justify-center">
-              <p className="text-sm text-muted-foreground">No Image</p>
+            <div className="flex h-full w-full flex-col items-center justify-center gap-2 text-muted-foreground">
+              <ServiceTypeIcon serviceName={serviceName} className="h-9 w-9" />
+              <p className="text-sm">No image yet</p>
             </div>
           )}
 
-          {/* SAME OVERLAY */}
-          <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-black/20 via-transparent to-black/5" />
+          {/* IMAGE COUNTER */}
+          {hasImages && (
+            <span className="absolute left-3 top-3 rounded-md border border-white/30 bg-black/45 px-2.5 py-1 text-xs font-semibold tabular-nums text-white backdrop-blur-sm">
+              {safeIndex + 1} / {images.length}
+            </span>
+          )}
 
-          {/* PRICE - SAME UI */}
-          <div className="absolute right-3 bottom-3 rounded-md bg-background/95 px-3 py-2 shadow-md backdrop-blur-md">
-            <p className="text-base font-bold leading-none text-foreground">
-              ৳ {Number(service?.shift_charge || 0).toLocaleString()}
-            </p>
-          </div>
-
-          {/* SERVICE NAME - SAME UI */}
-          <div className="absolute bottom-3 left-3 max-w-[55%] rounded-md border bg-background/90 px-3 py-2 shadow-md backdrop-blur-md">
-            <div className="flex items-center gap-1.5">
-              <ServiceTypeIcon serviceName={serviceName} />
-
-              <span className="truncate text-xs font-semibold">
-                {serviceTitle}
-              </span>
-            </div>
-          </div>
-
-          {/* PREVIOUS - SAME UI */}
+          {/* PREVIOUS IMAGE */}
           {hasMultipleImages && (
             <button
               type="button"
@@ -210,14 +184,14 @@ const ServiceCard = ({ service, brandSlug }) => {
                 e.stopPropagation();
                 goPrevious();
               }}
-              className="absolute left-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-background/90 shadow-md backdrop-blur hover:bg-background"
+              className="absolute left-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md border border-border/50 bg-background/90 text-foreground shadow-sm backdrop-blur-sm transition-all duration-200 hover:bg-theme-color hover:text-primary-foreground md:opacity-0 md:group-hover:opacity-100"
               aria-label="Previous image"
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
           )}
 
-          {/* NEXT - SAME UI */}
+          {/* NEXT IMAGE */}
           {hasMultipleImages && (
             <button
               type="button"
@@ -225,16 +199,16 @@ const ServiceCard = ({ service, brandSlug }) => {
                 e.stopPropagation();
                 goNext();
               }}
-              className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-background/90 shadow-md backdrop-blur hover:bg-background"
+              className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md border border-border/50 bg-background/90 text-foreground shadow-sm backdrop-blur-sm transition-all duration-200 hover:bg-theme-color hover:text-primary-foreground md:opacity-0 md:group-hover:opacity-100"
               aria-label="Next image"
             >
               <ChevronRight className="h-4 w-4" />
             </button>
           )}
 
-          {/* DOTS - SAME UI */}
+          {/* IMAGE INDICATORS */}
           {hasMultipleImages && (
-            <div className="absolute bottom-2 left-1/2 flex -translate-x-1/2 gap-1">
+            <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 items-center gap-1.5 rounded-md bg-black/40 px-2 py-1.5 backdrop-blur-sm">
               {images.map((image, index) => (
                 <button
                   key={image.id}
@@ -243,8 +217,10 @@ const ServiceCard = ({ service, brandSlug }) => {
                     e.stopPropagation();
                     setActiveImageIndex(index);
                   }}
-                  className={`h-1.5 rounded-full transition-all ${
-                    index === safeIndex ? "w-4 bg-white" : "w-1.5 bg-white/60"
+                  className={`h-1 rounded-md transition-all duration-300 ${
+                    index === safeIndex
+                      ? "w-7 bg-white"
+                      : "w-5 bg-white/50 hover:bg-white/80"
                   }`}
                   aria-label={`Go to image ${index + 1}`}
                 />
@@ -253,47 +229,53 @@ const ServiceCard = ({ service, brandSlug }) => {
           )}
         </div>
 
-        {/* CARD CONTENT */}
-        <div className="p-5">
+        {/* CONTENT */}
+        <div className="flex flex-1 flex-col p-4">
+          {/* SERVICE TITLE AND PRICE */}
+          <div className="flex items-start justify-between gap-3">
+            {/* SERVICE INFORMATION */}
+            <div className="min-w-0 flex-1">
+              <h3 className="truncate text-lg font-bold tracking-tight text-foreground">
+                {serviceTitle}
+              </h3>
 
+              {shiftHour > 0 && (
+                <span className="text-xs text-gray-600 font-bold">
+                 {shiftHour} {shiftHour > 1 ? "hours" : "hour"} shift
+                </span>
+              )}
+            </div>
 
-          {/* SERVICE INFORMATION */}
-          <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
-            {service?.shift_hour ? (
-              <p>
-                <span className="font-medium text-foreground">Shift:</span>{" "}
-                {service.shift_hour} Hour
-                {Number(service.shift_hour) > 1 ? "s" : ""}
+            {/* PRICE */}
+            <div className="shrink-0 pt-0.5 text-right">
+              <p className="text-xs font-medium text-muted-foreground">
+                Starting at
               </p>
-            ) : null}
 
-            {serviceName === "sound_lighting" ? (
-              <>
-                <p>
-                  <span className="font-medium text-foreground">Sound:</span> ৳
-                  {service?.sound_system_payment ?? "N/A"}
-                </p>
-
-                <p>
-                  <span className="font-medium text-foreground">Lighting:</span>{" "}
-                  ৳{service?.lighting_payment ?? "N/A"}
-                </p>
-              </>
-            ) : null}
+              <div className="mt-1 flex items-baseline justify-end gap-0.5 text-theme-color">
+                <span className="text-base font-semibold">৳</span>
+                <span className="text-2xl font-bold leading-none tracking-tight tabular-nums">
+                  {price.toLocaleString()}
+                </span>
+              </div>
+            </div>
           </div>
 
-          {/* ACTIONS */}
-          <div className="mt-5 gap-3 border-t pt-4">
-            <Link
-              to={detailPath}
-              className="inline-flex h-10 items-center justify-center rounded-md border px-4 text-sm font-medium text-foreground transition hover:bg-muted w-full"
-            >
-              View Service Details
-            </Link>
-          </div>
+          {/* VIEW DETAILS */}
+          <Link
+            to={detailPath}
+            className="mt-4 flex h-11 w-full items-center justify-between rounded-md bg-theme-color pl-4 pr-1.5 text-sm font-semibold text-primary-foreground shadow-sm transition-all duration-300 hover:bg-theme-secondary-color hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 active:scale-[0.99]"
+          >
+            <span>View details</span>
+
+            <span className="flex h-8 w-8 items-center justify-center rounded-md bg-white/15 transition-all duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:bg-white/25">
+              <ArrowUpRight className="h-4 w-4" />
+            </span>
+          </Link>
         </div>
       </article>
 
+      {/* IMAGE MODAL */}
       <ImageModal
         image={modalImage}
         open={!!modalImage}

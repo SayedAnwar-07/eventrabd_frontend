@@ -184,7 +184,7 @@ const StepConfirmation = ({
                       {eventLabel}
                     </h4>
 
-                    <p className="break-words text-xs leading-relaxed text-[#756A62]">
+                    <p className="wrap-break-word text-xs leading-relaxed text-[#756A62]">
                       {title}
                     </p>
 
@@ -241,7 +241,7 @@ const StepConfirmation = ({
                       </p>
 
                       {slot.venue_address && (
-                        <p className="break-words text-xs leading-relaxed text-[#756A62]">
+                        <p className="wrap-break-word text-xs leading-relaxed text-[#756A62]">
                           {slot.venue_address}
                         </p>
                       )}
@@ -287,7 +287,7 @@ const StepConfirmation = ({
                 <p className="text-[11px] text-[#9B9087]">Customer note</p>
               </div>
 
-              <p className="whitespace-pre-wrap break-words text-sm leading-relaxed text-[#51463E]">
+              <p className="whitespace-pre-wrap wrap-break-word text-sm leading-relaxed text-[#51463E]">
                 {customerNote}
               </p>
             </div>
